@@ -1,5 +1,6 @@
-/** @type {import("prettier").Config} */
-export default {
+import type { Config } from "prettier";
+
+const config: Config = {
     arrowParens: "always",
     bracketSpacing: true,
     printWidth: 120,
@@ -11,15 +12,22 @@ export default {
     useTabs: false,
     overrides: [
         {
-            files: ["**/*.ts", "**/*.tsx"],
+            files: ["*.json"],
             options: {
-                parser: "typescript",
+                trailingComma: "none",
+                printWidth: 80,
             },
         },
         {
-            files: ["**/*.json"],
+            files: ["*.toml"],
             options: {
-                trailingComma: "none",
+                printWidth: 80,
+            },
+        },
+        {
+            files: ["*.ts", "*.tsx"],
+            options: {
+                parser: "typescript",
             },
         },
         {
@@ -28,11 +36,11 @@ export default {
                 tabWidth: 2,
             },
         },
-        {
-            files: ["package.json", "package-lock.json"],
-            options: {
-                tabWidth: 2,
-            },
-        },
+    ],
+    plugins: [
+        //"prettier-plugin-sh",
+        // "prettier-plugin-toml",
     ],
 };
+
+export default config;

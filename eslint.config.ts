@@ -1,17 +1,33 @@
+import { defineConfig, globalIgnores } from "@eslint/config-helpers";
+import type { RulesConfig } from "@eslint/core";
 import js from "@eslint/js";
 import commentsPlugin from "@eslint-community/eslint-plugin-eslint-comments";
 import stylistic from "@stylistic/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 import love from "eslint-config-love";
-import importPlugin from "eslint-plugin-import";
-import nPlugin from "eslint-plugin-n";
+import { flatConfigs as importPluginsFlatConfigs } from "eslint-plugin-import-x";
 import perfectionist from "eslint-plugin-perfectionist";
 import prettier from "eslint-plugin-prettier/recommended";
 import promise from "eslint-plugin-promise";
 import eslintPluginUnicorn from "eslint-plugin-unicorn";
-import tseslint from "typescript-eslint";
+import { configs as tseslintConfigs } from "typescript-eslint";
 
-const sharedRules = {
+interface CompatibleConfig {
+    name?: string;
+    rules?: object;
+}
+
+type CompatibleConfigArray = CompatibleConfig[];
+
+function flattenRules(configArray: CompatibleConfigArray): RulesConfig {
+    return Object.fromEntries(
+        configArray.flatMap((group) => {
+            return Object.entries(group.rules ?? {});
+        }),
+    );
+}
+
+const sharedRules: RulesConfig = {
     "arrow-body-style": ["error", "always"],
     complexity: ["off"],
     curly: ["error", "all"],
@@ -33,6 +49,7 @@ const sharedRules = {
     "no-shadow": ["error"],
     "no-underscore-dangle": ["off"],
     "no-unused-expressions": ["error"],
+    "no-unused-vars": ["off"],
     "no-useless-constructor": ["off"],
     "object-shorthand": ["error", "always"],
     "prefer-template": ["error"],
@@ -53,39 +70,45 @@ const sharedRules = {
     ],
 
     "sort-keys": ["off"],
+
+    "unicorn/no-array-sort": ["off"],
     "unicorn/no-null": ["off"],
     "unicorn/prefer-ternary": ["off"],
 
-    "import/extensions": [
+    "import-x/extensions": [
         "error",
         "ignorePackages",
         {
             json: "always",
-            ts: "always",
-            tsx: "always",
+            ts: "never",
+            tsx: "never",
         },
     ],
-    "import/newline-after-import": ["error"],
-    "import/no-cycle": ["off"],
-    "import/no-extraneous-dependencies": ["off"],
-    "import/no-relative-packages": ["error"],
-    "import/no-unresolved": ["error"],
-    "import/order": [
+    "import-x/newline-after-import": ["error"],
+    "import-x/no-cycle": ["off"],
+    "import-x/no-extraneous-dependencies": ["off"],
+    "import-x/no-relative-packages": ["error"],
+    "import-x/no-unresolved": ["error"],
+    "import-x/order": [
         "error",
         {
             alphabetize: { caseInsensitive: true, order: "asc" },
             "newlines-between": "always-and-inside-groups",
         },
     ],
-    "import/prefer-default-export": ["off"],
+    "import-x/prefer-default-export": ["off"],
 };
 
-export default tseslint.config(
+const config: ReturnType<typeof defineConfig> = defineConfig(
+    prettier,
+    globalIgnores([".local/*"]),
     js.configs.recommended,
+    importPluginsFlatConfigs.recommended,
+    importPluginsFlatConfigs.typescript,
     {
         ignores: ["dist/**", "reports/**", "coverage/**"],
     },
-    eslintPluginUnicorn.configs["all"],
+    eslintPluginUnicorn.configs.all,
     {
         languageOptions: {
             parser: tsParser,
@@ -96,26 +119,21 @@ export default tseslint.config(
                 tsconfigRootDir: import.meta.dirname,
             },
         },
-        plugins: {
-            import: importPlugin,
-        },
+        plugins: {},
         settings: {
-            "import/resolver": {
+            "import-x/resolver": {
                 node: {},
                 typescript: {
                     alwaysTryTypes: true,
                 },
             },
         },
-        extends: [eslintPluginUnicorn.configs["recommended"]],
+        extends: [eslintPluginUnicorn.configs.recommended],
         rules: {
-            ...importPlugin.configs.recommended.rules,
-
             ...sharedRules,
         },
     },
     {
-        ...love,
         files: ["**/*.ts", "**/*.tsx"],
         ignores: ["**/*.mjs"],
         languageOptions: {
@@ -128,20 +146,14 @@ export default tseslint.config(
             },
         },
         plugins: {
+            ...love.plugins,
             "@stylistic/ts": stylistic,
-            import: importPlugin,
-            n: nPlugin,
             "eslint-comments": commentsPlugin,
-            promise,
             perfectionist,
         },
-        extends: [
-            tseslint.configs.strictTypeChecked,
-            tseslint.configs.recommendedTypeChecked,
-            tseslint.configs.stylisticTypeChecked,
-        ],
+        extends: [promise.configs["flat/recommended"]],
         settings: {
-            "import/resolver": {
+            "import-x/resolver": {
                 node: {},
                 typescript: {
                     alwaysTryTypes: true,
@@ -149,8 +161,11 @@ export default tseslint.config(
             },
         },
         rules: {
-            ...importPlugin.configs.typescript.rules,
-            ...importPlugin.configs.recommended.rules,
+            ...flattenRules(tseslintConfigs.strictTypeCheckedOnly),
+
+            ...flattenRules(tseslintConfigs.stylisticTypeCheckedOnly),
+
+            ...love.rules,
 
             ...sharedRules,
 
@@ -208,7 +223,7 @@ export default tseslint.config(
 
             "@typescript-eslint/require-await": ["error"],
 
-            "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
+            "import-x/consistent-type-specifier-style": ["error", "prefer-top-level"],
 
             "perfectionist/sort-intersection-types": ["error"],
             "perfectionist/sort-union-types": ["error"],
@@ -216,9 +231,10 @@ export default tseslint.config(
     },
 
     {
-        extends: [tseslint.configs.disableTypeChecked],
+        extends: [tseslintConfigs.disableTypeChecked],
         files: ["*.mjs"],
         rules: {},
     },
-    prettier,
 );
+
+export default config;

@@ -3,8 +3,8 @@ import os from "node:os";
 import * as core from "@actions/core";
 import { describe, expect, it, vi } from "vitest";
 
-import { OutputParser } from "@/output-parser.ts";
-import type { CargoMessage, CompilerMessage, Stats } from "@/schema.ts";
+import { OutputParser } from "../output-parser";
+import type { CargoMessage, CompilerMessage, Stats } from "../schema";
 
 describe("outputParser", () => {
     const emptyStats: Stats = {
@@ -143,7 +143,7 @@ describe("outputParser", () => {
 
         expect(() => {
             outputParser.tryParseClippyLine(JSON.stringify(output));
-        }).toThrow(/Unable to find primary span for message/);
+        }).toThrow(/Unable to find primary span for message/v);
     });
 
     it("parses annotations into AnnotationWithMessageAndLevel different `line_start` and `line_end`", () => {
@@ -263,7 +263,9 @@ describe("outputParser", () => {
     });
 
     it("normalizes Windows paths", () => {
-        vi.spyOn(os, "platform").mockImplementationOnce(() => "win32");
+        vi.spyOn(os, "platform").mockImplementationOnce(() => {
+            return "win32";
+        });
 
         const outputParser = new OutputParser();
 
@@ -287,7 +289,9 @@ describe("outputParser", () => {
     });
 
     it("don't normalize Windows paths on Linux", () => {
-        vi.spyOn(os, "platform").mockImplementationOnce(() => "linux");
+        vi.spyOn(os, "platform").mockImplementationOnce(() => {
+            return "linux";
+        });
 
         const outputParser = new OutputParser();
 

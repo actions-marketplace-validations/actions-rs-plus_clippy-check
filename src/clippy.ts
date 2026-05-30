@@ -6,10 +6,10 @@ import { Cargo, Cross } from "@actions-rs-plus/core";
 
 import type { BaseProgram } from "@actions-rs-plus/core";
 
-import type * as input from "@/input.ts";
-import { OutputParser } from "@/output-parser.ts";
-import { report } from "@/reporter.ts";
-import type { AnnotationWithMessageAndLevel, Context, Stats } from "@/schema.ts";
+import type * as input from "./input";
+import { OutputParser } from "./output-parser";
+import { report } from "./reporter";
+import type { AnnotationWithMessageAndLevel, Context, Stats } from "./schema";
 
 interface ClippyResult {
     stats: Stats;
@@ -28,7 +28,7 @@ async function buildContext(program: BaseProgram, toolchain: string | undefined)
         exec.exec("rustc", buildToolchainArguments(toolchain, ["-V"]), {
             listeners: {
                 stdout: (buffer: Buffer) => {
-                    return (context.rustc = buffer.toString().trim());
+                    context.rustc = buffer.toString().trim();
                 },
             },
             silent: false,
@@ -36,7 +36,7 @@ async function buildContext(program: BaseProgram, toolchain: string | undefined)
         program.call(buildToolchainArguments(toolchain, ["-V"]), {
             listeners: {
                 stdout: (buffer: Buffer) => {
-                    return (context.cargo = buffer.toString().trim());
+                    context.cargo = buffer.toString().trim();
                 },
             },
             silent: false,
@@ -44,7 +44,7 @@ async function buildContext(program: BaseProgram, toolchain: string | undefined)
         program.call(buildToolchainArguments(toolchain, ["clippy", "-V"]), {
             listeners: {
                 stdout: (buffer: Buffer) => {
-                    return (context.clippy = buffer.toString().trim());
+                    context.clippy = buffer.toString().trim();
                 },
             },
             silent: false,
@@ -95,7 +95,8 @@ async function runClippy(actionInput: input.ParsedInput, program: BaseProgram): 
         options.cwd = path.join(process.cwd(), actionInput.workingDirectory);
     }
 
-    let exitCode = 0;
+    // eslint-disable-next-line @typescript-eslint/init-declarations -- initialized below, no other way to do this except for an IIFE
+    let exitCode: number;
 
     try {
         core.startGroup("Executing cargo clippy (JSON output)");
