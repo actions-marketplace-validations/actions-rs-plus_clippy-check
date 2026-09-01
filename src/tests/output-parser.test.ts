@@ -1,10 +1,14 @@
 import os from "node:os";
 
+// oxlint-disable-next-line import/no-namespace -- `vi.spyOn` patches a property on the module object
 import * as core from "@actions/core";
 import { describe, expect, it, vi } from "vitest";
 
 import { OutputParser } from "../output-parser";
 import type { CargoMessage, CompilerMessage, Stats } from "../schema";
+import { AnnotationLevel } from "../schema";
+
+vi.setConfig({ testTimeout: 1000 });
 
 describe("outputParser", () => {
     const emptyStats: Stats = {
@@ -36,7 +40,7 @@ describe("outputParser", () => {
     };
 
     it("ignores invalid json", () => {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock
+        // oxlint-disable-next-line no-empty-function -- mock
         vi.spyOn(core, "debug").mockImplementation(() => {});
 
         const outputParser = new OutputParser();
@@ -47,7 +51,7 @@ describe("outputParser", () => {
     });
 
     it("ignores non-compiler-messages", () => {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock
+        // oxlint-disable-next-line no-empty-function -- mock
         vi.spyOn(core, "debug").mockImplementation(() => {});
 
         const outputParser = new OutputParser();
@@ -62,7 +66,7 @@ describe("outputParser", () => {
     });
 
     it("ignores when compiler-message doesn't have a code", () => {
-        // eslint-disable-next-line @typescript-eslint/no-empty-function -- mock
+        // oxlint-disable-next-line no-empty-function -- mock
         vi.spyOn(core, "debug").mockImplementation(() => {});
 
         const outputParser = new OutputParser();
@@ -130,7 +134,7 @@ describe("outputParser", () => {
         expect(outputParser.stats).toEqual({ ...emptyStats, [defaultMessage.message.level]: 1 });
     });
 
-    it("fails when primary span cannot be found", () => {
+    it("creates an annotation without file location when primary span cannot be found", () => {
         const outputParser = new OutputParser();
 
         const output: CompilerMessage = {
@@ -141,12 +145,21 @@ describe("outputParser", () => {
             },
         };
 
-        expect(() => {
-            outputParser.tryParseClippyLine(JSON.stringify(output));
-        }).toThrow(/Unable to find primary span for message/v);
+        outputParser.tryParseClippyLine(JSON.stringify(output));
+
+        expect(outputParser.stats).toEqual({ ...emptyStats, warning: 1 });
+        expect(outputParser.annotations).toEqual([
+            {
+                level: AnnotationLevel.Warning,
+                message: "rendered",
+                properties: {
+                    title: "message",
+                },
+            },
+        ]);
     });
 
-    it("parses annotations into AnnotationWithMessageAndLevel different `line_start` and `line_end`", () => {
+    it("parses annotations into AnnotationWithMessageAndLevel with different `line_start` and `line_end`", () => {
         const outputParser = new OutputParser("./my/sources/are/here");
 
         outputParser.tryParseClippyLine(
@@ -170,7 +183,7 @@ describe("outputParser", () => {
 
         expect(outputParser.annotations).toEqual([
             {
-                level: 1,
+                level: AnnotationLevel.Warning,
                 message: "rendered",
                 properties: {
                     endLine: 30,
@@ -197,7 +210,7 @@ describe("outputParser", () => {
 
         expect(outputParser.annotations).toEqual([
             {
-                level: 0,
+                level: AnnotationLevel.Error,
                 message: "rendered",
                 properties: {
                     endColumn: 15,
@@ -205,6 +218,73 @@ describe("outputParser", () => {
                     file: "my/sources/are/here/main.rs",
                     startColumn: 10,
                     startLine: 30,
+                    title: "message",
+                },
+            },
+        ]);
+    });
+
+    it("emits one annotation per primary span, counting the diagnostic once", () => {
+        const outputParser = new OutputParser();
+
+        outputParser.tryParseClippyLine(
+            JSON.stringify({
+                reason: defaultMessage.reason,
+                message: {
+                    ...defaultMessage.message,
+                    spans: [
+                        {
+                            is_primary: true,
+                            column_start: 10,
+                            column_end: 15,
+                            line_start: 30,
+                            line_end: 30,
+                            file_name: "main.rs",
+                        },
+                        {
+                            is_primary: false,
+                            column_start: 1,
+                            column_end: 5,
+                            line_start: 28,
+                            line_end: 28,
+                            file_name: "main.rs",
+                        },
+                        {
+                            is_primary: true,
+                            column_start: 3,
+                            column_end: 7,
+                            line_start: 12,
+                            line_end: 12,
+                            file_name: "lib.rs",
+                        },
+                    ],
+                },
+            }),
+        );
+
+        expect(outputParser.stats).toEqual({ ...emptyStats, warning: 1 });
+        expect(outputParser.annotations).toEqual([
+            {
+                level: AnnotationLevel.Warning,
+                message: "rendered",
+                properties: {
+                    endColumn: 15,
+                    endLine: 30,
+                    file: "main.rs",
+                    startColumn: 10,
+                    startLine: 30,
+                    title: "message",
+                },
+            },
+            {
+                level: AnnotationLevel.Warning,
+                message: "rendered",
+                properties: {
+                    endColumn: 7,
+                    endLine: 12,
+                    file: "lib.rs",
+                    startColumn: 3,
+                    startLine: 12,
                     title: "message",
                 },
             },
@@ -236,7 +316,7 @@ describe("outputParser", () => {
 
         expect(outputParser.annotations).toEqual([
             {
-                level: 0,
+                level: AnnotationLevel.Error,
                 message: "rendered",
                 properties: {
                     endColumn: 15,
@@ -248,7 +328,7 @@ describe("outputParser", () => {
                 },
             },
             {
-                level: 1,
+                level: AnnotationLevel.Warning,
                 message: "rendered",
                 properties: {
                     endColumn: 15,
@@ -288,7 +368,7 @@ describe("outputParser", () => {
         expect(outputParser.annotations[0]?.properties.file).toEqual("a/windows/path/src/main.rs");
     });
 
-    it("don't normalize Windows paths on Linux", () => {
+    it("doesn't normalize Windows paths on Linux", () => {
         vi.spyOn(os, "platform").mockImplementationOnce(() => {
             return "linux";
         });

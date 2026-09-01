@@ -1,7 +1,24 @@
-import * as core from "@actions/core";
+import { error, notice, summary, warning } from "@actions/core";
 
 import type { AnnotationWithMessageAndLevel, Context, Stats } from "./schema";
 import { AnnotationLevel } from "./schema";
+
+function logAnnotation(annotation: AnnotationWithMessageAndLevel): void {
+    switch (annotation.level) {
+        case AnnotationLevel.Error: {
+            error(annotation.message, annotation.properties);
+            break;
+        }
+        case AnnotationLevel.Notice: {
+            notice(annotation.message, annotation.properties);
+            break;
+        }
+        case AnnotationLevel.Warning: {
+            warning(annotation.message, annotation.properties);
+            break;
+        }
+    }
+}
 
 export async function report(
     stats: Stats,
@@ -9,24 +26,11 @@ export async function report(
     context: Context,
 ): Promise<void> {
     for (const annotation of annotations) {
-        switch (annotation.level) {
-            case AnnotationLevel.Error: {
-                core.error(annotation.message, annotation.properties);
-                break;
-            }
-            case AnnotationLevel.Notice: {
-                core.notice(annotation.message, annotation.properties);
-                break;
-            }
-            case AnnotationLevel.Warning: {
-                core.warning(annotation.message, annotation.properties);
-                break;
-            }
-        }
+        logAnnotation(annotation);
     }
 
-    core.summary.addHeading("Clippy summary", 2);
-    core.summary.addTable([
+    summary.addHeading("Clippy summary", 2);
+    summary.addTable([
         [
             {
                 header: true,
@@ -79,8 +83,8 @@ export async function report(
         ],
     ]);
 
-    core.summary.addHeading("Versions", 2);
-    core.summary.addList([context.rustc, context.cargo, context.clippy]);
+    summary.addHeading("Versions", 2);
+    summary.addList([context.rustc, context.cargo, context.clippy]);
 
-    await core.summary.write();
+    await summary.write();
 }

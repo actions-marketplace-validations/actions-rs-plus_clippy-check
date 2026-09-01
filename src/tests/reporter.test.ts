@@ -5,8 +5,12 @@ import { AnnotationLevel } from "../schema";
 
 vi.mock("@actions/core");
 
+vi.setConfig({ testTimeout: 1000 });
+
 describe("reporter", () => {
     it("works", async () => {
+        expect.assertions(1);
+
         await expect(
             report(
                 {

@@ -1,10 +1,11 @@
+#!/usr/bin/env node
 import { createRequire } from "node:module";
 import * as path$2 from "path";
 import * as fs$1 from "fs";
 import { constants, existsSync, promises, readFileSync, writeFileSync } from "fs";
 import * as os$4 from "os";
 import os, { EOL } from "os";
-import * as crypto$1 from "crypto";
+import * as crypto from "crypto";
 import * as http$4 from "http";
 import * as https$3 from "https";
 import * as events from "events";
@@ -12,7 +13,7 @@ import { EventEmitter } from "events";
 import assert, { ok } from "assert";
 import * as util$2 from "util";
 import http from "node:http";
-import { Readable, Transform } from "node:stream";
+import Stream, { Readable, Transform } from "node:stream";
 import buffer from "node:buffer";
 import util, { inspect } from "node:util";
 import zlib from "node:zlib";
@@ -32,38 +33,49 @@ import { Buffer as Buffer$1 } from "buffer";
 import fs from "node:fs";
 //#region \0rolldown/runtime.js
 var __create = Object.create;
-var __defProp$1 = Object.defineProperty;
+var __defProp = Object.defineProperty;
+var __name = (target, value) => __defProp(target, "name", {
+	value,
+	configurable: true
+});
 var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-var __esmMin = (fn, res) => () => (fn && (res = fn(fn = 0)), res);
+var __esmMin = (fn, res, err) => () => {
+	if (err) throw err[0];
+	try {
+		return fn && (res = fn(fn = 0)), res;
+	} catch (e) {
+		throw err = [e], e;
+	}
+};
 var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
-var __exportAll$1 = (all, no_symbols) => {
+var __exportAll = (all, no_symbols) => {
 	let target = {};
-	for (var name in all) __defProp$1(target, name, {
+	for (var name in all) __defProp(target, name, {
 		get: all[name],
 		enumerable: true
 	});
-	if (!no_symbols) __defProp$1(target, Symbol.toStringTag, { value: "Module" });
+	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
 	return target;
 };
 var __copyProps = (to, from, except, desc) => {
 	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
 		key = keys[i];
-		if (!__hasOwnProp.call(to, key) && key !== except) __defProp$1(to, key, {
+		if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
 			get: ((k) => from[k]).bind(null, key),
 			enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
 		});
 	}
 	return to;
 };
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp$1(target, "default", {
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule || !__hasOwnProp.call(mod, "default") ? __defProp(target, "default", {
 	value: mod,
 	enumerable: true
 }) : target, mod));
-var __toCommonJS = (mod) => __hasOwnProp.call(mod, "module.exports") ? mod["module.exports"] : __copyProps(__defProp$1({}, "__esModule", { value: true }), mod);
-var __require = /* @__PURE__ */ createRequire(import.meta.url);
+var __toCommonJS = (mod) => __hasOwnProp.call(mod, "module.exports") ? mod["module.exports"] : __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+var __require = /* #__PURE__ */ (() => createRequire(import.meta.url))();
 //#endregion
 //#region node_modules/.pnpm/source-map@0.6.1/node_modules/source-map/lib/base64.js
 var require_base64 = /* @__PURE__ */ __commonJSMin(((exports) => {
@@ -149,7 +161,8 @@ var require_base64_vlq = /* @__PURE__ */ __commonJSMin(((exports) => {
 		var strLen = aStr.length;
 		var result = 0;
 		var shift = 0;
-		var continuation, digit;
+		var continuation;
+		var digit;
 		do {
 			if (aIndex >= strLen) throw new Error("Expected more digits in base 64 VLQ value.");
 			digit = base64.decode(aStr.charCodeAt(aIndex++));
@@ -231,12 +244,14 @@ var require_util$8 = /* @__PURE__ */ __commonJSMin(((exports) => {
 			part = parts[i];
 			if (part === ".") parts.splice(i, 1);
 			else if (part === "..") up++;
-			else if (up > 0) if (part === "") {
-				parts.splice(i + 1, up);
-				up = 0;
-			} else {
-				parts.splice(i, 2);
-				up--;
+			else if (up > 0) {
+				if (part === "") {
+					parts.splice(i + 1, up);
+					up = 0;
+				} else {
+					parts.splice(i, 2);
+					up--;
+				}
 			}
 		}
 		path = parts.join("/");
@@ -488,8 +503,10 @@ var require_array_set = /* @__PURE__ */ __commonJSMin(((exports) => {
 		var isDuplicate = hasNativeMap ? this.has(aStr) : has.call(this._set, sStr);
 		var idx = this._array.length;
 		if (!isDuplicate || aAllowDuplicates) this._array.push(aStr);
-		if (!isDuplicate) if (hasNativeMap) this._set.set(aStr, idx);
-		else this._set[sStr] = idx;
+		if (!isDuplicate) {
+			if (hasNativeMap) this._set.set(aStr, idx);
+			else this._set[sStr] = idx;
+		}
 	};
 	/**
 	* Is the given string a member of this set?
@@ -1315,7 +1332,11 @@ var require_source_map_consumer = /* @__PURE__ */ __commonJSMin(((exports) => {
 		var temp = {};
 		var originalMappings = [];
 		var generatedMappings = [];
-		var mapping, str, segment, end, value;
+		var mapping;
+		var str;
+		var segment;
+		var end;
+		var value;
 		while (index < length) if (aStr.charAt(index) === ";") {
 			generatedLine++;
 			index++;
@@ -1802,21 +1823,24 @@ var require_source_node = /* @__PURE__ */ __commonJSMin(((exports) => {
 				return remainingLinesIndex < remainingLines.length ? remainingLines[remainingLinesIndex++] : void 0;
 			}
 		};
-		var lastGeneratedLine = 1, lastGeneratedColumn = 0;
+		var lastGeneratedLine = 1;
+		var lastGeneratedColumn = 0;
 		var lastMapping = null;
 		aSourceMapConsumer.eachMapping(function(mapping) {
-			if (lastMapping !== null) if (lastGeneratedLine < mapping.generatedLine) {
-				addMappingWithCode(lastMapping, shiftNextLine());
-				lastGeneratedLine++;
-				lastGeneratedColumn = 0;
-			} else {
-				var nextLine = remainingLines[remainingLinesIndex] || "";
-				var code = nextLine.substr(0, mapping.generatedColumn - lastGeneratedColumn);
-				remainingLines[remainingLinesIndex] = nextLine.substr(mapping.generatedColumn - lastGeneratedColumn);
-				lastGeneratedColumn = mapping.generatedColumn;
-				addMappingWithCode(lastMapping, code);
-				lastMapping = mapping;
-				return;
+			if (lastMapping !== null) {
+				if (lastGeneratedLine < mapping.generatedLine) {
+					addMappingWithCode(lastMapping, shiftNextLine());
+					lastGeneratedLine++;
+					lastGeneratedColumn = 0;
+				} else {
+					var nextLine = remainingLines[remainingLinesIndex] || "";
+					var code = nextLine.substr(0, mapping.generatedColumn - lastGeneratedColumn);
+					remainingLines[remainingLinesIndex] = nextLine.substr(mapping.generatedColumn - lastGeneratedColumn);
+					lastGeneratedColumn = mapping.generatedColumn;
+					addMappingWithCode(lastMapping, code);
+					lastMapping = mapping;
+					return;
+				}
 			}
 			while (lastGeneratedLine < mapping.generatedLine) {
 				node.add(shiftNextLine());
@@ -2180,7 +2204,8 @@ var require_buffer_from = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		} catch (e) {}
 		fileData = retrieveFile(source);
 		var re = /(?:\/\/[@#][\s]*sourceMappingURL=([^\s'"]+)[\s]*$)|(?:\/\*[@#][\s]*sourceMappingURL=([^\s*'"]+)[\s]*(?:\*\/)[\s]*$)/gm;
-		var lastMatch, match;
+		var lastMatch;
+		var match;
 		while (match = re.exec(fileData)) lastMatch = match;
 		if (!lastMatch) return null;
 		return lastMatch[1];
@@ -2829,7 +2854,7 @@ var require_tunnel = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = require_tunnel$1();
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/symbols.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/symbols.js
 var require_symbols$4 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		kClose: Symbol("close"),
@@ -2900,7 +2925,7 @@ var require_symbols$4 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/errors.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/errors.js
 var require_errors = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var kUndiciError = Symbol.for("undici.error.UND_ERR");
 	var UndiciError = class extends Error {
@@ -3258,7 +3283,7 @@ var require_errors = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/constants.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/constants.js
 var require_constants$5 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/** @type {Record<string, string | undefined>} */
 	var headerNameLowerCasedRecord = {};
@@ -3371,7 +3396,7 @@ var require_constants$5 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/tree.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/tree.js
 var require_tree = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { wellknownHeaderNames, headerNameLowerCasedRecord } = require_constants$5();
 	var TstNode = class TstNode {
@@ -3408,20 +3433,22 @@ var require_tree = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			while (true) {
 				const code = key.charCodeAt(index);
 				if (code > 127) throw new TypeError("key must be ascii string");
-				if (node.code === code) if (length === ++index) {
-					node.value = value;
-					break;
-				} else if (node.middle !== null) node = node.middle;
-				else {
-					node.middle = new TstNode(key, value, index);
-					break;
-				}
-				else if (node.code < code) if (node.left !== null) node = node.left;
-				else {
-					node.left = new TstNode(key, value, index);
-					break;
-				}
-				else if (node.right !== null) node = node.right;
+				if (node.code === code) {
+					if (length === ++index) {
+						node.value = value;
+						break;
+					} else if (node.middle !== null) node = node.middle;
+					else {
+						node.middle = new TstNode(key, value, index);
+						break;
+					}
+				} else if (node.code < code) {
+					if (node.left !== null) node = node.left;
+					else {
+						node.left = new TstNode(key, value, index);
+						break;
+					}
+				} else if (node.right !== null) node = node.right;
 				else {
 					node.right = new TstNode(key, value, index);
 					break;
@@ -3481,7 +3508,7 @@ var require_tree = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/util.js
 var require_util$7 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$28 = __require("node:assert");
 	var { kDestroyed, kBodyUsed, kListeners, kBody } = require_symbols$4();
@@ -3935,7 +3962,7 @@ var require_util$7 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/diagnostics.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/diagnostics.js
 var require_diagnostics = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var diagnosticsChannel = __require("node:diagnostics_channel");
 	var util$4 = __require("node:util");
@@ -4032,7 +4059,7 @@ var require_diagnostics = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { channels };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/request.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/request.js
 var require_request$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { InvalidArgumentError, NotSupportedError } = require_errors();
 	var assert$27 = __require("node:assert");
@@ -4096,15 +4123,16 @@ var require_request$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (Array.isArray(headers)) {
 				if (headers.length % 2 !== 0) throw new InvalidArgumentError("headers array must be even");
 				for (let i = 0; i < headers.length; i += 2) processHeader(this, headers[i], headers[i + 1]);
-			} else if (headers && typeof headers === "object") if (headers[Symbol.iterator]) for (const header of headers) {
-				if (!Array.isArray(header) || header.length !== 2) throw new InvalidArgumentError("headers must be in key-value pair format");
-				processHeader(this, header[0], header[1]);
-			}
-			else {
-				const keys = Object.keys(headers);
-				for (let i = 0; i < keys.length; ++i) processHeader(this, keys[i], headers[keys[i]]);
-			}
-			else if (headers != null) throw new InvalidArgumentError("headers must be an object or an array");
+			} else if (headers && typeof headers === "object") {
+				if (headers[Symbol.iterator]) for (const header of headers) {
+					if (!Array.isArray(header) || header.length !== 2) throw new InvalidArgumentError("headers must be in key-value pair format");
+					processHeader(this, header[0], header[1]);
+				}
+				else {
+					const keys = Object.keys(headers);
+					for (let i = 0; i < keys.length; ++i) processHeader(this, keys[i], headers[keys[i]]);
+				}
+			} else if (headers != null) throw new InvalidArgumentError("headers must be an object or an array");
 			validateHandler(handler, method, upgrade);
 			this.servername = servername || getServerName(this.host);
 			this[kHandler] = handler;
@@ -4223,12 +4251,19 @@ var require_request$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				arr.push(val[i]);
 			} else if (val[i] === null) arr.push("");
 			else if (typeof val[i] === "object") throw new InvalidArgumentError(`invalid ${key} header`);
-			else arr.push(`${val[i]}`);
+			else {
+				const str = `${val[i]}`;
+				if (!isValidHeaderValue(str)) throw new InvalidArgumentError(`invalid ${key} header`);
+				arr.push(str);
+			}
 			val = arr;
 		} else if (typeof val === "string") {
 			if (!isValidHeaderValue(val)) throw new InvalidArgumentError(`invalid ${key} header`);
 		} else if (val === null) val = "";
-		else val = `${val}`;
+		else {
+			val = `${val}`;
+			if (!isValidHeaderValue(val)) throw new InvalidArgumentError(`invalid ${key} header`);
+		}
 		if (headerName === "host") {
 			if (request.host !== null) throw new InvalidArgumentError("duplicate host header");
 			if (typeof val !== "string") throw new InvalidArgumentError("invalid host header");
@@ -4251,7 +4286,7 @@ var require_request$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = Request;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/dispatcher.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/dispatcher.js
 var require_dispatcher = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var EventEmitter$1 = __require("node:events");
 	var Dispatcher = class extends EventEmitter$1 {
@@ -4297,7 +4332,7 @@ var require_dispatcher = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = Dispatcher;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/dispatcher-base.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/dispatcher-base.js
 var require_dispatcher_base = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Dispatcher = require_dispatcher();
 	var { ClientDestroyedError, ClientClosedError, InvalidArgumentError } = require_errors();
@@ -4316,7 +4351,10 @@ var require_dispatcher_base = /* @__PURE__ */ __commonJSMin(((exports, module) =
 			this[kWebSocketOptions] = opts?.webSocket ?? {};
 		}
 		get webSocketOptions() {
-			return { maxPayloadSize: this[kWebSocketOptions].maxPayloadSize ?? 128 * 1024 * 1024 };
+			return {
+				maxFragments: this[kWebSocketOptions].maxFragments ?? 131072,
+				maxPayloadSize: this[kWebSocketOptions].maxPayloadSize ?? 134217728
+			};
 		}
 		get destroyed() {
 			return this[kDestroyed];
@@ -4367,7 +4405,7 @@ var require_dispatcher_base = /* @__PURE__ */ __commonJSMin(((exports, module) =
 			}
 			if (callback === void 0) return new Promise((resolve, reject) => {
 				this.destroy(err, (err, data) => {
-					return err ? reject(err) : resolve(data);
+					return err ? /* istanbul ignore next: should never error */ reject(err) : resolve(data);
 				});
 			});
 			if (typeof callback !== "function") throw new InvalidArgumentError("invalid callback");
@@ -4416,7 +4454,7 @@ var require_dispatcher_base = /* @__PURE__ */ __commonJSMin(((exports, module) =
 	module.exports = DispatcherBase;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/util/timers.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/util/timers.js
 var require_timers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* This module offers an optimized timer implementation designed for scenarios
@@ -4754,7 +4792,7 @@ var require_timers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/core/connect.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/core/connect.js
 var require_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var net$4 = __require("node:net");
 	var assert$26 = __require("node:assert");
@@ -4837,7 +4875,7 @@ var require_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				assert$26(!httpSocket, "httpSocket can only be sent on TLS update");
 				port = port || 80;
 				socket = net$4.connect({
-					highWaterMark: 64 * 1024,
+					highWaterMark: 65536,
 					...options,
 					localAddress,
 					port,
@@ -4924,7 +4962,7 @@ var require_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = buildConnector;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/llhttp/utils.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/llhttp/utils.js
 var require_utils = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.enumToMap = void 0;
@@ -4939,7 +4977,7 @@ var require_utils = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.enumToMap = enumToMap;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/llhttp/constants.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/llhttp/constants.js
 var require_constants$4 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.SPECIAL_HEADERS = exports.HEADER_STATE = exports.MINOR = exports.MAJOR = exports.CONNECTION_TOKEN_CHARS = exports.HEADER_CHARS = exports.TOKEN = exports.STRICT_TOKEN = exports.HEX = exports.URL_CHAR = exports.STRICT_URL_CHAR = exports.USERINFO_CHARS = exports.MARK = exports.ALPHANUM = exports.NUM = exports.HEX_MAP = exports.NUM_MAP = exports.ALPHA = exports.FINISH = exports.H_METHOD_MAP = exports.METHOD_MAP = exports.METHODS_RTSP = exports.METHODS_ICE = exports.METHODS_HTTP = exports.METHODS = exports.LENIENT_FLAGS = exports.FLAGS = exports.TYPE = exports.ERROR = void 0;
@@ -5272,19 +5310,19 @@ var require_constants$4 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/llhttp/llhttp-wasm.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/llhttp/llhttp-wasm.js
 var require_llhttp_wasm = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Buffer: Buffer$3 } = __require("node:buffer");
 	module.exports = Buffer$3.from("AGFzbQEAAAABJwdgAX8Bf2ADf39/AX9gAX8AYAJ/fwBgBH9/f38Bf2AAAGADf39/AALLAQgDZW52GHdhc21fb25faGVhZGVyc19jb21wbGV0ZQAEA2VudhV3YXNtX29uX21lc3NhZ2VfYmVnaW4AAANlbnYLd2FzbV9vbl91cmwAAQNlbnYOd2FzbV9vbl9zdGF0dXMAAQNlbnYUd2FzbV9vbl9oZWFkZXJfZmllbGQAAQNlbnYUd2FzbV9vbl9oZWFkZXJfdmFsdWUAAQNlbnYMd2FzbV9vbl9ib2R5AAEDZW52GHdhc21fb25fbWVzc2FnZV9jb21wbGV0ZQAAAy0sBQYAAAIAAAAAAAACAQIAAgICAAADAAAAAAMDAwMBAQEBAQEBAQEAAAIAAAAEBQFwARISBQMBAAIGCAF/AUGA1AQLB9EFIgZtZW1vcnkCAAtfaW5pdGlhbGl6ZQAIGV9faW5kaXJlY3RfZnVuY3Rpb25fdGFibGUBAAtsbGh0dHBfaW5pdAAJGGxsaHR0cF9zaG91bGRfa2VlcF9hbGl2ZQAvDGxsaHR0cF9hbGxvYwALBm1hbGxvYwAxC2xsaHR0cF9mcmVlAAwEZnJlZQAMD2xsaHR0cF9nZXRfdHlwZQANFWxsaHR0cF9nZXRfaHR0cF9tYWpvcgAOFWxsaHR0cF9nZXRfaHR0cF9taW5vcgAPEWxsaHR0cF9nZXRfbWV0aG9kABAWbGxodHRwX2dldF9zdGF0dXNfY29kZQAREmxsaHR0cF9nZXRfdXBncmFkZQASDGxsaHR0cF9yZXNldAATDmxsaHR0cF9leGVjdXRlABQUbGxodHRwX3NldHRpbmdzX2luaXQAFQ1sbGh0dHBfZmluaXNoABYMbGxodHRwX3BhdXNlABcNbGxodHRwX3Jlc3VtZQAYG2xsaHR0cF9yZXN1bWVfYWZ0ZXJfdXBncmFkZQAZEGxsaHR0cF9nZXRfZXJybm8AGhdsbGh0dHBfZ2V0X2Vycm9yX3JlYXNvbgAbF2xsaHR0cF9zZXRfZXJyb3JfcmVhc29uABwUbGxodHRwX2dldF9lcnJvcl9wb3MAHRFsbGh0dHBfZXJybm9fbmFtZQAeEmxsaHR0cF9tZXRob2RfbmFtZQAfEmxsaHR0cF9zdGF0dXNfbmFtZQAgGmxsaHR0cF9zZXRfbGVu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PgtBhwEMPQtBiAEMPAtBiQEMOwtBigEMOgtBiwEMOQtBjAEMOAtBjQEMNwtBjgEMNgtBjwEMNQtBkAEMNAtBkQEMMwtBkgEMMgtBkwEMMQtBlAEMMAtBlQEMLwtBlgEMLgtBlwEMLQtBmAEMLAtBmQEMKwtBmgEMKgtBmwEMKQtBnAEMKAtBnQEMJwtBngEMJgtBnwEMJQtBoAEMJAtBoQEMIwtBogEMIgtBowEMIQtBpAEMIAtBpQEMHwtBpgEMHgtBpwEMHQtBqAEMHAtBqQEMGwtBqgEMGgtBqwEMGQtBrAEMGAtBrQEMFwtBrgEMFgtBAQwVC0GvAQwUC0GwAQwTC0GxAQwSC0GzAQwRC0GyAQwQC0G0AQwPC0G1AQwOC0G2AQwNC0G3AQwMC0G4AQwLC0G5AQwKC0G6AQwJC0G7AQwIC0HGAQwHC0G8AQwGC0G9AQwFC0G+AQwEC0G/AQwDC0HAAQwCC0HCAQwBC0HBAQshAwNAAkACQAJAAkACQAJAAkACQAJAIAICfwJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJ/AkACQAJAAkACQAJAAkACQAJAAkACQAJAAkAgAgJ/AkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACfwJAAkACfwJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkAC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iQEhAwykAgtBASABLQAAQd8ARw1nGiABQQFqIQEMXgtBigEhAyABIARGDaICIAIoAgAiACAEIAFraiEFIAEgAGtBAWohBgNAIAEtAAAgAEGMzwBqLQAARw1kIABBAUYN+gEgAEEBaiEAIAQgAUEBaiIBRw0ACyACIAU2AgAMogILQYsBIQMgASAERg2hAiACKAIAIgAgBCABa2ohBSABIABrQQJqIQYCQANAIAEtAAAgAEGOzwBqLQAARw1kIABBAkYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAyiAgsgAkEANgIAIAZBAWohAUECDGULQYwBIQMgASAERg2gAiACKAIAIgAgBCABa2ohBSABIABrQQFqIQYCQANAIAEtAAAgAEHwzwBqLQAARw1jIABBAUYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAyhAgsgAkEANgIAIAZBAWohAUEfDGQLQY0BIQMgASAERg2fAiACKAIAIgAgBCABa2ohBSABIABrQQFqIQYCQANAIAEtAAAgAEHyzwBqLQAARw1iIABBAUYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAygAgsgAkEANgIAIAZBAWohAUEJDGMLIAEgBEYEQEGOASEDDJ8CCwJAAkAgAS0AAEHJAGsOBwBiYmJiYgFiCyABQQFqIQFB+AAhAwyGAgsgAUEBaiEBQfkAIQMMhQILQY8BIQMgASAERg2dAiACKAIAIgAgBCABa2ohBSABIABrQQVqIQYCQANAIAEtAAAgAEGRzwBqLQAARw1gIABBBUYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAyeAgsgAkEANgIAIAZBAWohAUEYDGELQZABIQMgASAERg2cAiACKAIAIgAgBCABa2ohBSABIABrQQJqIQYCQANAIAEtAAAgAEGXzwBqLQAARw1fIABBAkYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAydAgsgAkEANgIAIAZBAWohAUEXDGALQZEBIQMgASAERg2bAiACKAIAIgAgBCABa2ohBSABIABrQQZqIQYCQANAIAEtAAAgAEGazwBqLQAARw1eIABBBkYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAycAgsgAkEANgIAIAZBAWohAUEV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JSIARQ0RIAJB5QA2AhwgAiABNgIUIAIgADYCDEEAIQMMtAELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0gIAJB0wA2AhwgAiABNgIUIAIgADYCDEEAIQMMswELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0iIAJB0gA2AhwgAiABNgIUIAIgADYCDEEAIQMMsgELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0OIAJB5QA2AhwgAiABNgIUIAIgADYCDEEAIQMMsQELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0dIAJB0wA2AhwgAiABNgIUIAIgADYCDEEAIQMMsAELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0fIAJB0gA2AhwgAiABNgIUIAIgADYCDEEAIQMMrwELIABBP0cNASABQQFqCyEBQQUhAwyUAQtBACEDIAJBADYCHCACIAE2AhQgAkH9EjYCECACQQc2AgwMrAELIAJBADYCHCACIAE2AhQgAkHcCDYCECACQQc2AgxBACEDDKsBCyACKAIEIQAgAkEANgIEIAIgACABECUiAEUNByACQeUANgIcIAIgATYCFCACIAA2AgxBACEDDKoBCyACKAIEIQAgAkEANgIEIAIgACABECUiAEUNFiACQdMANgIcIAIgATYCFCACIAA2AgxBACEDDKkBCyACKAIEIQAgAkEANgIEIAIgACABECUiAEUNGCACQdIANgIcIAIgATYCFCACIAA2AgxBACEDDKgBCyACQQA2AhwgAiABNgIUIAJBxgo2AhAgAkEHNgIMQQAhAwynAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDQMgAkHlADYCHCACIAE2AhQgAiAANgIMQQAhAwymAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDRIgAkHTADYCHCACIAE2AhQgAiAANgIMQQAhAwylAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDRQgAkHSADYCHCACIAE2AhQgAiAANgIMQQAhAwykAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDQAgAkHlADYCHCACIAE2AhQgAiAANgIMQQAhAwyjAQtB1QAhAwyJAQsgAEEVRwRAIAJBADYCHCACIAE2AhQgAkG5DTYCECACQRo2AgxB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AkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAIABB5ABrDvQDY2IAAWFhYWFhYQIDBAVhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhBgcICQoLDA0OD2FhYWFhEGFhYWFhYWFhYWFhEWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYRITFBUWFxgZGhthYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2YTc4OTphYWFhYWFhYTthYWE8YWFhYT0+P2FhYWFhYWFhQGFhQWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYUJDREVGR0hJSktMTU5PUFFSU2FhYWFhYWFhVFVWV1hZWlthXF1hYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFeYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhX2BhC0HhJw8LQaQhDwtByywPC0H+MQ8LQcAkDwtBqyQPC0GNKA8LQeImDwtBgDAPC0G5Lw8LQdckDwtB7x8PC0HhHw8LQfofDwtB8iAPC0GoLw8LQa4yDwtBiDAPC0HsJw8LQYIiDwtBjh0PC0HQLg8LQcojDwtBxTIPC0HfHA8LQdIcDwtBxCAPC0HXIA8LQaIfDwtB7S4PC0GrMA8LQdQlDwtBzC4PC0H6Lg8LQfwrDwtB0jAPC0HxHQ8LQbsgDwtB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CABB3AgLii1JbnZhbGlkIGNoYXIgaW4gdXJsIHF1ZXJ5AFNwYW4gY2FsbGJhY2sgZXJyb3IgaW4gb25fYm9keQBDb250ZW50LUxlbmd0aCBvdmVyZmxvdwBDaHVuayBzaXplIG92ZXJmbG93AFJlc3BvbnNlIG92ZXJmbG93AEludmFsaWQgbWV0aG9kIGZvciBIVFRQL3gueCByZXF1ZXN0AEludmFsaWQgbWV0aG9kIGZvciBSVFNQL3gueCByZXF1ZXN0AEV4cGVjdGVkIFNPVVJDRSBtZXRob2QgZm9yIElDRS94LnggcmVxdWVzdABJbnZhbGlkIGNoYXIgaW4gdXJsIGZyYWdtZW50IHN0YXJ0AEV4cGVjdGVkIGRvdABTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX3N0YXR1cwBJbnZhbGlkIHJlc3BvbnNlIHN0YXR1cwBJbnZhbGlkIGNoYXJhY3RlciBpbiBjaHVuayBleHRlbnNpb25zAFVzZXIgY2FsbGJhY2sgZXJyb3IAYG9uX3Jlc2V0YCBjYWxsYmFjayBlcnJvcgBgb25fY2h1bmtfaGVhZGVyYCBjYWxsYmFjayBlcnJvcgBgb25fbWVzc2FnZV9iZWdpbmAgY2FsbGJhY2sgZXJyb3IAYG9uX2NodW5rX2V4dGVuc2lvbl92YWx1ZWAgY2FsbGJhY2sgZXJyb3IAYG9uX3N0YXR1c19jb21wbGV0ZWAgY2FsbGJhY2sgZXJyb3IAYG9uX3ZlcnNpb25fY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl91cmxfY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl9jaHVua19jb21wbGV0ZWAgY2FsbGJhY2sgZXJyb3IAYG9uX2hlYWRlcl92YWx1ZV9jb21wbGV0ZWAgY2FsbGJhY2sgZXJyb3IAYG9uX21lc3NhZ2VfY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl9tZXRob2RfY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl9oZWFkZXJfZmllbGRfY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl9jaHVua19leHRlbnNpb25fbmFtZWAgY2FsbGJhY2sgZXJyb3IAVW5leHBlY3RlZCBjaGFyIGluIHVybCBzZXJ2ZXIASW52YWxpZCBoZWFkZXIgdmFsdWUgY2hhcgBJbnZhbGlkIGhlYWRlciBmaWVsZCBjaGFyAFNwYW4gY2FsbGJhY2sgZXJyb3IgaW4gb25fdmVyc2lvbgBJbnZhbGlkIG1pbm9yIHZlcnNpb24ASW52YWxpZCBtYWpvciB2ZXJzaW9uAEV4cGVjdGVkIHNwYWNlIGFmdGVyIHZlcnNpb24ARXhwZWN0ZWQgQ1JMRiBhZnRlciB2ZXJzaW9uAEludmFsaWQgSFRUUCB2ZXJzaW9uAEludmFsaWQgaGVhZGVyIHRva2VuAFNwYW4gY2FsbGJhY2sgZXJyb3IgaW4gb25fdXJsAEludmFsaWQgY2hhcmFjdGVycyBpbiB1cmwAVW5leHBlY3RlZCBzdGFydCBjaGFyIGluIHVybABEb3VibGUgQCBpbiB1cmwARW1wdHkgQ29udGVudC1MZW5ndGgASW52YWxpZCBjaGFyYWN0ZXIgaW4gQ29udGVudC1MZW5ndGgARHVwbGljYXRlIENvbnRlbnQtTGVuZ3RoAEludmFsaWQgY2hhciBpbiB1cmwgcGF0aABDb250ZW50LUxlbmd0aCBjYW4ndCBiZSBwcmVzZW50IHdpdGggVHJhbnNmZXItRW5jb2RpbmcASW52YWxpZCBjaGFyYWN0ZXIgaW4gY2h1bmsgc2l6ZQBTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX2hlYWRlcl92YWx1ZQBTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX2NodW5rX2V4dGVuc2lvbl92YWx1ZQBJbnZhbGlkIGNoYXJhY3RlciBpbiBjaHVuayBleHRlbnNpb25zIHZhbHVlAE1pc3NpbmcgZXhwZWN0ZWQgTEYgYWZ0ZXIgaGVhZGVyIHZhbHVlAEludmFsaWQgYFRyYW5zZmVyLUVuY29kaW5nYCBoZWFkZXIgdmFsdWUASW52YWxpZCBjaGFyYWN0ZXIgaW4gY2h1bmsgZXh0ZW5zaW9ucyBxdW90ZSB2YWx1ZQBJbnZhbGlkIGNoYXJhY3RlciBpbiBjaHVuayBleHRlbnNpb25zIHF1b3RlZCB2YWx1ZQBQYXVzZWQgYnkgb25faGVhZGVyc19jb21wbGV0ZQBJbnZhbGlkIEVPRiBzdGF0ZQBvbl9yZXNldCBwYXVzZQBvbl9jaHVua19oZWFkZXIgcGF1c2UAb25fbWVzc2FnZV9iZWdpbiBwYXVzZQBvbl9jaHVua19leHRlbnNpb25fdmFsdWUgcGF1c2UAb25fc3RhdHVzX2NvbXBsZXRlIHBhdXNlAG9uX3ZlcnNpb25fY29tcGxldGUgcGF1c2UAb25fdXJsX2NvbXBsZXRlIHBhdXNlAG9uX2NodW5rX2NvbXBsZXRlIHBhdXNlAG9uX2hlYWRlcl92YWx1ZV9jb21wbGV0ZSBwYXVzZQBvbl9tZXNzYWdlX2NvbXBsZXRlIHBhdXNlAG9uX21ldGhvZF9jb21wbGV0ZSBwYXVzZQBvbl9oZWFkZXJfZmllbGRfY29tcGxldGUgcGF1c2UAb25fY2h1bmtfZXh0ZW5zaW9uX25hbWUgcGF1c2UAVW5leHBlY3RlZCBzcGFjZSBhZnRlciBzdGFydCBsaW5lAFNwYW4gY2FsbGJhY2sgZXJyb3IgaW4gb25fY2h1bmtfZXh0ZW5zaW9uX25hbWUASW52YWxpZCBjaGFyYWN0ZXIgaW4gY2h1bmsgZXh0ZW5zaW9ucyBuYW1lAFBhdXNlIG9uIENPTk5FQ1QvVXBncmFkZQBQYXVzZSBvbiBQUkkvVXBncmFkZQBFeHBlY3RlZCBIVFRQLzIgQ29ubmVjdGlvbiBQcmVmYWNlAFNwYW4gY2FsbGJhY2sgZXJyb3IgaW4gb25fbWV0aG9kAEV4cGVjdGVkIHNwYWNlIGFmdGVyIG1ldGhvZABTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX2hlYWRlcl9maWVsZABQYXVzZWQASW52YWxpZCB3b3JkIGVuY291bnRlcmVkAEludmFsaWQgbWV0aG9kIGVuY291bnRlcmVkAFVuZXhwZWN0ZWQgY2hhciBpbiB1cmwgc2NoZW1hAFJlcXVlc3QgaGFzIGludmFsaWQgYFRyYW5zZmVyLUVuY29kaW5nYABTV0lUQ0hfUFJPWFkAVVNFX1BST1hZAE1LQUNUSVZJVFkAVU5QUk9DRVNTQUJMRV9FTlRJVFkAQ09QWQBNT1ZFRF9QRVJNQU5FTlRMWQBUT09fRUFSTFkATk9USUZZAEZBSUxFRF9ERVBFTkRFTkNZAEJBRF9HQVRFV0FZAFBMQVkAUFVUAENIRUNLT1VUAEdBVEVXQVlfVElNRU9VVABSRVFVRVNUX1RJTUVPVVQATkVUV09SS19DT05ORUNUX1RJTUVPVVQAQ09OTkVDVElPTl9USU1FT1VUAExPR0lOX1RJTUVPVVQATkVUV09SS19SRUFEX1RJTUVPVVQAUE9TVABNSVNESVJFQ1RFRF9SRVFVRVNUAENMSUVOVF9DTE9TRURfUkVRVUVTVABDTElFTlRfQ0xPU0VEX0xPQURfQkFMQU5DRURfUkVRVUVTVABCQURfUkVRVUVTVABIVFRQX1JFUVVFU1RfU0VOVF9UT19IVFRQU19QT1JUAFJFUE9SVABJTV9BX1RFQVBPVABSRVNFVF9DT05URU5UAE5PX0NPTlRFTlQAUEFSVElBTF9DT05URU5UAEhQRV9JTlZBTElEX0NPTlNUQU5UAEhQRV9DQl9SRVNFVABHRVQASFBFX1NUUklDVABDT05GTElDVABURU1QT1JBUllfUkVESVJFQ1QAUEVSTUFORU5UX1JFRElSRUNUAENPTk5FQ1QATVVMVElfU1RBVFVTAEhQRV9JTlZBTElEX1NUQVRVUwBUT09fTUFOWV9SRVFVRVNUUwBFQVJMWV9ISU5UUwBVTkFWQUlMQUJMRV9GT1JfTEVHQUxfUkVBU09OUwBPUFRJT05TAFNXSVRDSElOR19QUk9UT0NPTFMAVkFSSUFOVF9BTFNPX05FR09USUFURVMATVVMVElQTEVfQ0hPSUNFUwBJTlRFUk5BTF9TRVJWRVJfRVJST1IAV0VCX1NFUlZFUl9VTktOT1dOX0VSUk9SAFJBSUxHVU5fRVJST1IASURFTlRJVFlfUFJPVklERVJfQVVUSEVOVElDQVRJT05fRVJST1IAU1NMX0NFUlRJRklDQVRFX0VSUk9SAElOVkFMSURfWF9GT1JXQVJERURfRk9SAFNFVF9QQVJBTUVURVIAR0VUX1BBUkFNRVRFUgBIUEVfVVNFUgBTRUVfT1RIRVIASFBFX0NCX0NIVU5LX0hFQURFUgBNS0NBTEVOREFSAFNFVFVQAFdFQl9TRVJWRVJfSVNfRE9XTgBURUFSRE9XTgBIUEVfQ0xPU0VEX0NPTk5FQ1RJT04ASEVVUklTVElDX0VYUElSQVRJT04ARElTQ09OTkVDVEVEX09QRVJBVElPTgBOT05fQVVUSE9SSVRBVElWRV9JTkZPUk1BVElPTgBIUEVfSU5WQUxJRF9WRVJTSU9OAEhQRV9DQl9NRVNTQUdFX0JFR0lOAFNJVEVfSVNfRlJPWkVOAEhQRV9JTlZBTElEX0hFQURFUl9UT0tFTgBJTlZBTElEX1RPS0VOAEZPUkJJRERFTgBFTkhBTkNFX1lPVVJfQ0FMTQBIUEVfSU5WQUxJRF9VUkwAQkxPQ0tFRF9CWV9QQVJFTlRBTF9DT05UUk9MAE1LQ09MAEFDTABIUEVfSU5URVJOQUwAUkVRVUVTVF9IRUFERVJfRklFTERTX1RPT19MQVJHRV9VTk9GRklDSUFMAEhQRV9PSwBVTkxJTksAVU5MT0NLAFBSSQBSRVRSWV9XSVRIAEhQRV9JTlZBTElEX0NPTlRFTlRfTEVOR1RIAEhQRV9VTkVYUEVDVEVEX0NPTlRFTlRfTEVOR1RIAEZMVVNIAFBST1BQQVRDSABNLVNFQVJDSABVUklfVE9PX0xPTkcAUFJPQ0VTU0lORwBNSVNDRUxMQU5FT1VTX1BFUlNJU1RFTlRfV0FSTklORwBNSVNDRUxMQU5FT1VTX1dBUk5JTkcASFBFX0lOVkFMSURfVFJBTlNGRVJfRU5DT0RJTkcARXhwZWN0ZWQgQ1JMRgBIUEVfSU5WQUxJRF9DSFVOS19TSVpFAE1PVkUAQ09OVElOVUUASFBFX0NCX1NUQVRVU19DT01QTEVURQBIUEVfQ0JfSEVBREVSU19DT01QTEVURQBIUEVfQ0JfVkVSU0lPTl9DT01QTEVURQBIUEVfQ0JfVVJMX0NPTVBMRVRFAEhQRV9DQl9DSFVOS19DT01QTEVURQBIUEVfQ0JfSEVBREVSX1ZBTFVFX0NPTVBMRVRFAEhQRV9DQl9DSFVOS19FWFRFTlNJT05fVkFMVUVfQ09NUExFVEUASFBFX0NCX0NIVU5LX0VYVEVOU0lPTl9OQU1FX0NPTVBMRVRFAEhQRV9DQl9NRVNTQUdFX0NPTVBMRVRFAEhQRV9DQl9NRVRIT0RfQ09NUExFVEUASFBFX0NCX0hFQURFUl9GSUVMRF9DT01QTEVURQBERUxFVEUASFBFX0lOVkFMSURfRU9GX1NUQVRFAElOVkFMSURfU1NMX0NFUlRJRklDQVRFAFBBVVNFAE5PX1JFU1BPTlNFAFVOU1VQUE9SVEVEX01FRElBX1RZUEUAR09ORQBOT1RfQUNDRVBUQUJMRQBTRVJWSUNFX1VOQVZBSUxBQkxFAFJBTkdFX05PVF9TQVRJU0ZJQUJMRQBPUklHSU5fSVNfVU5SRUFDSEFCTEUAUkVTUE9OU0VfSVNfU1RBTEUAUFVSR0UATUVSR0UAUkVRVUVTVF9IRUFERVJfRklFTERTX1RPT19MQVJHRQBSRVFVRVNUX0hFQURFUl9UT09fTEFSR0UAUEFZTE9BRF9UT09fTEFSR0UASU5TVUZGSUNJRU5UX1NUT1JBR0UASFBFX1BBVVNFRF9VUEdSQURFAEhQRV9QQVVTRURfSDJfVVBHUkFERQBTT1VSQ0UAQU5OT1VOQ0UAVFJBQ0UASFBFX1VORVhQRUNURURfU1BBQ0UAREVTQ1JJQkUAVU5TVUJTQ1JJQkUAUkVDT1JEAEhQRV9JTlZBTElEX01FVEhPRABOT1RfRk9VTkQAUFJPUEZJTkQAVU5CSU5EAFJFQklORABVTkFVVEhPUklaRUQATUVUSE9EX05PVF9BTExPV0VEAEhUVFBfVkVSU0lPTl9OT1RfU1VQUE9SVEVEAEFMUkVBRFlfUkVQT1JURUQAQUNDRVBURUQATk9UX0lNUExFTUVOVEVEAExPT1BfREVURUNURUQASFBFX0NSX0VYUEVDVEVEAEhQRV9MRl9FWFBFQ1RFRABDUkVBVEVEAElNX1VTRUQASFBFX1BBVVNFRABUSU1FT1VUX09DQ1VSRUQAUEFZTUVOVF9SRVFVSVJFRABQUkVDT05ESVRJT05fUkVRVUlSRUQAUFJPWFlfQVVUSEVOVElDQVRJT05fUkVRVUlSRUQATkVUV09SS19BVVRIRU5USUNBVElPTl9SRVFVSVJFRABMRU5HVEhfUkVRVUlSRUQAU1NMX0NFUlRJRklDQVRFX1JFUVVJUkVEAFVQR1JBREVfUkVRVUlSRUQAUEFHRV9FWFBJUkVEAFBSRUNPTkRJVElPTl9GQUlMRUQARVhQRUNUQVRJT05fRkFJTEVEAFJFVkFMSURBVElPTl9GQUlMRUQAU1NMX0hBTkRTSEFLRV9GQUlMRUQATE9DS0VEAFRSQU5TRk9STUFUSU9OX0FQUExJRUQATk9UX01PRElGSUVEAE5PVF9FWFRFTkRFRABCQU5EV0lEVEhfTElNSVRfRVhDRUVERUQAU0lURV9JU19PVkVSTE9BREVEAEhFQUQARXhwZWN0ZWQgSFRUUC8AAF4TAAAmEwAAMBAAAPAXAACdEwAAFRIAADkXAADwEgAAChAAAHUSAACtEgAAghMAAE8UAAB/EAAAoBUAACMUAACJEgAAixQAAE0VAADUEQAAzxQAABAYAADJFgAA3BYAAMERAADgFwAAuxQAAHQUAAB8FQAA5RQAAAgXAAAfEAAAZRUAAKMUAAAoFQAAAhUAAJkVAAAsEAAAixkAAE8PAADUDgAAahAAAM4QAAACFwAAiQ4AAG4TAAAcEwAAZhQAAFYXAADBEwAAzRMAAGwTAABoFwAAZhcAAF8XAAAiEwAAzg8AAGkOAADYDgAAYxYAAMsTAACqDgAAKBcAACYXAADFEwAAXRYAAOgRAABnEwAAZRMAAPIWAABzEwAAHRcAAPkWAADzEQAAzw4AAM4VAAAMEgAAsxEAAKURAABhEAAAMhcAALsTAEH5NQsBAQBBkDYL4AEBAQIBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQBB/TcLAQEAQZE4C14CAwICAgICAAACAgACAgACAgICAgICAgICAAQAAAAAAAICAgICAgICAgICAgICAgICAgICAgICAgICAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAgACAEH9OQsBAQBBkToLXgIAAgICAgIAAAICAAICAAICAgICAgICAgIAAwAEAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgACAAIAQfA7Cw1sb3NlZWVwLWFsaXZlAEGJPAsBAQBBoDwL4AEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQBBiT4LAQEAQaA+C+cBAQEBAQEBAQEBAQEBAgEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQFjaHVua2VkAEGwwAALXwEBAAEBAQEBAAABAQABAQABAQEBAQEBAQEBAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAQABAEGQwgALIWVjdGlvbmVudC1sZW5ndGhvbnJveHktY29ubmVjdGlvbgBBwMIACy1yYW5zZmVyLWVuY29kaW5ncGdyYWRlDQoNCg0KU00NCg0KVFRQL0NFL1RTUC8AQfnCAAsFAQIAAQMAQZDDAAvgAQQBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAEH5xAALBQECAAEDAEGQxQAL4AEEAQEFAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQBB+cYACwQBAAABAEGRxwAL3wEBAQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAEH6yAALBAEAAAIAQZDJAAtfAwQAAAQEBAQEBAQEBAQEBQQEBAQEBAQEBAQEBAAEAAYHBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAQABAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAAAAQAQfrKAAsEAQAAAQBBkMsACwEBAEGqywALQQIAAAAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwAAAAAAAAMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAEH6zAALBAEAAAEAQZDNAAsBAQBBms0ACwYCAAAAAAIAQbHNAAs6AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMAAAAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwBB8M4AC5YBTk9VTkNFRUNLT1VUTkVDVEVURUNSSUJFTFVTSEVURUFEU0VBUkNIUkdFQ1RJVklUWUxFTkRBUlZFT1RJRllQVElPTlNDSFNFQVlTVEFUQ0hHRU9SRElSRUNUT1JUUkNIUEFSQU1FVEVSVVJDRUJTQ1JJQkVBUkRPV05BQ0VJTkROS0NLVUJTQ1JJQkVIVFRQL0FEVFAv", "base64");
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/llhttp/llhttp_simd-wasm.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/llhttp/llhttp_simd-wasm.js
 var require_llhttp_simd_wasm = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Buffer: Buffer$2 } = __require("node:buffer");
 	module.exports = Buffer$2.from("AGFzbQEAAAABJwdgAX8Bf2ADf39/AX9gAX8AYAJ/fwBgBH9/f38Bf2AAAGADf39/AALLAQgDZW52GHdhc21fb25faGVhZGVyc19jb21wbGV0ZQAEA2VudhV3YXNtX29uX21lc3NhZ2VfYmVnaW4AAANlbnYLd2FzbV9vbl91cmwAAQNlbnYOd2FzbV9vbl9zdGF0dXMAAQNlbnYUd2FzbV9vbl9oZWFkZXJfZmllbGQAAQNlbnYUd2FzbV9vbl9oZWFkZXJfdmFsdWUAAQNlbnYMd2FzbV9vbl9ib2R5AAEDZW52GHdhc21fb25fbWVzc2FnZV9jb21wbGV0ZQAAAy0sBQYAAAIAAAAAAAACAQIAAgICAAADAAAAAAMDAwMBAQEBAQEBAQEAAAIAAAAEBQFwARISBQMBAAIGCAF/AUGA1AQLB9EFIgZtZW1vcnkCAAtfaW5pdGlhbGl6ZQAIGV9faW5kaXJlY3RfZnVuY3Rpb25fdGFibGUBAAtsbGh0dHBfaW5pdAAJGGxsaHR0cF9zaG91bGRfa2VlcF9hbGl2ZQAvDGxsaHR0cF9hbGxvYwALBm1hbGxvYwAxC2xsaHR0cF9mcmVlAAwEZnJlZQAMD2xsaHR0cF9nZXRfdHlwZQANFWxsaHR0cF9nZXRfaHR0cF9tYWpvcgAOFWxsaHR0cF9nZXRfaHR0cF9taW5vcgAPEWxsaHR0cF9nZXRfbWV0aG9kABAWbGxodHRwX2dldF9zdGF0dXNfY29kZQAREmxsaHR0cF9nZXRfdXBncmFkZQASDGxsaHR0cF9yZXNldAATDmxsaHR0cF9leGVjdXRlABQUbGxodHRwX3NldHRpbmdzX2luaXQAFQ1sbGh0dHBfZmluaXNoABYMbGxodHRwX3BhdXNlABcNbGxodHRwX3Jlc3VtZQAYG2xsaHR0cF9yZXN1bWVfYWZ0ZXJfdXBncmFkZQAZEGxsaHR0cF9nZXRfZXJybm8AGhdsbGh0dHBfZ2V0X2Vycm9yX3JlYXNvbgAbF2xsaHR0cF9zZXRfZXJyb3JfcmVhc29uABwUbGxodHRwX2dldF9lcnJvcl9wb3MAHRFsbGh0dHBfZXJybm9fbmFtZQAeEmxsaHR0cF9tZXRob2RfbmFtZQAfEmxsaHR0cF9zdGF0dXNfbmFtZQAgGmxsaHR0cF9zZXRfbGVu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PgtBhwEMPQtBiAEMPAtBiQEMOwtBigEMOgtBiwEMOQtBjAEMOAtBjQEMNwtBjgEMNgtBjwEMNQtBkAEMNAtBkQEMMwtBkgEMMgtBkwEMMQtBlAEMMAtBlQEMLwtBlgEMLgtBlwEMLQtBmAEMLAtBmQEMKwtBmgEMKgtBmwEMKQtBnAEMKAtBnQEMJwtBngEMJgtBnwEMJQtBoAEMJAtBoQEMIwtBogEMIgtBowEMIQtBpAEMIAtBpQEMHwtBpgEMHgtBpwEMHQtBqAEMHAtBqQEMGwtBqgEMGgtBqwEMGQtBrAEMGAtBrQEMFwtBrgEMFgtBAQwVC0GvAQwUC0GwAQwTC0GxAQwSC0GzAQwRC0GyAQwQC0G0AQwPC0G1AQwOC0G2AQwNC0G3AQwMC0G4AQwLC0G5AQwKC0G6AQwJC0G7AQwIC0HGAQwHC0G8AQwGC0G9AQwFC0G+AQwEC0G/AQwDC0HAAQwCC0HCAQwBC0HBAQshAwNAAkACQAJAAkACQAJAAkACQAJAIAICfwJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJ/AkACQAJAAkACQAJAAkACQAJAAkACQAJAAkAgAgJ/AkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACfwJAAkACfwJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkAC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iQEhAwykAgtBASABLQAAQd8ARw1nGiABQQFqIQEMXgtBigEhAyABIARGDaICIAIoAgAiACAEIAFraiEFIAEgAGtBAWohBgNAIAEtAAAgAEGMzwBqLQAARw1kIABBAUYN+gEgAEEBaiEAIAQgAUEBaiIBRw0ACyACIAU2AgAMogILQYsBIQMgASAERg2hAiACKAIAIgAgBCABa2ohBSABIABrQQJqIQYCQANAIAEtAAAgAEGOzwBqLQAARw1kIABBAkYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAyiAgsgAkEANgIAIAZBAWohAUECDGULQYwBIQMgASAERg2gAiACKAIAIgAgBCABa2ohBSABIABrQQFqIQYCQANAIAEtAAAgAEHwzwBqLQAARw1jIABBAUYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAyhAgsgAkEANgIAIAZBAWohAUEfDGQLQY0BIQMgASAERg2fAiACKAIAIgAgBCABa2ohBSABIABrQQFqIQYCQANAIAEtAAAgAEHyzwBqLQAARw1iIABBAUYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAygAgsgAkEANgIAIAZBAWohAUEJDGMLIAEgBEYEQEGOASEDDJ8CCwJAAkAgAS0AAEHJAGsOBwBiYmJiYgFiCyABQQFqIQFB+AAhAwyGAgsgAUEBaiEBQfkAIQMMhQILQY8BIQMgASAERg2dAiACKAIAIgAgBCABa2ohBSABIABrQQVqIQYCQANAIAEtAAAgAEGRzwBqLQAARw1gIABBBUYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAyeAgsgAkEANgIAIAZBAWohAUEYDGELQZABIQMgASAERg2cAiACKAIAIgAgBCABa2ohBSABIABrQQJqIQYCQANAIAEtAAAgAEGXzwBqLQAARw1fIABBAkYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAydAgsgAkEANgIAIAZBAWohAUEXDGALQZEBIQMgASAERg2bAiACKAIAIgAgBCABa2ohBSABIABrQQZqIQYCQANAIAEtAAAgAEGazwBqLQAARw1eIABBBkYNASAAQQFqIQAgBCABQQFqIgFHDQALIAIgBTYCAAycAgsgAkEANgIAIAZBAWohAUEV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JSIARQ0RIAJB5QA2AhwgAiABNgIUIAIgADYCDEEAIQMMtAELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0gIAJB0wA2AhwgAiABNgIUIAIgADYCDEEAIQMMswELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0iIAJB0gA2AhwgAiABNgIUIAIgADYCDEEAIQMMsgELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0OIAJB5QA2AhwgAiABNgIUIAIgADYCDEEAIQMMsQELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0dIAJB0wA2AhwgAiABNgIUIAIgADYCDEEAIQMMsAELIAIoAgQhACACQQA2AgQgAiAAIAEQJSIARQ0fIAJB0gA2AhwgAiABNgIUIAIgADYCDEEAIQMMrwELIABBP0cNASABQQFqCyEBQQUhAwyUAQtBACEDIAJBADYCHCACIAE2AhQgAkH9EjYCECACQQc2AgwMrAELIAJBADYCHCACIAE2AhQgAkHcCDYCECACQQc2AgxBACEDDKsBCyACKAIEIQAgAkEANgIEIAIgACABECUiAEUNByACQeUANgIcIAIgATYCFCACIAA2AgxBACEDDKoBCyACKAIEIQAgAkEANgIEIAIgACABECUiAEUNFiACQdMANgIcIAIgATYCFCACIAA2AgxBACEDDKkBCyACKAIEIQAgAkEANgIEIAIgACABECUiAEUNGCACQdIANgIcIAIgATYCFCACIAA2AgxBACEDDKgBCyACQQA2AhwgAiABNgIUIAJBxgo2AhAgAkEHNgIMQQAhAwynAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDQMgAkHlADYCHCACIAE2AhQgAiAANgIMQQAhAwymAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDRIgAkHTADYCHCACIAE2AhQgAiAANgIMQQAhAwylAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDRQgAkHSADYCHCACIAE2AhQgAiAANgIMQQAhAwykAQsgAigCBCEAIAJBADYCBCACIAAgARAlIgBFDQAgAkHlADYCHCACIAE2AhQgAiAANgIMQQAhAwyjAQtB1QAhAwyJAQsgAEEVRwRAIAJBADYCHCACIAE2AhQgAkG5DTYCECACQRo2AgxB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AkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAAkACQAJAIABB5ABrDvQDY2IAAWFhYWFhYQIDBAVhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhBgcICQoLDA0OD2FhYWFhEGFhYWFhYWFhYWFhEWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYRITFBUWFxgZGhthYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhHB0eHyAhIiMkJSYnKCkqKywtLi8wMTIzNDU2YTc4OTphYWFhYWFhYTthYWE8YWFhYT0+P2FhYWFhYWFhQGFhQWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYUJDREVGR0hJSktMTU5PUFFSU2FhYWFhYWFhVFVWV1hZWlthXF1hYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFeYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhX2BhC0HhJw8LQaQhDwtByywPC0H+MQ8LQcAkDwtBqyQPC0GNKA8LQeImDwtBgDAPC0G5Lw8LQdckDwtB7x8PC0HhHw8LQfofDwtB8iAPC0GoLw8LQa4yDwtBiDAPC0HsJw8LQYIiDwtBjh0PC0HQLg8LQcojDwtBxTIPC0HfHA8LQdIcDwtBxCAPC0HXIA8LQaIfDwtB7S4PC0GrMA8LQdQlDwtBzC4PC0H6Lg8LQfwrDwtB0jAPC0HxHQ8LQbsgDwtB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AAADAEGUCAsFBAAAAAUAQaQICwkGAAAABwAAAAgAQdwIC4otSW52YWxpZCBjaGFyIGluIHVybCBxdWVyeQBTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX2JvZHkAQ29udGVudC1MZW5ndGggb3ZlcmZsb3cAQ2h1bmsgc2l6ZSBvdmVyZmxvdwBSZXNwb25zZSBvdmVyZmxvdwBJbnZhbGlkIG1ldGhvZCBmb3IgSFRUUC94LnggcmVxdWVzdABJbnZhbGlkIG1ldGhvZCBmb3IgUlRTUC94LnggcmVxdWVzdABFeHBlY3RlZCBTT1VSQ0UgbWV0aG9kIGZvciBJQ0UveC54IHJlcXVlc3QASW52YWxpZCBjaGFyIGluIHVybCBmcmFnbWVudCBzdGFydABFeHBlY3RlZCBkb3QAU3BhbiBjYWxsYmFjayBlcnJvciBpbiBvbl9zdGF0dXMASW52YWxpZCByZXNwb25zZSBzdGF0dXMASW52YWxpZCBjaGFyYWN0ZXIgaW4gY2h1bmsgZXh0ZW5zaW9ucwBVc2VyIGNhbGxiYWNrIGVycm9yAGBvbl9yZXNldGAgY2FsbGJhY2sgZXJyb3IAYG9uX2NodW5rX2hlYWRlcmAgY2FsbGJhY2sgZXJyb3IAYG9uX21lc3NhZ2VfYmVnaW5gIGNhbGxiYWNrIGVycm9yAGBvbl9jaHVua19leHRlbnNpb25fdmFsdWVgIGNhbGxiYWNrIGVycm9yAGBvbl9zdGF0dXNfY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl92ZXJzaW9uX2NvbXBsZXRlYCBjYWxsYmFjayBlcnJvcgBgb25fdXJsX2NvbXBsZXRlYCBjYWxsYmFjayBlcnJvcgBgb25fY2h1bmtfY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl9oZWFkZXJfdmFsdWVfY29tcGxldGVgIGNhbGxiYWNrIGVycm9yAGBvbl9tZXNzYWdlX2NvbXBsZXRlYCBjYWxsYmFjayBlcnJvcgBgb25fbWV0aG9kX2NvbXBsZXRlYCBjYWxsYmFjayBlcnJvcgBgb25faGVhZGVyX2ZpZWxkX2NvbXBsZXRlYCBjYWxsYmFjayBlcnJvcgBgb25fY2h1bmtfZXh0ZW5zaW9uX25hbWVgIGNhbGxiYWNrIGVycm9yAFVuZXhwZWN0ZWQgY2hhciBpbiB1cmwgc2VydmVyAEludmFsaWQgaGVhZGVyIHZhbHVlIGNoYXIASW52YWxpZCBoZWFkZXIgZmllbGQgY2hhcgBTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX3ZlcnNpb24ASW52YWxpZCBtaW5vciB2ZXJzaW9uAEludmFsaWQgbWFqb3IgdmVyc2lvbgBFeHBlY3RlZCBzcGFjZSBhZnRlciB2ZXJzaW9uAEV4cGVjdGVkIENSTEYgYWZ0ZXIgdmVyc2lvbgBJbnZhbGlkIEhUVFAgdmVyc2lvbgBJbnZhbGlkIGhlYWRlciB0b2tlbgBTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX3VybABJbnZhbGlkIGNoYXJhY3RlcnMgaW4gdXJsAFVuZXhwZWN0ZWQgc3RhcnQgY2hhciBpbiB1cmwARG91YmxlIEAgaW4gdXJsAEVtcHR5IENvbnRlbnQtTGVuZ3RoAEludmFsaWQgY2hhcmFjdGVyIGluIENvbnRlbnQtTGVuZ3RoAER1cGxpY2F0ZSBDb250ZW50LUxlbmd0aABJbnZhbGlkIGNoYXIgaW4gdXJsIHBhdGgAQ29udGVudC1MZW5ndGggY2FuJ3QgYmUgcHJlc2VudCB3aXRoIFRyYW5zZmVyLUVuY29kaW5nAEludmFsaWQgY2hhcmFjdGVyIGluIGNodW5rIHNpemUAU3BhbiBjYWxsYmFjayBlcnJvciBpbiBvbl9oZWFkZXJfdmFsdWUAU3BhbiBjYWxsYmFjayBlcnJvciBpbiBvbl9jaHVua19leHRlbnNpb25fdmFsdWUASW52YWxpZCBjaGFyYWN0ZXIgaW4gY2h1bmsgZXh0ZW5zaW9ucyB2YWx1ZQBNaXNzaW5nIGV4cGVjdGVkIExGIGFmdGVyIGhlYWRlciB2YWx1ZQBJbnZhbGlkIGBUcmFuc2Zlci1FbmNvZGluZ2AgaGVhZGVyIHZhbHVlAEludmFsaWQgY2hhcmFjdGVyIGluIGNodW5rIGV4dGVuc2lvbnMgcXVvdGUgdmFsdWUASW52YWxpZCBjaGFyYWN0ZXIgaW4gY2h1bmsgZXh0ZW5zaW9ucyBxdW90ZWQgdmFsdWUAUGF1c2VkIGJ5IG9uX2hlYWRlcnNfY29tcGxldGUASW52YWxpZCBFT0Ygc3RhdGUAb25fcmVzZXQgcGF1c2UAb25fY2h1bmtfaGVhZGVyIHBhdXNlAG9uX21lc3NhZ2VfYmVnaW4gcGF1c2UAb25fY2h1bmtfZXh0ZW5zaW9uX3ZhbHVlIHBhdXNlAG9uX3N0YXR1c19jb21wbGV0ZSBwYXVzZQBvbl92ZXJzaW9uX2NvbXBsZXRlIHBhdXNlAG9uX3VybF9jb21wbGV0ZSBwYXVzZQBvbl9jaHVua19jb21wbGV0ZSBwYXVzZQBvbl9oZWFkZXJfdmFsdWVfY29tcGxldGUgcGF1c2UAb25fbWVzc2FnZV9jb21wbGV0ZSBwYXVzZQBvbl9tZXRob2RfY29tcGxldGUgcGF1c2UAb25faGVhZGVyX2ZpZWxkX2NvbXBsZXRlIHBhdXNlAG9uX2NodW5rX2V4dGVuc2lvbl9uYW1lIHBhdXNlAFVuZXhwZWN0ZWQgc3BhY2UgYWZ0ZXIgc3RhcnQgbGluZQBTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX2NodW5rX2V4dGVuc2lvbl9uYW1lAEludmFsaWQgY2hhcmFjdGVyIGluIGNodW5rIGV4dGVuc2lvbnMgbmFtZQBQYXVzZSBvbiBDT05ORUNUL1VwZ3JhZGUAUGF1c2Ugb24gUFJJL1VwZ3JhZGUARXhwZWN0ZWQgSFRUUC8yIENvbm5lY3Rpb24gUHJlZmFjZQBTcGFuIGNhbGxiYWNrIGVycm9yIGluIG9uX21ldGhvZABFeHBlY3RlZCBzcGFjZSBhZnRlciBtZXRob2QAU3BhbiBjYWxsYmFjayBlcnJvciBpbiBvbl9oZWFkZXJfZmllbGQAUGF1c2VkAEludmFsaWQgd29yZCBlbmNvdW50ZXJlZABJbnZhbGlkIG1ldGhvZCBlbmNvdW50ZXJlZABVbmV4cGVjdGVkIGNoYXIgaW4gdXJsIHNjaGVtYQBSZXF1ZXN0IGhhcyBpbnZhbGlkIGBUcmFuc2Zlci1FbmNvZGluZ2AAU1dJVENIX1BST1hZAFVTRV9QUk9YWQBNS0FDVElWSVRZAFVOUFJPQ0VTU0FCTEVfRU5USVRZAENPUFkATU9WRURfUEVSTUFORU5UTFkAVE9PX0VBUkxZAE5PVElGWQBGQUlMRURfREVQRU5ERU5DWQBCQURfR0FURVdBWQBQTEFZAFBVVABDSEVDS09VVABHQVRFV0FZX1RJTUVPVVQAUkVRVUVTVF9USU1FT1VUAE5FVFdPUktfQ09OTkVDVF9USU1FT1VUAENPTk5FQ1RJT05fVElNRU9VVABMT0dJTl9USU1FT1VUAE5FVFdPUktfUkVBRF9USU1FT1VUAFBPU1QATUlTRElSRUNURURfUkVRVUVTVABDTElFTlRfQ0xPU0VEX1JFUVVFU1QAQ0xJRU5UX0NMT1NFRF9MT0FEX0JBTEFOQ0VEX1JFUVVFU1QAQkFEX1JFUVVFU1QASFRUUF9SRVFVRVNUX1NFTlRfVE9fSFRUUFNfUE9SVABSRVBPUlQASU1fQV9URUFQT1QAUkVTRVRfQ09OVEVOVABOT19DT05URU5UAFBBUlRJQUxfQ09OVEVOVABIUEVfSU5WQUxJRF9DT05TVEFOVABIUEVfQ0JfUkVTRVQAR0VUAEhQRV9TVFJJQ1QAQ09ORkxJQ1QAVEVNUE9SQVJZX1JFRElSRUNUAFBFUk1BTkVOVF9SRURJUkVDVABDT05ORUNUAE1VTFRJX1NUQVRVUwBIUEVfSU5WQUxJRF9TVEFUVVMAVE9PX01BTllfUkVRVUVTVFMARUFSTFlfSElOVFMAVU5BVkFJTEFCTEVfRk9SX0xFR0FMX1JFQVNPTlMAT1BUSU9OUwBTV0lUQ0hJTkdfUFJPVE9DT0xTAFZBUklBTlRfQUxTT19ORUdPVElBVEVTAE1VTFRJUExFX0NIT0lDRVMASU5URVJOQUxfU0VSVkVSX0VSUk9SAFdFQl9TRVJWRVJfVU5LTk9XTl9FUlJPUgBSQUlMR1VOX0VSUk9SAElERU5USVRZX1BST1ZJREVSX0FVVEhFTlRJQ0FUSU9OX0VSUk9SAFNTTF9DRVJUSUZJQ0FURV9FUlJPUgBJTlZBTElEX1hfRk9SV0FSREVEX0ZPUgBTRVRfUEFSQU1FVEVSAEdFVF9QQVJBTUVURVIASFBFX1VTRVIAU0VFX09USEVSAEhQRV9DQl9DSFVOS19IRUFERVIATUtDQUxFTkRBUgBTRVRVUABXRUJfU0VSVkVSX0lTX0RPV04AVEVBUkRPV04ASFBFX0NMT1NFRF9DT05ORUNUSU9OAEhFVVJJU1RJQ19FWFBJUkFUSU9OAERJU0NPTk5FQ1RFRF9PUEVSQVRJT04ATk9OX0FVVEhPUklUQVRJVkVfSU5GT1JNQVRJT04ASFBFX0lOVkFMSURfVkVSU0lPTgBIUEVfQ0JfTUVTU0FHRV9CRUdJTgBTSVRFX0lTX0ZST1pFTgBIUEVfSU5WQUxJRF9IRUFERVJfVE9LRU4ASU5WQUxJRF9UT0tFTgBGT1JCSURERU4ARU5IQU5DRV9ZT1VSX0NBTE0ASFBFX0lOVkFMSURfVVJMAEJMT0NLRURfQllfUEFSRU5UQUxfQ09OVFJPTABNS0NPTABBQ0wASFBFX0lOVEVSTkFMAFJFUVVFU1RfSEVBREVSX0ZJRUxEU19UT09fTEFSR0VfVU5PRkZJQ0lBTABIUEVfT0sAVU5MSU5LAFVOTE9DSwBQUkkAUkVUUllfV0lUSABIUEVfSU5WQUxJRF9DT05URU5UX0xFTkdUSABIUEVfVU5FWFBFQ1RFRF9DT05URU5UX0xFTkdUSABGTFVTSABQUk9QUEFUQ0gATS1TRUFSQ0gAVVJJX1RPT19MT05HAFBST0NFU1NJTkcATUlTQ0VMTEFORU9VU19QRVJTSVNURU5UX1dBUk5JTkcATUlTQ0VMTEFORU9VU19XQVJOSU5HAEhQRV9JTlZBTElEX1RSQU5TRkVSX0VOQ09ESU5HAEV4cGVjdGVkIENSTEYASFBFX0lOVkFMSURfQ0hVTktfU0laRQBNT1ZFAENPTlRJTlVFAEhQRV9DQl9TVEFUVVNfQ09NUExFVEUASFBFX0NCX0hFQURFUlNfQ09NUExFVEUASFBFX0NCX1ZFUlNJT05fQ09NUExFVEUASFBFX0NCX1VSTF9DT01QTEVURQBIUEVfQ0JfQ0hVTktfQ09NUExFVEUASFBFX0NCX0hFQURFUl9WQUxVRV9DT01QTEVURQBIUEVfQ0JfQ0hVTktfRVhURU5TSU9OX1ZBTFVFX0NPTVBMRVRFAEhQRV9DQl9DSFVOS19FWFRFTlNJT05fTkFNRV9DT01QTEVURQBIUEVfQ0JfTUVTU0FHRV9DT01QTEVURQBIUEVfQ0JfTUVUSE9EX0NPTVBMRVRFAEhQRV9DQl9IRUFERVJfRklFTERfQ09NUExFVEUAREVMRVRFAEhQRV9JTlZBTElEX0VPRl9TVEFURQBJTlZBTElEX1NTTF9DRVJUSUZJQ0FURQBQQVVTRQBOT19SRVNQT05TRQBVTlNVUFBPUlRFRF9NRURJQV9UWVBFAEdPTkUATk9UX0FDQ0VQVEFCTEUAU0VSVklDRV9VTkFWQUlMQUJMRQBSQU5HRV9OT1RfU0FUSVNGSUFCTEUAT1JJR0lOX0lTX1VOUkVBQ0hBQkxFAFJFU1BPTlNFX0lTX1NUQUxFAFBVUkdFAE1FUkdFAFJFUVVFU1RfSEVBREVSX0ZJRUxEU19UT09fTEFSR0UAUkVRVUVTVF9IRUFERVJfVE9PX0xBUkdFAFBBWUxPQURfVE9PX0xBUkdFAElOU1VGRklDSUVOVF9TVE9SQUdFAEhQRV9QQVVTRURfVVBHUkFERQBIUEVfUEFVU0VEX0gyX1VQR1JBREUAU09VUkNFAEFOTk9VTkNFAFRSQUNFAEhQRV9VTkVYUEVDVEVEX1NQQUNFAERFU0NSSUJFAFVOU1VCU0NSSUJFAFJFQ09SRABIUEVfSU5WQUxJRF9NRVRIT0QATk9UX0ZPVU5EAFBST1BGSU5EAFVOQklORABSRUJJTkQAVU5BVVRIT1JJWkVEAE1FVEhPRF9OT1RfQUxMT1dFRABIVFRQX1ZFUlNJT05fTk9UX1NVUFBPUlRFRABBTFJFQURZX1JFUE9SVEVEAEFDQ0VQVEVEAE5PVF9JTVBMRU1FTlRFRABMT09QX0RFVEVDVEVEAEhQRV9DUl9FWFBFQ1RFRABIUEVfTEZfRVhQRUNURUQAQ1JFQVRFRABJTV9VU0VEAEhQRV9QQVVTRUQAVElNRU9VVF9PQ0NVUkVEAFBBWU1FTlRfUkVRVUlSRUQAUFJFQ09ORElUSU9OX1JFUVVJUkVEAFBST1hZX0FVVEhFTlRJQ0FUSU9OX1JFUVVJUkVEAE5FVFdPUktfQVVUSEVOVElDQVRJT05fUkVRVUlSRUQATEVOR1RIX1JFUVVJUkVEAFNTTF9DRVJUSUZJQ0FURV9SRVFVSVJFRABVUEdSQURFX1JFUVVJUkVEAFBBR0VfRVhQSVJFRABQUkVDT05ESVRJT05fRkFJTEVEAEVYUEVDVEFUSU9OX0ZBSUxFRABSRVZBTElEQVRJT05fRkFJTEVEAFNTTF9IQU5EU0hBS0VfRkFJTEVEAExPQ0tFRABUUkFOU0ZPUk1BVElPTl9BUFBMSUVEAE5PVF9NT0RJRklFRABOT1RfRVhURU5ERUQAQkFORFdJRFRIX0xJTUlUX0VYQ0VFREVEAFNJVEVfSVNfT1ZFUkxPQURFRABIRUFEAEV4cGVjdGVkIEhUVFAvAABeEwAAJhMAADAQAADwFwAAnRMAABUSAAA5FwAA8BIAAAoQAAB1EgAArRIAAIITAABPFAAAfxAAAKAVAAAjFAAAiRIAAIsUAABNFQAA1BEAAM8UAAAQGAAAyRYAANwWAADBEQAA4BcAALsUAAB0FAAAfBUAAOUUAAAIFwAAHxAAAGUVAACjFAAAKBUAAAIVAACZFQAALBAAAIsZAABPDwAA1A4AAGoQAADOEAAAAhcAAIkOAABuEwAAHBMAAGYUAABWFwAAwRMAAM0TAABsEwAAaBcAAGYXAABfFwAAIhMAAM4PAABpDgAA2A4AAGMWAADLEwAAqg4AACgXAAAmFwAAxRMAAF0WAADoEQAAZxMAAGUTAADyFgAAcxMAAB0XAAD5FgAA8xEAAM8OAADOFQAADBIAALMRAAClEQAAYRAAADIXAAC7EwBB+TULAQEAQZA2C+ABAQECAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAQf03CwEBAEGROAteAgMCAgICAgAAAgIAAgIAAgICAgICAgICAgAEAAAAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgAAAAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAAIAAgBB/TkLAQEAQZE6C14CAAICAgICAAACAgACAgACAgICAgICAgICAAMABAAAAAICAgICAgICAgICAgICAgICAgICAgICAgICAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAgACAEHwOwsNbG9zZWVlcC1hbGl2ZQBBiTwLAQEAQaA8C+ABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAQYk+CwEBAEGgPgvnAQEBAQEBAQEBAQEBAQIBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBY2h1bmtlZABBsMAAC18BAQABAQEBAQAAAQEAAQEAAQEBAQEBAQEBAQAAAAAAAAABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAEAAQBBkMIACyFlY3Rpb25lbnQtbGVuZ3Rob25yb3h5LWNvbm5lY3Rpb24AQcDCAAstcmFuc2Zlci1lbmNvZGluZ3BncmFkZQ0KDQoNClNNDQoNClRUUC9DRS9UU1AvAEH5wgALBQECAAEDAEGQwwAL4AEEAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQBB+cQACwUBAgABAwBBkMUAC+ABBAEBBQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAQfnGAAsEAQAAAQBBkccAC98BAQEAAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQBB+sgACwQBAAACAEGQyQALXwMEAAAEBAQEBAQEBAQEBAUEBAQEBAQEBAQEBAQABAAGBwQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAAEAAQABAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAEAEH6ygALBAEAAAEAQZDLAAsBAQBBqssAC0ECAAAAAAAAAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMAAAAAAAADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwBB+swACwQBAAABAEGQzQALAQEAQZrNAAsGAgAAAAACAEGxzQALOgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAAAAAAAAAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMAQfDOAAuWAU5PVU5DRUVDS09VVE5FQ1RFVEVDUklCRUxVU0hFVEVBRFNFQVJDSFJHRUNUSVZJVFlMRU5EQVJWRU9USUZZUFRJT05TQ0hTRUFZU1RBVENIR0VPUkRJUkVDVE9SVFJDSFBBUkFNRVRFUlVSQ0VCU0NSSUJFQVJET1dOQUNFSU5ETktDS1VCU0NSSUJFSFRUUC9BRFRQLw==", "base64");
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/constants.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/constants.js
 var require_constants$3 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var corsSafeListedMethods = [
 		"GET",
@@ -5502,7 +5540,7 @@ var require_constants$3 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/global.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/global.js
 var require_global$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var globalOrigin = Symbol.for("undici.globalOrigin.1");
 	function getGlobalOrigin() {
@@ -5533,7 +5571,7 @@ var require_global$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/data-url.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/data-url.js
 var require_data_url = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$25 = __require("node:assert");
 	var encoder = new TextEncoder();
@@ -5868,7 +5906,7 @@ var require_data_url = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/webidl.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/webidl.js
 var require_webidl = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { types: types$4, inspect: inspect$1 } = __require("node:util");
 	var { markAsUncloneable } = __require("node:worker_threads");
@@ -6184,7 +6222,7 @@ var require_webidl = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { webidl };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/util.js
 var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Transform: Transform$3 } = __require("node:stream");
 	var zlib$2 = __require("node:zlib");
@@ -6316,10 +6354,7 @@ var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				case "strict-origin-when-cross-origin":
 					if (request.origin && urlHasHttpsScheme(request.origin) && !urlHasHttpsScheme(requestCurrentURL(request))) serializedOrigin = null;
 					break;
-				case "same-origin":
-					if (!sameOrigin(request, requestCurrentURL(request))) serializedOrigin = null;
-					break;
-				default:
+				case "same-origin": if (!sameOrigin(request, requestCurrentURL(request))) serializedOrigin = null;
 			}
 			request.headersList.append("origin", serializedOrigin, true);
 		}
@@ -6451,8 +6486,10 @@ var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const algorithm = item.algo;
 			const expectedValue = item.hash;
 			let actualValue = crypto.createHash(algorithm).update(bytes).digest("base64");
-			if (actualValue[actualValue.length - 1] === "=") if (actualValue[actualValue.length - 2] === "=") actualValue = actualValue.slice(0, -2);
-			else actualValue = actualValue.slice(0, -1);
+			if (actualValue[actualValue.length - 1] === "=") {
+				if (actualValue[actualValue.length - 2] === "=") actualValue = actualValue.slice(0, -2);
+				else actualValue = actualValue.slice(0, -1);
+			}
 			if (compareBase64Mixed(actualValue, expectedValue)) return true;
 		}
 		return false;
@@ -6601,9 +6638,7 @@ var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					case "value":
 						result = value;
 						break;
-					case "key+value":
-						result = [key, value];
-						break;
+					case "key+value": result = [key, value];
 				}
 				return {
 					value: result,
@@ -6897,12 +6932,14 @@ var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		let temporaryValue = "";
 		while (position.position < input.length) {
 			temporaryValue += collectASequenceOfCodePoints((char) => char !== "\"" && char !== ",", input, position);
-			if (position.position < input.length) if (input.charCodeAt(position.position) === 34) {
-				temporaryValue += collectAnHTTPQuotedString(input, position);
-				if (position.position < input.length) continue;
-			} else {
-				assert$24(input.charCodeAt(position.position) === 44);
-				position.position++;
+			if (position.position < input.length) {
+				if (input.charCodeAt(position.position) === 34) {
+					temporaryValue += collectAnHTTPQuotedString(input, position);
+					if (position.position < input.length) continue;
+				} else {
+					assert$24(input.charCodeAt(position.position) === 44);
+					position.position++;
+				}
 			}
 			temporaryValue = removeChars(temporaryValue, true, true, (char) => char === 9 || char === 32);
 			values.push(temporaryValue);
@@ -6997,7 +7034,7 @@ var require_util$6 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/symbols.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/symbols.js
 var require_symbols$3 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		kUrl: Symbol("url"),
@@ -7008,9 +7045,9 @@ var require_symbols$3 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/file.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/file.js
 var require_file = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-	var { Blob: Blob$2, File: File$1 } = __require("node:buffer");
+	var { Blob: Blob$2, File } = __require("node:buffer");
 	var { kState } = require_symbols$3();
 	var { webidl } = require_webidl();
 	var FileLike = class FileLike {
@@ -7063,7 +7100,7 @@ var require_file = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 	webidl.converters.Blob = webidl.interfaceConverter(Blob$2);
 	function isFileLike(object) {
-		return object instanceof File$1 || object && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && object[Symbol.toStringTag] === "File";
+		return object instanceof File || object && (typeof object.stream === "function" || typeof object.arrayBuffer === "function") && object[Symbol.toStringTag] === "File";
 	}
 	module.exports = {
 		FileLike,
@@ -7071,7 +7108,7 @@ var require_file = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/formdata.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/formdata.js
 var require_formdata = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { isBlobLike, iteratorMixin } = require_util$6();
 	var { kState } = require_symbols$3();
@@ -7152,9 +7189,10 @@ var require_formdata = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		}
 		[nodeUtil$2.inspect.custom](depth, options) {
 			const state = this[kState].reduce((a, b) => {
-				if (a[b.name]) if (Array.isArray(a[b.name])) a[b.name].push(b.value);
-				else a[b.name] = [a[b.name], b.value];
-				else a[b.name] = b.value;
+				if (a[b.name]) {
+					if (Array.isArray(a[b.name])) a[b.name].push(b.value);
+					else a[b.name] = [a[b.name], b.value];
+				} else a[b.name] = b.value;
 				return a;
 			}, { __proto__: null });
 			options.depth ??= depth;
@@ -7206,7 +7244,7 @@ var require_formdata = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/formdata-parser.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/formdata-parser.js
 var require_formdata_parser = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { isUSVString, bufferToLowerCasedHeaderName } = require_util$7();
 	var { utf8DecodeBytes } = require_util$6();
@@ -7405,7 +7443,7 @@ var require_formdata_parser = /* @__PURE__ */ __commonJSMin(((exports, module) =
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/body.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/body.js
 var require_body = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var util = require_util$7();
 	var { ReadableStreamFrom, isBlobLike, isReadableStreamLike, readableStreamClose, createDeferredPromise, fullyReadBody, extractMimeType, utf8DecodeBytes } = require_util$6();
@@ -7662,19 +7700,22 @@ Content-Type: ${value.type || "application/octet-stream"}\r\n\r\n`);
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/client-h1.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/client-h1.js
 var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$21 = __require("node:assert");
 	var util = require_util$7();
 	var { channels } = require_diagnostics();
 	var timers = require_timers();
-	var { RequestContentLengthMismatchError, ResponseContentLengthMismatchError, RequestAbortedError, HeadersTimeoutError, HeadersOverflowError, SocketError, InformationalError, BodyTimeoutError, HTTPParserError, ResponseExceededMaxSizeError } = require_errors();
+	var { RequestContentLengthMismatchError, ResponseContentLengthMismatchError, RequestAbortedError, InvalidArgumentError, HeadersTimeoutError, HeadersOverflowError, SocketError, InformationalError, BodyTimeoutError, HTTPParserError, ResponseExceededMaxSizeError } = require_errors();
 	var { kUrl, kReset, kClient, kParser, kBlocking, kRunning, kPending, kSize, kWriting, kQueue, kNoRef, kKeepAliveDefaultTimeout, kHostHeader, kPendingIdx, kRunningIdx, kError, kPipelining, kSocket, kKeepAliveTimeoutValue, kMaxHeadersSize, kKeepAliveMaxTimeout, kKeepAliveTimeoutThreshold, kHeadersTimeout, kBodyTimeout, kStrictContentLength, kMaxRequests, kCounter, kMaxResponseSize, kOnError, kResume, kHTTPContext } = require_symbols$4();
 	var constants = require_constants$4();
 	var EMPTY_BUF = Buffer.alloc(0);
 	var FastBuffer = Buffer[Symbol.species];
 	var addListener = util.addListener;
 	var removeAllListeners = util.removeAllListeners;
+	var kIdleSocketValidation = Symbol("kIdleSocketValidation");
+	var kIdleSocketValidationTimeout = Symbol("kIdleSocketValidationTimeout");
+	var kSocketUsed = Symbol("kSocketUsed");
 	var extractBody;
 	async function lazyllhttp() {
 		const llhttpWasmData = process.env.JEST_WORKER_ID ? require_llhttp_wasm() : void 0;
@@ -7766,10 +7807,12 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					timers.clearTimeout(this.timeout);
 					this.timeout = null;
 				}
-				if (delay) if (type & USE_FAST_TIMER) this.timeout = timers.setFastTimeout(onParserTimeout, delay, new WeakRef(this));
-				else {
-					this.timeout = setTimeout(onParserTimeout, delay, new WeakRef(this));
-					this.timeout.unref();
+				if (delay) {
+					if (type & USE_FAST_TIMER) this.timeout = timers.setFastTimeout(onParserTimeout, delay, new WeakRef(this));
+					else {
+						this.timeout = setTimeout(onParserTimeout, delay, new WeakRef(this));
+						this.timeout.unref();
+					}
 				}
 				this.timeoutValue = delay;
 			} else if (this.timeout) {
@@ -7824,23 +7867,47 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					currentBufferRef = null;
 				}
 				const offset = llhttp.llhttp_get_error_pos(this.ptr) - currentBufferPtr;
-				if (ret === constants.ERROR.PAUSED_UPGRADE) this.onUpgrade(data.slice(offset));
-				else if (ret === constants.ERROR.PAUSED) {
-					this.paused = true;
-					socket.unshift(data.slice(offset));
-				} else if (ret !== constants.ERROR.OK) {
-					const ptr = llhttp.llhttp_get_error_reason(this.ptr);
-					let message = "";
-					/* istanbul ignore else: difficult to make a test case for */
-					if (ptr) {
-						const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
-						message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
-					}
-					throw new HTTPParserError(message, constants.ERROR[ret], data.slice(offset));
+				if (ret !== constants.ERROR.OK) {
+					const body = data.subarray(offset);
+					if (ret === constants.ERROR.PAUSED_UPGRADE) this.onUpgrade(body);
+					else if (ret === constants.ERROR.PAUSED) {
+						this.paused = true;
+						socket.unshift(body);
+					} else throw this.createError(ret, body);
 				}
 			} catch (err) {
 				util.destroy(socket, err);
 			}
+		}
+		finish() {
+			assert$21(currentParser === null);
+			assert$21(this.ptr != null);
+			assert$21(!this.paused);
+			const { llhttp } = this;
+			let ret;
+			try {
+				currentParser = this;
+				ret = llhttp.llhttp_finish(this.ptr);
+			} finally {
+				currentParser = null;
+			}
+			if (ret === constants.ERROR.OK) return null;
+			if (ret === constants.ERROR.PAUSED || ret === constants.ERROR.PAUSED_UPGRADE) {
+				this.paused = true;
+				return null;
+			}
+			return this.createError(ret, EMPTY_BUF);
+		}
+		createError(ret, data) {
+			const { llhttp, contentLength, bytesRead } = this;
+			if (contentLength && bytesRead !== parseInt(contentLength, 10)) return new ResponseContentLengthMismatchError();
+			const ptr = llhttp.llhttp_get_error_reason(this.ptr);
+			let message = "";
+			if (ptr) {
+				const len = new Uint8Array(llhttp.memory.buffer, ptr).indexOf(0);
+				message = "Response does not match the HTTP/1.1 protocol (" + Buffer.from(llhttp.memory.buffer, ptr, len).toString() + ")";
+			}
+			return new HTTPParserError(message, constants.ERROR[ret], data);
 		}
 		destroy() {
 			assert$21(this.ptr != null);
@@ -7860,6 +7927,10 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const { socket, client } = this;
 			/* istanbul ignore next: difficult to make a test case for */
 			if (socket.destroyed) return -1;
+			if (client[kRunning] === 0) {
+				util.destroy(socket, new SocketError("bad response", util.getSocketInfo(socket)));
+				return -1;
+			}
 			const request = client[kQueue][client[kRunningIdx]];
 			if (!request) return -1;
 			request.onResponseStarted();
@@ -7924,6 +7995,10 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const { client, socket, headers, statusText } = this;
 			/* istanbul ignore next: difficult to make a test case for */
 			if (socket.destroyed) return -1;
+			if (client[kRunning] === 0) {
+				util.destroy(socket, new SocketError("bad response", util.getSocketInfo(socket)));
+				return -1;
+			}
 			const request = client[kQueue][client[kRunningIdx]];
 			/* istanbul ignore next: difficult to make a test case for */
 			if (!request) return -1;
@@ -8020,6 +8095,7 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 			request.onComplete(headers);
 			client[kQueue][client[kRunningIdx]++] = null;
+			socket[kSocketUsed] = true;
 			if (socket[kWriting]) {
 				assert$21(client[kRunning] === 0);
 				util.destroy(socket, new InformationalError("reset"));
@@ -8059,12 +8135,19 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		socket[kWriting] = false;
 		socket[kReset] = false;
 		socket[kBlocking] = false;
+		socket[kIdleSocketValidation] = 0;
+		socket[kIdleSocketValidationTimeout] = null;
+		socket[kSocketUsed] = false;
 		socket[kParser] = new Parser(client, socket, llhttpInstance);
 		addListener(socket, "error", function(err) {
 			assert$21(err.code !== "ERR_TLS_CERT_ALTNAME_INVALID");
 			const parser = this[kParser];
 			if (err.code === "ECONNRESET" && parser.statusCode && !parser.shouldKeepAlive) {
-				parser.onMessageComplete();
+				const parserErr = parser.finish();
+				if (parserErr) {
+					this[kError] = parserErr;
+					this[kClient][kOnError](parserErr);
+				}
 				return;
 			}
 			this[kError] = err;
@@ -8077,7 +8160,8 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		addListener(socket, "end", function() {
 			const parser = this[kParser];
 			if (parser.statusCode && !parser.shouldKeepAlive) {
-				parser.onMessageComplete();
+				const parserErr = parser.finish();
+				if (parserErr) util.destroy(this, parserErr);
 				return;
 			}
 			util.destroy(this, new SocketError("other side closed", util.getSocketInfo(this)));
@@ -8085,8 +8169,9 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		addListener(socket, "close", function() {
 			const client = this[kClient];
 			const parser = this[kParser];
+			clearIdleSocketValidation(this);
 			if (parser) {
-				if (!this[kError] && parser.statusCode && !parser.shouldKeepAlive) parser.onMessageComplete();
+				if (!this[kError] && parser.statusCode && !parser.shouldKeepAlive) this[kError] = parser.finish() || this[kError];
 				this[kParser].destroy();
 				this[kParser] = null;
 			}
@@ -8131,7 +8216,7 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				return socket.destroyed;
 			},
 			busy(request) {
-				if (socket[kWriting] || socket[kReset] || socket[kBlocking]) return true;
+				if (socket[kWriting] || socket[kReset] || socket[kBlocking] || socket[kIdleSocketValidation] === 1) return true;
 				if (request) {
 					if (client[kRunning] > 0 && !request.idempotent) return true;
 					if (client[kRunning] > 0 && (request.upgrade || request.method === "CONNECT")) return true;
@@ -8141,6 +8226,25 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			}
 		};
 	}
+	function clearIdleSocketValidation(socket) {
+		if (socket[kIdleSocketValidationTimeout]) {
+			clearTimeout(socket[kIdleSocketValidationTimeout]);
+			socket[kIdleSocketValidationTimeout] = null;
+		}
+		socket[kIdleSocketValidation] = 0;
+	}
+	function scheduleIdleSocketValidation(client, socket) {
+		socket[kIdleSocketValidation] = 1;
+		socket[kIdleSocketValidationTimeout] = setTimeout(() => {
+			socket[kIdleSocketValidationTimeout] = null;
+			socket[kIdleSocketValidation] = 2;
+			if (client[kSocket] === socket && !socket.destroyed) client[kResume]();
+		}, 0);
+		socket[kIdleSocketValidationTimeout].unref?.();
+	}
+	/**
+	* @param {import('./client.js')} client
+	*/
 	function resumeH1(client) {
 		const socket = client[kSocket];
 		if (socket && !socket.destroyed) {
@@ -8152,6 +8256,23 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			} else if (socket[kNoRef] && socket.ref) {
 				socket.ref();
 				socket[kNoRef] = false;
+			}
+			if (client[kRunning] === 0 && client[kPending] > 0 && socket[kSocketUsed]) {
+				if (socket[kIdleSocketValidation] === 0) {
+					scheduleIdleSocketValidation(client, socket);
+					socket[kParser].readMore();
+					if (socket.destroyed) return;
+					return;
+				}
+				if (socket[kIdleSocketValidation] === 1) {
+					socket[kParser].readMore();
+					if (socket.destroyed) return;
+					return;
+				}
+			}
+			if (client[kRunning] === 0) {
+				socket[kParser].readMore();
+				if (socket.destroyed) return;
 			}
 			if (client[kSize] === 0) {
 				if (socket[kParser].timeoutType !== TIMEOUT_KEEP_ALIVE) socket[kParser].setTimeout(client[kKeepAliveTimeoutValue], TIMEOUT_KEEP_ALIVE);
@@ -8177,7 +8298,17 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (request.contentType == null) headers.push("content-type", contentType);
 			body = bodyStream.stream;
 			contentLength = bodyStream.length;
-		} else if (util.isBlobLike(body) && request.contentType == null && body.type) headers.push("content-type", body.type);
+		} else if (util.isBlobLike(body) && request.contentType == null) {
+			const contentType = body.type;
+			if (contentType) {
+				const contentTypeValue = `${contentType}`;
+				if (!util.isValidHeaderValue(contentTypeValue)) {
+					util.errorRequest(client, request, new InvalidArgumentError("invalid content-type header"));
+					return false;
+				}
+				headers.push("content-type", contentTypeValue);
+			}
+		}
 		if (body && typeof body.read === "function") body.read(0);
 		const bodyLength = util.bodyLength(body);
 		contentLength = bodyLength ?? contentLength;
@@ -8191,6 +8322,7 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			process.emitWarning(new RequestContentLengthMismatchError());
 		}
 		const socket = client[kSocket];
+		clearIdleSocketValidation(socket);
 		const abort = (err) => {
 			if (request.aborted || request.completed) return;
 			util.errorRequest(client, request, err || new RequestAbortedError());
@@ -8228,9 +8360,10 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		/* istanbul ignore else: assertion */
 		if (!body || bodyLength === 0) writeBuffer(abort, null, client, request, socket, contentLength, header, expectsPayload);
 		else if (util.isBuffer(body)) writeBuffer(abort, body, client, request, socket, contentLength, header, expectsPayload);
-		else if (util.isBlobLike(body)) if (typeof body.stream === "function") writeIterable(abort, body.stream(), client, request, socket, contentLength, header, expectsPayload);
-		else writeBlob(abort, body, client, request, socket, contentLength, header, expectsPayload);
-		else if (util.isStream(body)) writeStream(abort, body, client, request, socket, contentLength, header, expectsPayload);
+		else if (util.isBlobLike(body)) {
+			if (typeof body.stream === "function") writeIterable(abort, body.stream(), client, request, socket, contentLength, header, expectsPayload);
+			else writeBlob(abort, body, client, request, socket, contentLength, header, expectsPayload);
+		} else if (util.isStream(body)) writeStream(abort, body, client, request, socket, contentLength, header, expectsPayload);
 		else if (util.isIterable(body)) writeIterable(abort, body, client, request, socket, contentLength, header, expectsPayload);
 		else assert$21(false);
 		return true;
@@ -8292,12 +8425,13 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}
 	function writeBuffer(abort, body, client, request, socket, contentLength, header, expectsPayload) {
 		try {
-			if (!body) if (contentLength === 0) socket.write(`${header}content-length: 0\r\n\r\n`, "latin1");
-			else {
-				assert$21(contentLength === null, "no body must not have content length");
-				socket.write(`${header}\r\n`, "latin1");
-			}
-			else if (util.isBuffer(body)) {
+			if (!body) {
+				if (contentLength === 0) socket.write(`${header}content-length: 0\r\n\r\n`, "latin1");
+				else {
+					assert$21(contentLength === null, "no body must not have content length");
+					socket.write(`${header}\r\n`, "latin1");
+				}
+			} else if (util.isBuffer(body)) {
 				assert$21(contentLength === body.byteLength, "buffer body must have content length");
 				socket.cork();
 				socket.write(`${header}content-length: ${contentLength}\r\n\r\n`, "latin1");
@@ -8413,11 +8547,14 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			socket[kWriting] = false;
 			if (socket[kError]) throw socket[kError];
 			if (socket.destroyed) return;
-			if (bytesWritten === 0) if (expectsPayload) socket.write(`${header}content-length: 0\r\n\r\n`, "latin1");
-			else socket.write(`${header}\r\n`, "latin1");
-			else if (contentLength === null) socket.write("\r\n0\r\n\r\n", "latin1");
-			if (contentLength !== null && bytesWritten !== contentLength) if (client[kStrictContentLength]) throw new RequestContentLengthMismatchError();
-			else process.emitWarning(new RequestContentLengthMismatchError());
+			if (bytesWritten === 0) {
+				if (expectsPayload) socket.write(`${header}content-length: 0\r\n\r\n`, "latin1");
+				else socket.write(`${header}\r\n`, "latin1");
+			} else if (contentLength === null) socket.write("\r\n0\r\n\r\n", "latin1");
+			if (contentLength !== null && bytesWritten !== contentLength) {
+				if (client[kStrictContentLength]) throw new RequestContentLengthMismatchError();
+				else process.emitWarning(new RequestContentLengthMismatchError());
+			}
 			if (socket[kParser].timeout && socket[kParser].timeoutType === TIMEOUT_HEADERS) {
 				// istanbul ignore else: only for jest
 				if (socket[kParser].timeout.refresh) socket[kParser].timeout.refresh();
@@ -8436,7 +8573,7 @@ var require_client_h1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = connectH1;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/client-h2.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/client-h2.js
 var require_client_h2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$20 = __require("node:assert");
 	var { pipeline: pipeline$2 } = __require("node:stream");
@@ -8538,12 +8675,14 @@ var require_client_h2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}
 	function resumeH2(client) {
 		const socket = client[kSocket];
-		if (socket?.destroyed === false) if (client[kSize] === 0 && client[kMaxConcurrentStreams] === 0) {
-			socket.unref();
-			client[kHTTP2Session].unref();
-		} else {
-			socket.ref();
-			client[kHTTP2Session].ref();
+		if (socket?.destroyed === false) {
+			if (client[kSize] === 0 && client[kMaxConcurrentStreams] === 0) {
+				socket.unref();
+				client[kHTTP2Session].unref();
+			} else {
+				socket.ref();
+				client[kHTTP2Session].ref();
+			}
 		}
 	}
 	function onHttp2SessionError(err) {
@@ -8727,9 +8866,10 @@ var require_client_h2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			/* istanbul ignore else: assertion */
 			if (!body || contentLength === 0) writeBuffer(abort, stream, null, client, request, client[kSocket], contentLength, expectsPayload);
 			else if (util.isBuffer(body)) writeBuffer(abort, stream, body, client, request, client[kSocket], contentLength, expectsPayload);
-			else if (util.isBlobLike(body)) if (typeof body.stream === "function") writeIterable(abort, stream, body.stream(), client, request, client[kSocket], contentLength, expectsPayload);
-			else writeBlob(abort, stream, body, client, request, client[kSocket], contentLength, expectsPayload);
-			else if (util.isStream(body)) writeStream(abort, client[kSocket], expectsPayload, stream, body, client, request, contentLength);
+			else if (util.isBlobLike(body)) {
+				if (typeof body.stream === "function") writeIterable(abort, stream, body.stream(), client, request, client[kSocket], contentLength, expectsPayload);
+				else writeBlob(abort, stream, body, client, request, client[kSocket], contentLength, expectsPayload);
+			} else if (util.isStream(body)) writeStream(abort, client[kSocket], expectsPayload, stream, body, client, request, contentLength);
 			else if (util.isIterable(body)) writeIterable(abort, stream, body, client, request, client[kSocket], contentLength, expectsPayload);
 			else assert$20(false);
 		}
@@ -8822,7 +8962,7 @@ var require_client_h2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = connectH2;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/handler/redirect-handler.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/handler/redirect-handler.js
 var require_redirect_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var util = require_util$7();
 	var { kBodyUsed } = require_symbols$4();
@@ -8948,7 +9088,7 @@ var require_redirect_handler = /* @__PURE__ */ __commonJSMin(((exports, module) 
 	module.exports = RedirectHandler;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/interceptor/redirect-interceptor.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/interceptor/redirect-interceptor.js
 var require_redirect_interceptor = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var RedirectHandler = require_redirect_handler();
 	function createRedirectInterceptor({ maxRedirections: defaultMaxRedirections }) {
@@ -8968,7 +9108,7 @@ var require_redirect_interceptor = /* @__PURE__ */ __commonJSMin(((exports, modu
 	module.exports = createRedirectInterceptor;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/client.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/client.js
 var require_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$18 = __require("node:assert");
 	var net$3 = __require("node:net");
@@ -9303,10 +9443,10 @@ var require_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = Client;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/fixed-queue.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/fixed-queue.js
 var require_fixed_queue = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var kSize = 2048;
-	var kMask = kSize - 1;
+	var kMask = 2047;
 	var FixedCircularBuffer = class {
 		constructor() {
 			this.bottom = 0;
@@ -9352,7 +9492,7 @@ var require_fixed_queue = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/pool-stats.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/pool-stats.js
 var require_pool_stats = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kFree, kConnected, kPending, kQueued, kRunning, kSize } = require_symbols$4();
 	var kPool = Symbol("pool");
@@ -9382,7 +9522,7 @@ var require_pool_stats = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = PoolStats;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/pool-base.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/pool-base.js
 var require_pool_base = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var DispatcherBase = require_dispatcher_base();
 	var FixedQueue = require_fixed_queue();
@@ -9516,7 +9656,7 @@ var require_pool_base = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/pool.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/pool.js
 var require_pool = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { PoolBase, kClients, kNeedDrain, kAddClient, kGetDispatcher } = require_pool_base();
 	var Client = require_client();
@@ -9577,7 +9717,7 @@ var require_pool = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = Pool;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/balanced-pool.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/balanced-pool.js
 var require_balanced_pool = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { BalancedPoolMissingUpstreamError, InvalidArgumentError } = require_errors();
 	var { PoolBase, kClients, kNeedDrain, kAddClient, kRemoveClient, kGetDispatcher } = require_pool_base();
@@ -9688,7 +9828,7 @@ var require_balanced_pool = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	module.exports = BalancedPool;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/agent.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/agent.js
 var require_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { InvalidArgumentError } = require_errors();
 	var { kClients, kRunning, kClose, kDestroy, kDispatch, kInterceptors } = require_symbols$4();
@@ -9768,7 +9908,7 @@ var require_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = Agent;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/proxy-agent.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/proxy-agent.js
 var require_proxy_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kProxy, kClose, kDestroy, kDispatch, kInterceptors } = require_symbols$4();
 	var { URL: URL$2 } = __require("node:url");
@@ -9966,7 +10106,7 @@ var require_proxy_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = ProxyAgent;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/env-http-proxy-agent.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/env-http-proxy-agent.js
 var require_env_http_proxy_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var DispatcherBase = require_dispatcher_base();
 	var { kClose, kDestroy, kClosed, kDestroyed, kDispatch, kNoProxyAgent, kHttpProxyAgent, kHttpsProxyAgent } = require_symbols$4();
@@ -10066,7 +10206,7 @@ var require_env_http_proxy_agent = /* @__PURE__ */ __commonJSMin(((exports, modu
 	module.exports = EnvHttpProxyAgent;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/handler/retry-handler.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/handler/retry-handler.js
 var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$17 = __require("node:assert");
 	var { kRetryHandlerDefaultRetry } = require_symbols$4();
@@ -10075,6 +10215,18 @@ var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	function calculateRetryAfterHeader(retryAfter) {
 		const current = Date.now();
 		return new Date(retryAfter).getTime() - current;
+	}
+	function validatePartialResponseContentLength(headers, range, statusCode, retryCount) {
+		const contentLength = headers["content-length"];
+		if (contentLength == null) return null;
+		if (!Number.isFinite(range.start) || !Number.isFinite(range.end)) return null;
+		const length = Number(contentLength);
+		const expectedLength = range.end - range.start + 1;
+		if (!Number.isFinite(length) || length !== expectedLength) return new RequestRetryError("Content-Length mismatch", statusCode, {
+			headers,
+			data: { count: retryCount }
+		});
+		return null;
 	}
 	module.exports = class RetryHandler {
 		constructor(opts, handlers) {
@@ -10091,7 +10243,7 @@ var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 			this.retryOpts = {
 				retry: retryFn ?? RetryHandler[kRetryHandlerDefaultRetry],
 				retryAfter: retryAfter ?? true,
-				maxTimeout: maxTimeout ?? 30 * 1e3,
+				maxTimeout: maxTimeout ?? 3e4,
 				minTimeout: minTimeout ?? 500,
 				timeoutFactor: timeoutFactor ?? 2,
 				maxRetries: maxRetries ?? 5,
@@ -10179,13 +10331,15 @@ var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 		onHeaders(statusCode, rawHeaders, resume, statusMessage) {
 			const headers = parseHeaders(rawHeaders);
 			this.retryCount += 1;
-			if (statusCode >= 300) if (this.retryOpts.statusCodes.includes(statusCode) === false) return this.handler.onHeaders(statusCode, rawHeaders, resume, statusMessage);
-			else {
-				this.abort(new RequestRetryError("Request failed", statusCode, {
-					headers,
-					data: { count: this.retryCount }
-				}));
-				return false;
+			if (statusCode >= 300) {
+				if (this.retryOpts.statusCodes.includes(statusCode) === false) return this.handler.onHeaders(statusCode, rawHeaders, resume, statusMessage);
+				else {
+					this.abort(new RequestRetryError("Request failed", statusCode, {
+						headers,
+						data: { count: this.retryCount }
+					}));
+					return false;
+				}
 			}
 			if (this.resume != null) {
 				this.resume = null;
@@ -10211,6 +10365,11 @@ var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 					}));
 					return false;
 				}
+				const contentLengthError = validatePartialResponseContentLength(headers, contentRange, statusCode, this.retryCount);
+				if (contentLengthError != null) {
+					this.abort(contentLengthError);
+					return false;
+				}
 				const { start, size, end = size - 1 } = contentRange;
 				assert$17(this.start === start, "content-range mismatch");
 				assert$17(this.end == null || this.end === end, "content-range mismatch");
@@ -10221,6 +10380,11 @@ var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 				if (statusCode === 206) {
 					const range = parseRangeHeader(headers["content-range"]);
 					if (range == null) return this.handler.onHeaders(statusCode, rawHeaders, resume, statusMessage);
+					const contentLengthError = validatePartialResponseContentLength(headers, range, statusCode, this.retryCount);
+					if (contentLengthError != null) {
+						this.abort(contentLengthError);
+						return false;
+					}
 					const { start, size, end = size - 1 } = range;
 					assert$17(start != null && Number.isFinite(start), "content-range mismatch");
 					assert$17(end != null && Number.isFinite(end), "invalid content-length");
@@ -10288,7 +10452,7 @@ var require_retry_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/dispatcher/retry-agent.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/dispatcher/retry-agent.js
 var require_retry_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Dispatcher = require_dispatcher();
 	var RetryHandler = require_retry_handler();
@@ -10320,7 +10484,7 @@ var require_retry_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = RetryAgent;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/readable.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/readable.js
 var require_readable = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$16 = __require("node:assert");
 	var { Readable: Readable$4 } = __require("node:stream");
@@ -10335,7 +10499,7 @@ var require_readable = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var kContentLength = Symbol("kContentLength");
 	var noop = () => {};
 	var BodyReadable = class extends Readable$4 {
-		constructor({ resume, abort, contentType = "", contentLength, highWaterMark = 64 * 1024 }) {
+		constructor({ resume, abort, contentType = "", contentLength, highWaterMark = 65536 }) {
 			super({
 				autoDestroy: true,
 				read: resume,
@@ -10414,7 +10578,7 @@ var require_readable = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			return this[kBody];
 		}
 		async dump(opts) {
-			let limit = Number.isFinite(opts?.limit) ? opts.limit : 128 * 1024;
+			let limit = Number.isFinite(opts?.limit) ? opts.limit : 131072;
 			const signal = opts?.signal;
 			if (signal != null && (typeof signal !== "object" || !("aborted" in signal))) throw new InvalidArgumentError("signal must be an AbortSignal");
 			signal?.throwIfAborted();
@@ -10503,7 +10667,7 @@ var require_readable = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	* @returns {Uint8Array}
 	*/
 	function chunksConcat(chunks, length) {
-		if (chunks.length === 0 || length === 0) return new Uint8Array(0);
+		if (chunks.length === 0 || length === 0) return /* @__PURE__ */ new Uint8Array(0);
 		if (chunks.length === 1) return new Uint8Array(chunks[0]);
 		const buffer = new Uint8Array(Buffer.allocUnsafeSlow(length).buffer);
 		let offset = 0;
@@ -10548,12 +10712,12 @@ var require_readable = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/util.js
 var require_util$5 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$15 = __require("node:assert");
 	var { ResponseStatusCodeError } = require_errors();
 	var { chunksDecode } = require_readable();
-	var CHUNK_LIMIT = 128 * 1024;
+	var CHUNK_LIMIT = 131072;
 	async function getResolveErrorBodyCallback({ callback, body, contentType, statusCode, statusMessage, headers }) {
 		assert$15(body);
 		let chunks = [];
@@ -10601,7 +10765,7 @@ var require_util$5 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/api-request.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/api-request.js
 var require_api_request = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$14 = __require("node:assert");
 	var { Readable } = require_readable();
@@ -10642,17 +10806,19 @@ var require_api_request = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (util.isStream(body)) body.on("error", (err) => {
 				this.onError(err);
 			});
-			if (this.signal) if (this.signal.aborted) this.reason = this.signal.reason ?? new RequestAbortedError();
-			else this.removeAbortListener = util.addAbortListener(this.signal, () => {
-				this.reason = this.signal.reason ?? new RequestAbortedError();
-				if (this.res) util.destroy(this.res.on("error", util.nop), this.reason);
-				else if (this.abort) this.abort(this.reason);
-				if (this.removeAbortListener) {
-					this.res?.off("close", this.removeAbortListener);
-					this.removeAbortListener();
-					this.removeAbortListener = null;
-				}
-			});
+			if (this.signal) {
+				if (this.signal.aborted) this.reason = this.signal.reason ?? new RequestAbortedError();
+				else this.removeAbortListener = util.addAbortListener(this.signal, () => {
+					this.reason = this.signal.reason ?? new RequestAbortedError();
+					if (this.res) util.destroy(this.res.on("error", util.nop), this.reason);
+					else if (this.abort) this.abort(this.reason);
+					if (this.removeAbortListener) {
+						this.res?.off("close", this.removeAbortListener);
+						this.removeAbortListener();
+						this.removeAbortListener = null;
+					}
+				});
+			}
 		}
 		onConnect(abort, context) {
 			if (this.reason) {
@@ -10686,22 +10852,24 @@ var require_api_request = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (this.removeAbortListener) res.on("close", this.removeAbortListener);
 			this.callback = null;
 			this.res = res;
-			if (callback !== null) if (this.throwOnError && statusCode >= 400) this.runInAsyncScope(getResolveErrorBodyCallback, null, {
-				callback,
-				body: res,
-				contentType,
-				statusCode,
-				statusMessage,
-				headers
-			});
-			else this.runInAsyncScope(callback, null, null, {
-				statusCode,
-				headers,
-				trailers: this.trailers,
-				opaque,
-				body: res,
-				context
-			});
+			if (callback !== null) {
+				if (this.throwOnError && statusCode >= 400) this.runInAsyncScope(getResolveErrorBodyCallback, null, {
+					callback,
+					body: res,
+					contentType,
+					statusCode,
+					statusMessage,
+					headers
+				});
+				else this.runInAsyncScope(callback, null, null, {
+					statusCode,
+					headers,
+					trailers: this.trailers,
+					opaque,
+					body: res,
+					context
+				});
+			}
 		}
 		onData(chunk) {
 			return this.res.push(chunk);
@@ -10753,7 +10921,7 @@ var require_api_request = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports.RequestHandler = RequestHandler;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/abort-signal.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/abort-signal.js
 var require_abort_signal = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { addAbortListener } = require_util$7();
 	var { RequestAbortedError } = require_errors();
@@ -10792,7 +10960,7 @@ var require_abort_signal = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/api-stream.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/api-stream.js
 var require_api_stream = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$13 = __require("node:assert");
 	var { finished: finished$1, PassThrough: PassThrough$1 } = __require("node:stream");
@@ -10937,7 +11105,7 @@ var require_api_stream = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = stream;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/api-pipeline.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/api-pipeline.js
 var require_api_pipeline = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Readable: Readable$3, Duplex, PassThrough } = __require("node:stream");
 	var { InvalidArgumentError, InvalidReturnValueError, RequestAbortedError } = require_errors();
@@ -11105,7 +11273,7 @@ var require_api_pipeline = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = pipeline;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/api-upgrade.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/api-upgrade.js
 var require_api_upgrade = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { InvalidArgumentError, SocketError } = require_errors();
 	var { AsyncResource: AsyncResource$1 } = __require("node:async_hooks");
@@ -11184,7 +11352,7 @@ var require_api_upgrade = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = upgrade;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/api-connect.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/api-connect.js
 var require_api_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$10 = __require("node:assert");
 	var { AsyncResource } = __require("node:async_hooks");
@@ -11262,7 +11430,7 @@ var require_api_connect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = connect;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/api/index.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/api/index.js
 var require_api = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports.request = require_api_request();
 	module.exports.stream = require_api_stream();
@@ -11271,7 +11439,7 @@ var require_api = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports.connect = require_api_connect();
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/mock-errors.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/mock-errors.js
 var require_mock_errors = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { UndiciError } = require_errors();
 	var kMockNotMatchedError = Symbol.for("undici.error.UND_MOCK_ERR_MOCK_NOT_MATCHED");
@@ -11290,7 +11458,7 @@ var require_mock_errors = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	} };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/mock-symbols.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/mock-symbols.js
 var require_mock_symbols = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		kAgent: Symbol("agent"),
@@ -11315,7 +11483,7 @@ var require_mock_symbols = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/mock-utils.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/mock-utils.js
 var require_mock_utils = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { MockNotMatchedError } = require_mock_errors();
 	var { kDispatches, kMockAgent, kOriginalDispatch, kOrigin, kGetNetConnect } = require_mock_symbols();
@@ -11552,7 +11720,7 @@ var require_mock_utils = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/mock-interceptor.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/mock-interceptor.js
 var require_mock_interceptor = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { getResponseData, buildKey, addMockDispatch } = require_mock_utils();
 	var { kDispatches, kDispatchKey, kDefaultHeaders, kDefaultTrailers, kContentLength, kMockDispatch } = require_mock_symbols();
@@ -11597,10 +11765,12 @@ var require_mock_interceptor = /* @__PURE__ */ __commonJSMin(((exports, module) 
 			if (typeof opts !== "object") throw new InvalidArgumentError("opts must be an object");
 			if (typeof opts.path === "undefined") throw new InvalidArgumentError("opts.path must be defined");
 			if (typeof opts.method === "undefined") opts.method = "GET";
-			if (typeof opts.path === "string") if (opts.query) opts.path = buildURL(opts.path, opts.query);
-			else {
-				const parsedURL = new URL(opts.path, "data://");
-				opts.path = parsedURL.pathname + parsedURL.search;
+			if (typeof opts.path === "string") {
+				if (opts.query) opts.path = buildURL(opts.path, opts.query);
+				else {
+					const parsedURL = new URL(opts.path, "data://");
+					opts.path = parsedURL.pathname + parsedURL.search;
+				}
 			}
 			if (typeof opts.method === "string") opts.method = opts.method.toUpperCase();
 			this[kDispatchKey] = buildKey(opts);
@@ -11692,7 +11862,7 @@ var require_mock_interceptor = /* @__PURE__ */ __commonJSMin(((exports, module) 
 	module.exports.MockScope = MockScope;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/mock-client.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/mock-client.js
 var require_mock_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { promisify: promisify$1 } = __require("node:util");
 	var Client = require_client();
@@ -11735,7 +11905,7 @@ var require_mock_client = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = MockClient;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/mock-pool.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/mock-pool.js
 var require_mock_pool = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { promisify } = __require("node:util");
 	var Pool = require_pool();
@@ -11778,7 +11948,7 @@ var require_mock_pool = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = MockPool;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/pluralizer.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/pluralizer.js
 var require_pluralizer = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var singulars = {
 		pronoun: "it",
@@ -11810,7 +11980,7 @@ var require_pluralizer = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/pending-interceptors-formatter.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/pending-interceptors-formatter.js
 var require_pending_interceptors_formatter = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Transform: Transform$2 } = __require("node:stream");
 	var { Console } = __require("node:console");
@@ -11845,7 +12015,7 @@ var require_pending_interceptors_formatter = /* @__PURE__ */ __commonJSMin(((exp
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/mock/mock-agent.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/mock/mock-agent.js
 var require_mock_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kClients } = require_symbols$4();
 	var Agent = require_agent();
@@ -11891,9 +12061,10 @@ var require_mock_agent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			this[kIsMockActive] = true;
 		}
 		enableNetConnect(matcher) {
-			if (typeof matcher === "string" || typeof matcher === "function" || matcher instanceof RegExp) if (Array.isArray(this[kNetConnect])) this[kNetConnect].push(matcher);
-			else this[kNetConnect] = [matcher];
-			else if (typeof matcher === "undefined") this[kNetConnect] = true;
+			if (typeof matcher === "string" || typeof matcher === "function" || matcher instanceof RegExp) {
+				if (Array.isArray(this[kNetConnect])) this[kNetConnect].push(matcher);
+				else this[kNetConnect] = [matcher];
+			} else if (typeof matcher === "undefined") this[kNetConnect] = true;
 			else throw new InvalidArgumentError("Unsupported matcher. Must be one of String|Function|RegExp.");
 		}
 		disableNetConnect() {
@@ -11948,7 +12119,7 @@ ${pendingInterceptorsFormatter.format(pending)}
 	module.exports = MockAgent;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/global.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/global.js
 var require_global = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var globalDispatcher = Symbol.for("undici.globalDispatcher.1");
 	var { InvalidArgumentError } = require_errors();
@@ -11972,7 +12143,7 @@ var require_global = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/handler/decorator-handler.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/handler/decorator-handler.js
 var require_decorator_handler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = class DecoratorHandler {
 		#handler;
@@ -12007,7 +12178,7 @@ var require_decorator_handler = /* @__PURE__ */ __commonJSMin(((exports, module)
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/interceptor/redirect.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/interceptor/redirect.js
 var require_redirect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var RedirectHandler = require_redirect_handler();
 	module.exports = (opts) => {
@@ -12022,7 +12193,7 @@ var require_redirect = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/interceptor/retry.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/interceptor/retry.js
 var require_retry = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var RetryHandler = require_retry_handler();
 	module.exports = (globalOpts) => {
@@ -12043,13 +12214,13 @@ var require_retry = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/interceptor/dump.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/interceptor/dump.js
 var require_dump = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var util = require_util$7();
 	var { InvalidArgumentError, RequestAbortedError } = require_errors();
 	var DecoratorHandler = require_decorator_handler();
 	var DumpHandler = class extends DecoratorHandler {
-		#maxSize = 1024 * 1024;
+		#maxSize = 1048576;
 		#abort = null;
 		#dumped = false;
 		#aborted = false;
@@ -12099,7 +12270,7 @@ var require_dump = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			this.#handler.onComplete(trailers);
 		}
 	};
-	function createDumpInterceptor({ maxSize: defaultMaxSize } = { maxSize: 1024 * 1024 }) {
+	function createDumpInterceptor({ maxSize: defaultMaxSize } = { maxSize: 1048576 }) {
 		return (dispatch) => {
 			return function Intercept(opts, handler) {
 				const { dumpMaxSize = defaultMaxSize } = opts;
@@ -12110,7 +12281,7 @@ var require_dump = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = createDumpInterceptor;
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/interceptor/dns.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/interceptor/dns.js
 var require_dns = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { isIP } = __require("node:net");
 	var { lookup } = __require("node:dns");
@@ -12196,12 +12367,14 @@ var require_dns = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			const { records, offset } = hostnameRecords;
 			let family;
 			if (this.dualStack) {
-				if (affinity == null) if (offset == null || offset === maxInt) {
-					hostnameRecords.offset = 0;
-					affinity = 4;
-				} else {
-					hostnameRecords.offset++;
-					affinity = (hostnameRecords.offset & 1) === 1 ? 6 : 4;
+				if (affinity == null) {
+					if (offset == null || offset === maxInt) {
+						hostnameRecords.offset = 0;
+						affinity = 4;
+					} else {
+						hostnameRecords.offset++;
+						affinity = (hostnameRecords.offset & 1) === 1 ? 6 : 4;
+					}
 				}
 				if (records[affinity] != null && records[affinity].ips.length > 0) family = records[affinity];
 				else family = records[affinity === 4 ? 6 : 4];
@@ -12270,9 +12443,7 @@ var require_dns = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					this.#handler.onError(err);
 					return;
 				case "ENOTFOUND": this.#state.deleteRecord(this.#origin);
-				default:
-					this.#handler.onError(err);
-					break;
+				default: this.#handler.onError(err);
 			}
 		}
 	};
@@ -12323,7 +12494,7 @@ var require_dns = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/headers.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/headers.js
 var require_headers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kConstruct } = require_symbols$4();
 	var { kEnumerableProperty } = require_util$7();
@@ -12688,7 +12859,7 @@ var require_headers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/response.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/response.js
 var require_response = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Headers, HeadersList, fill, getHeadersGuard, setHeadersGuard, setHeadersList } = require_headers();
 	var { extractBody, cloneBody, mixinBody, hasFinalizationRegistry, streamRegistry, bodyUnusable } = require_body();
@@ -13001,7 +13172,7 @@ var require_response = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/dispatcher-weakref.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/dispatcher-weakref.js
 var require_dispatcher_weakref = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kConnected, kSize } = require_symbols$4();
 	var CompatWeakRef = class {
@@ -13038,7 +13209,7 @@ var require_dispatcher_weakref = /* @__PURE__ */ __commonJSMin(((exports, module
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/request.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/request.js
 var require_request = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { extractBody, mixinBody, cloneBody, bodyUnusable } = require_body();
 	var { Headers, fill: fillHeaders, HeadersList, setHeadersGuard, getHeadersGuard, setHeadersList, getHeadersList } = require_headers();
@@ -13547,7 +13718,7 @@ var require_request = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fetch/index.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fetch/index.js
 var require_fetch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { makeNetworkError, makeAppropriateNetworkError, filterResponse, makeResponse, fromInnerResponse } = require_response();
 	var { HeadersList } = require_headers();
@@ -13697,8 +13868,10 @@ var require_fetch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		assert$6(!request.body || request.body.stream);
 		if (request.window === "client") request.window = request.client?.globalObject?.constructor?.name === "Window" ? request.client : "no-window";
 		if (request.origin === "client") request.origin = request.client.origin;
-		if (request.policyContainer === "client") if (request.client != null) request.policyContainer = clonePolicyContainer(request.client.policyContainer);
-		else request.policyContainer = makePolicyContainer();
+		if (request.policyContainer === "client") {
+			if (request.client != null) request.policyContainer = clonePolicyContainer(request.client.policyContainer);
+			else request.policyContainer = makePolicyContainer();
+		}
 		if (!request.headersList.contains("accept", true)) request.headersList.append("accept", "*/*", true);
 		if (!request.headersList.contains("accept-language", true)) request.headersList.append("accept-language", "*", true);
 		if (request.priority === null) {}
@@ -13965,8 +14138,10 @@ var require_fetch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			if (!httpRequest.headersList.contains("cache-control", true)) httpRequest.headersList.append("cache-control", "no-cache", true);
 		}
 		if (httpRequest.headersList.contains("range", true)) httpRequest.headersList.append("accept-encoding", "identity", true);
-		if (!httpRequest.headersList.contains("accept-encoding", true)) if (urlHasHttpsScheme(requestCurrentURL(httpRequest))) httpRequest.headersList.append("accept-encoding", "br, gzip, deflate", true);
-		else httpRequest.headersList.append("accept-encoding", "gzip, deflate", true);
+		if (!httpRequest.headersList.contains("accept-encoding", true)) {
+			if (urlHasHttpsScheme(requestCurrentURL(httpRequest))) httpRequest.headersList.append("accept-encoding", "br, gzip, deflate", true);
+			else httpRequest.headersList.append("accept-encoding", "gzip, deflate", true);
+		}
 		httpRequest.headersList.delete("host", true);
 		if (includeCredentials) {}
 		httpRequest.cache = "no-store";
@@ -14245,7 +14420,7 @@ var require_fetch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fileapi/symbols.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fileapi/symbols.js
 var require_symbols$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		kState: Symbol("FileReader state"),
@@ -14257,7 +14432,7 @@ var require_symbols$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fileapi/progressevent.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fileapi/progressevent.js
 var require_progressevent = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { webidl } = require_webidl();
 	var kState = Symbol("ProgressEvent state");
@@ -14323,7 +14498,7 @@ var require_progressevent = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	module.exports = { ProgressEvent };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fileapi/encoding.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fileapi/encoding.js
 var require_encoding = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* @see https://encoding.spec.whatwg.org/#concept-encoding-get
@@ -14565,7 +14740,7 @@ var require_encoding = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { getEncoding };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fileapi/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fileapi/util.js
 var require_util$4 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kState, kError, kResult, kAborted, kLastProgressEventFired } = require_symbols$2();
 	var { ProgressEvent } = require_progressevent();
@@ -14741,7 +14916,7 @@ var require_util$4 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/fileapi/filereader.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/fileapi/filereader.js
 var require_filereader = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { staticPropertyDescriptors, readOperation, fireAProgressEvent } = require_util$4();
 	var { kState, kError, kResult, kEvents, kAborted } = require_symbols$2();
@@ -14954,12 +15129,12 @@ var require_filereader = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { FileReader };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cache/symbols.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cache/symbols.js
 var require_symbols$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { kConstruct: require_symbols$4().kConstruct };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cache/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cache/util.js
 var require_util$3 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var assert$5 = __require("node:assert");
 	var { URLSerializer } = require_data_url();
@@ -14993,7 +15168,7 @@ var require_util$3 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cache/cache.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cache/cache.js
 var require_cache = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kConstruct } = require_symbols$1();
 	var { urlEquals, getFieldValues } = require_util$3();
@@ -15442,7 +15617,7 @@ var require_cache = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { Cache };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cache/cachestorage.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cache/cachestorage.js
 var require_cachestorage = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kConstruct } = require_symbols$1();
 	var { Cache } = require_cache();
@@ -15532,7 +15707,7 @@ var require_cachestorage = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { CacheStorage };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cookies/constants.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cookies/constants.js
 var require_constants$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		maxAttributeValueSize: 1024,
@@ -15540,7 +15715,7 @@ var require_constants$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cookies/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cookies/util.js
 var require_util$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* @param {string} value
@@ -15596,16 +15771,54 @@ var require_util$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	function validateCookiePath(path) {
 		for (let i = 0; i < path.length; ++i) {
 			const code = path.charCodeAt(i);
-			if (code < 32 || code === 127 || code === 59) throw new Error("Invalid cookie path");
+			if (code < 32 || code > 126 || code === 59) throw new Error("Invalid cookie path");
 		}
 	}
 	/**
-	* I have no idea why these values aren't allowed to be honest,
-	* but Deno tests these. - Khafra
+	* <let-dig> ::= <letter> | <digit>
+	*
+	* <letter> ::= any one of the 52 alphabetic characters A through Z in
+	* upper case and a through z in lower case
+	*
+	* <digit> ::= any one of the ten digits 0 through 9r
+	*
+	* @see https://www.rfc-editor.org/rfc/rfc1034#section-3.5
+	* @param {number} code
+	*/
+	function isLetterOrDigit(code) {
+		return code >= 48 && code <= 57 || code >= 65 && code <= 90 || code >= 97 && code <= 122;
+	}
+	/**
+	* Validates a cookie domain against the "preferred name syntax".
+	*
+	* <domain>      ::= <subdomain> | " "
+	* <subdomain>   ::= <label> | <subdomain> "." <label>
+	* <label>       ::= <let-dig> [ [ <ldh-str> ] <let-dig> ]
+	* <ldh-str>     ::= <let-dig-hyp> | <let-dig-hyp> <ldh-str>
+	* <let-dig-hyp> ::= <let-dig> | "-"
+	*
+	* @see https://www.rfc-editor.org/rfc/rfc1034#section-3.5
+	* @see https://www.rfc-editor.org/rfc/rfc1123#section-2.1
+	* @see https://www.rfc-editor.org/rfc/rfc1035#section-2.3.4
 	* @param {string} domain
 	*/
 	function validateCookieDomain(domain) {
-		if (domain.startsWith("-") || domain.endsWith(".") || domain.endsWith("-")) throw new Error("Invalid cookie domain");
+		if (domain === " ") return;
+		if (domain.length > 255) throw new Error("Invalid cookie domain");
+		let labelLength = 0;
+		for (let i = 0; i < domain.length; ++i) {
+			const code = domain.charCodeAt(i);
+			if (code === 46) {
+				if (labelLength === 0) throw new Error("Invalid cookie domain");
+				if (domain.charCodeAt(i - 1) === 45) throw new Error("Invalid cookie domain");
+				labelLength = 0;
+				continue;
+			}
+			if (labelLength === 0 && !isLetterOrDigit(code)) throw new Error("Invalid cookie domain");
+			if (!isLetterOrDigit(code) && code !== 45) throw new Error("Invalid cookie domain");
+			if (++labelLength > 63) throw new Error("Invalid cookie domain");
+		}
+		if (labelLength === 0 || domain.charCodeAt(domain.length - 1) === 45) throw new Error("Invalid cookie domain");
 	}
 	var IMFDays = [
 		"Sun",
@@ -15720,7 +15933,11 @@ var require_util$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		for (const part of cookie.unparsed) {
 			if (!part.includes("=")) throw new Error("Invalid unparsed");
 			const [key, ...value] = part.split("=");
-			out.push(`${key.trim()}=${value.join("=")}`);
+			const trimmedKey = key.trim();
+			const joinedValue = value.join("=");
+			validateCookieName(trimmedKey);
+			validateCookieValue(joinedValue);
+			out.push(`${trimmedKey}=${joinedValue}`);
 		}
 		return out.join("; ");
 	}
@@ -15734,7 +15951,7 @@ var require_util$2 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cookies/parse.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cookies/parse.js
 var require_parse$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { maxNameValuePairSize, maxAttributeValueSize } = require_constants$2();
 	var { isCTLExcludingHtab } = require_util$2();
@@ -15820,12 +16037,10 @@ var require_parse$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		} else if (attributeNameLowercase === "secure") cookieAttributeList.secure = true;
 		else if (attributeNameLowercase === "httponly") cookieAttributeList.httpOnly = true;
 		else if (attributeNameLowercase === "samesite") {
-			let enforcement = "Default";
 			const attributeValueLowercase = attributeValue.toLowerCase();
-			if (attributeValueLowercase.includes("none")) enforcement = "None";
-			if (attributeValueLowercase.includes("strict")) enforcement = "Strict";
-			if (attributeValueLowercase.includes("lax")) enforcement = "Lax";
-			cookieAttributeList.sameSite = enforcement;
+			if (attributeValueLowercase === "none") cookieAttributeList.sameSite = "None";
+			else if (attributeValueLowercase === "strict") cookieAttributeList.sameSite = "Strict";
+			else if (attributeValueLowercase === "lax") cookieAttributeList.sameSite = "Lax";
 		} else {
 			cookieAttributeList.unparsed ??= [];
 			cookieAttributeList.unparsed.push(`${attributeName}=${attributeValue}`);
@@ -15838,7 +16053,7 @@ var require_parse$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/cookies/index.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/cookies/index.js
 var require_cookies = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { parseSetCookie } = require_parse$1();
 	var { stringify } = require_util$2();
@@ -15989,7 +16204,7 @@ var require_cookies = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/events.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/events.js
 var require_events = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { webidl } = require_webidl();
 	var { kEnumerableProperty } = require_util$7();
@@ -16252,7 +16467,7 @@ var require_events = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/constants.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/constants.js
 var require_constants$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		uid: "258EAFA5-E914-47DA-95CA-C5AB0DC85B11",
@@ -16297,7 +16512,7 @@ var require_constants$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/symbols.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/symbols.js
 var require_symbols = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = {
 		kWebSocketURL: Symbol("url"),
@@ -16311,7 +16526,7 @@ var require_symbols = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/util.js
 var require_util$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { kReadyState, kController, kResponse, kBinaryType, kWebSocketURL } = require_symbols();
 	var { states, opcodes } = require_constants$1();
@@ -16372,8 +16587,10 @@ var require_util$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			failWebsocketConnection(ws, "Received invalid UTF-8 in text frame.");
 			return;
 		}
-		else if (type === opcodes.BINARY) if (ws[kBinaryType] === "blob") dataForEvent = new Blob([data]);
-		else dataForEvent = toArrayBuffer(data);
+		else if (type === opcodes.BINARY) {
+			if (ws[kBinaryType] === "blob") dataForEvent = new Blob([data]);
+			else dataForEvent = toArrayBuffer(data);
+		}
 		fireEvent("message", ws, createFastMessageEvent, {
 			origin: ws[kWebSocketURL].origin,
 			data: dataForEvent
@@ -16493,7 +16710,7 @@ var require_util$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/frame.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/frame.js
 var require_frame = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { maxUnsigned16Bit } = require_constants$1();
 	var BUFFER_SIZE = 16386;
@@ -16565,7 +16782,7 @@ var require_frame = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { WebsocketFrameSend };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/connection.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/connection.js
 var require_connection = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { uid, states, sentCloseFrameState, emptyBuffer, opcodes } = require_constants$1();
 	var { kReadyState, kSentClose, kByteParser, kReceivedClose, kResponse } = require_symbols();
@@ -16730,7 +16947,7 @@ var require_connection = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/permessage-deflate.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/permessage-deflate.js
 var require_permessage_deflate = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { createInflateRaw, Z_DEFAULT_WINDOWBITS } = __require("node:zlib");
 	var { isValidClientWindowBits } = require_util$1();
@@ -16809,7 +17026,7 @@ var require_permessage_deflate = /* @__PURE__ */ __commonJSMin(((exports, module
 	module.exports = { PerMessageDeflate };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/receiver.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/receiver.js
 var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Writable } = __require("node:stream");
 	var assert$2 = __require("node:assert");
@@ -16821,6 +17038,10 @@ var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { closeWebSocketConnection } = require_connection();
 	var { PerMessageDeflate } = require_permessage_deflate();
 	var { MessageSizeExceededError } = require_errors();
+	function failWebsocketConnectionWithCode(ws, code, reason) {
+		closeWebSocketConnection(ws, code, reason, Buffer.byteLength(reason));
+		failWebsocketConnection(ws, reason);
+	}
 	var ByteParser = class extends Writable {
 		#buffers = [];
 		#fragmentsBytes = 0;
@@ -16832,16 +17053,19 @@ var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		/** @type {Map<string, PerMessageDeflate>} */
 		#extensions;
 		/** @type {number} */
+		#maxFragments;
+		/** @type {number} */
 		#maxPayloadSize;
 		/**
 		* @param {import('./websocket').WebSocket} ws
 		* @param {Map<string, string>|null} extensions
-		* @param {{ maxPayloadSize?: number }} [options]
+		* @param {{ maxFragments?: number, maxPayloadSize?: number }} [options]
 		*/
 		constructor(ws, extensions, options = {}) {
 			super();
 			this.ws = ws;
 			this.#extensions = extensions == null ? /* @__PURE__ */ new Map() : extensions;
+			this.#maxFragments = options.maxFragments ?? 0;
 			this.#maxPayloadSize = options.maxPayloadSize ?? 0;
 			if (this.#extensions.has("permessage-deflate")) this.#extensions.set("permessage-deflate", new PerMessageDeflate(extensions, options));
 		}
@@ -16856,8 +17080,8 @@ var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			this.run(callback);
 		}
 		#validatePayloadLength() {
-			if (this.#maxPayloadSize > 0 && !isControlFrame(this.#info.opcode) && this.#info.payloadLength > this.#maxPayloadSize) {
-				failWebsocketConnection(this.ws, "Payload size exceeds maximum allowed size");
+			if (this.#maxPayloadSize > 0 && !isControlFrame(this.#info.opcode) && this.#info.payloadLength + this.#fragmentsBytes > this.#maxPayloadSize) {
+				failWebsocketConnectionWithCode(this.ws, 1009, "Payload size exceeds maximum allowed size");
 				return false;
 			}
 			return true;
@@ -16954,9 +17178,9 @@ var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					this.#loop = this.parseControlFrame(body);
 					this.#state = parserStates.INFO;
 				} else if (!this.#info.compressed) {
-					this.writeFragments(body);
+					if (!this.writeFragments(body)) return;
 					if (this.#maxPayloadSize > 0 && this.#fragmentsBytes > this.#maxPayloadSize) {
-						failWebsocketConnection(this.ws, new MessageSizeExceededError().message);
+						failWebsocketConnectionWithCode(this.ws, 1009, new MessageSizeExceededError().message);
 						return;
 					}
 					if (!this.#info.fragmented && this.#info.fin) websocketMessageReceived(this.ws, this.#info.binaryType, this.consumeFragments());
@@ -16964,12 +17188,13 @@ var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				} else {
 					this.#extensions.get("permessage-deflate").decompress(body, this.#info.fin, (error, data) => {
 						if (error) {
-							failWebsocketConnection(this.ws, error.message);
+							const code = error instanceof MessageSizeExceededError ? 1009 : 1007;
+							failWebsocketConnectionWithCode(this.ws, code, error.message);
 							return;
 						}
-						this.writeFragments(data);
+						if (!this.writeFragments(data)) return;
 						if (this.#maxPayloadSize > 0 && this.#fragmentsBytes > this.#maxPayloadSize) {
-							failWebsocketConnection(this.ws, new MessageSizeExceededError().message);
+							failWebsocketConnectionWithCode(this.ws, 1009, new MessageSizeExceededError().message);
 							return;
 						}
 						if (!this.#info.fin) {
@@ -17021,8 +17246,13 @@ var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			return buffer;
 		}
 		writeFragments(fragment) {
+			if (this.#maxFragments > 0 && this.#fragments.length === this.#maxFragments) {
+				failWebsocketConnectionWithCode(this.ws, 1008, "Too many message fragments");
+				return false;
+			}
 			this.#fragmentsBytes += fragment.length;
 			this.#fragments.push(fragment);
+			return true;
 		}
 		consumeFragments() {
 			const fragments = this.#fragments;
@@ -17113,7 +17343,7 @@ var require_receiver = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { ByteParser };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/sender.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/sender.js
 var require_sender = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { WebsocketFrameSend } = require_frame();
 	var { opcodes, sendHints } = require_constants$1();
@@ -17193,7 +17423,7 @@ var require_sender = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { SendQueue };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/websocket/websocket.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/websocket/websocket.js
 var require_websocket = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { webidl } = require_webidl();
 	var { URLSerializer } = require_data_url();
@@ -17389,8 +17619,13 @@ var require_websocket = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		*/
 		#onConnectionEstablished(response, parsedExtensions) {
 			this[kResponse] = response;
-			const maxPayloadSize = this[kController]?.dispatcher?.webSocketOptions?.maxPayloadSize;
-			const parser = new ByteParser(this, parsedExtensions, { maxPayloadSize });
+			const webSocketOptions = this[kController]?.dispatcher?.webSocketOptions;
+			const maxFragments = webSocketOptions?.maxFragments;
+			const maxPayloadSize = webSocketOptions?.maxPayloadSize;
+			const parser = new ByteParser(this, parsedExtensions, {
+				maxFragments,
+				maxPayloadSize
+			});
 			parser.on("drain", onParserDrain);
 			parser.on("error", onParserError.bind(this));
 			response.socket.ws = this;
@@ -17489,7 +17724,7 @@ var require_websocket = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { WebSocket };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/eventsource/util.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/eventsource/util.js
 var require_util = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* Checks if the given value is a valid LastEventId.
@@ -17521,7 +17756,7 @@ var require_util = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/eventsource/eventsource-stream.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/eventsource/eventsource-stream.js
 var require_eventsource_stream = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { Transform: Transform$1 } = __require("node:stream");
 	var { isASCIINumber, isValidLastEventId } = require_util();
@@ -17645,7 +17880,6 @@ var require_eventsource_stream = /* @__PURE__ */ __commonJSMin(((exports, module
 				default:
 					if (this.buffer[0] === BOM[0] && this.buffer[1] === BOM[1] && this.buffer[2] === BOM[2]) this.buffer = this.buffer.subarray(3);
 					this.checkBOM = false;
-					break;
 			}
 			while (this.pos < this.buffer.length) {
 				if (this.eventEndCheck) {
@@ -17711,9 +17945,7 @@ var require_eventsource_stream = /* @__PURE__ */ __commonJSMin(((exports, module
 				case "id":
 					if (isValidLastEventId(value)) event[field] = value;
 					break;
-				case "event":
-					if (value.length > 0) event[field] = value;
-					break;
+				case "event": if (value.length > 0) event[field] = value;
 			}
 		}
 		/**
@@ -17743,7 +17975,7 @@ var require_eventsource_stream = /* @__PURE__ */ __commonJSMin(((exports, module
 	module.exports = { EventSourceStream };
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/lib/web/eventsource/eventsource.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/lib/web/eventsource/eventsource.js
 var require_eventsource = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { pipeline } = __require("node:stream");
 	var { fetching } = require_fetch();
@@ -17919,13 +18151,15 @@ var require_eventsource = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			};
 			fetchParams.processResponseEndOfBody = processEventSourceEndOfBody;
 			fetchParams.processResponse = (response) => {
-				if (isNetworkError(response)) if (response.aborted) {
-					this.close();
-					this.dispatchEvent(new Event("error"));
-					return;
-				} else {
-					this.#reconnect();
-					return;
+				if (isNetworkError(response)) {
+					if (response.aborted) {
+						this.close();
+						this.dispatchEvent(new Event("error"));
+						return;
+					} else {
+						this.#reconnect();
+						return;
+					}
 				}
 				const contentType = response.headersList.get("content-type", true);
 				const mimeType = contentType !== null ? parseMIMEType(contentType) : "failure";
@@ -18056,7 +18290,7 @@ var require_eventsource = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/undici@6.25.0/node_modules/undici/index.js
+//#region node_modules/.pnpm/undici@6.28.0/node_modules/undici/index.js
 var require_undici = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Client = require_client();
 	var Dispatcher = require_dispatcher();
@@ -18508,7 +18742,7 @@ var HttpClient = class {
 		req.on("socket", (sock) => {
 			socket = sock;
 		});
-		req.setTimeout(this._socketTimeout || 3 * 6e4, () => {
+		req.setTimeout(this._socketTimeout || 18e4, () => {
 			if (socket) socket.end();
 			handleResult(/* @__PURE__ */ new Error(`Request timeout: ${info.options.path}`));
 		});
@@ -18588,14 +18822,18 @@ var HttpClient = class {
 		let clientHeader;
 		if (this.requestOptions && this.requestOptions.headers) {
 			const headerValue = lowercaseKeys$1(this.requestOptions.headers)[Headers.ContentType];
-			if (headerValue) if (typeof headerValue === "number") clientHeader = String(headerValue);
-			else if (Array.isArray(headerValue)) clientHeader = headerValue.join(", ");
-			else clientHeader = headerValue;
+			if (headerValue) {
+				if (typeof headerValue === "number") clientHeader = String(headerValue);
+				else if (Array.isArray(headerValue)) clientHeader = headerValue.join(", ");
+				else clientHeader = headerValue;
+			}
 		}
 		const additionalValue = additionalHeaders[Headers.ContentType];
-		if (additionalValue !== void 0) if (typeof additionalValue === "number") return String(additionalValue);
-		else if (Array.isArray(additionalValue)) return additionalValue.join(", ");
-		else return additionalValue;
+		if (additionalValue !== void 0) {
+			if (typeof additionalValue === "number") return String(additionalValue);
+			else if (Array.isArray(additionalValue)) return additionalValue.join(", ");
+			else return additionalValue;
+		}
 		if (clientHeader !== void 0) return clientHeader;
 		return _default;
 	}
@@ -18703,7 +18941,7 @@ var HttpClient = class {
 		});
 	}
 };
-var lowercaseKeys$1 = (obj) => Object.keys(obj).reduce((c, k) => (c[k.toLowerCase()] = obj[k], c), {});
+var lowercaseKeys$1 = /* @__PURE__ */ __name((obj) => Object.keys(obj).reduce((c, k) => (c[k.toLowerCase()] = obj[k], c), {}), "lowercaseKeys");
 //#endregion
 //#region node_modules/.pnpm/@actions+http-client@4.0.1/node_modules/@actions/http-client/lib/auth.js
 var __awaiter$23 = function(thisArg, _arguments, P, generator) {
@@ -19142,6 +19380,7 @@ function normalizeSeparators$1(p) {
 	}
 	return p.replace(/\/\/+/g, "/");
 }
+__name(normalizeSeparators$1, "normalizeSeparators");
 function isUnixExecutable(stats) {
 	return (stats.mode & 1) > 0 || (stats.mode & 8) > 0 && process.getgid !== void 0 && stats.gid === process.getgid() || (stats.mode & 64) > 0 && process.getuid !== void 0 && stats.uid === process.getuid();
 }
@@ -19200,8 +19439,10 @@ function which(tool, check) {
 		if (!tool) throw new Error("parameter 'tool' is required");
 		if (check) {
 			const result = yield which(tool, false);
-			if (!result) if (IS_WINDOWS$8) throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also verify the file has a valid extension for an executable file.`);
-			else throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also check the file mode to verify the file is executable.`);
+			if (!result) {
+				if (IS_WINDOWS$8) throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also verify the file has a valid extension for an executable file.`);
+				else throw new Error(`Unable to locate executable file: ${tool}. Please verify either the file path exists or the file can be found within a directory specified by the PATH environment variable. Also check the file mode to verify the file is executable.`);
+			}
 			return result;
 		}
 		const matches = yield findInPath(tool);
@@ -19284,17 +19525,18 @@ var ToolRunner = class extends events.EventEmitter {
 		const toolPath = this._getSpawnFileName();
 		const args = this._getSpawnArgs(options);
 		let cmd = noPrefix ? "" : "[command]";
-		if (IS_WINDOWS$7) if (this._isCmdFile()) {
-			cmd += toolPath;
-			for (const a of args) cmd += ` ${a}`;
-		} else if (options.windowsVerbatimArguments) {
-			cmd += `"${toolPath}"`;
-			for (const a of args) cmd += ` ${a}`;
+		if (IS_WINDOWS$7) {
+			if (this._isCmdFile()) {
+				cmd += toolPath;
+				for (const a of args) cmd += ` ${a}`;
+			} else if (options.windowsVerbatimArguments) {
+				cmd += `"${toolPath}"`;
+				for (const a of args) cmd += ` ${a}`;
+			} else {
+				cmd += this._windowsQuoteCmdArg(toolPath);
+				for (const a of args) cmd += ` ${this._windowsQuoteCmdArg(a)}`;
+			}
 		} else {
-			cmd += this._windowsQuoteCmdArg(toolPath);
-			for (const a of args) cmd += ` ${this._windowsQuoteCmdArg(a)}`;
-		}
-		else {
 			cmd += toolPath;
 			for (const a of args) cmd += ` ${a}`;
 		}
@@ -19707,6 +19949,7 @@ function getInput$1(name, options) {
 	if (options && options.trimWhitespace === false) return val;
 	return val.trim();
 }
+__name(getInput$1, "getInput");
 /**
 * Sets the action status to failed.
 * When the action exits it will be with an exit code of 1
@@ -19777,30 +20020,22 @@ function endGroup() {
 	issue("endgroup");
 }
 //#endregion
-//#region node_modules/.pnpm/@actions-rs-plus+core@0.7.5/node_modules/@actions-rs-plus/core/dist/_virtual/_rolldown/runtime.js
-var __defProp = Object.defineProperty;
-var __exportAll = (all, no_symbols) => {
-	let target = {};
-	for (var name in all) __defProp(target, name, {
-		get: all[name],
-		enumerable: true
-	});
-	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
-	return target;
-};
-//#endregion
 //#region node_modules/.pnpm/@actions+github@9.1.1/node_modules/@actions/github/lib/context.js
 var Context = class {
 	/**
 	* Hydrate the context from the environment
 	*/
 	constructor() {
-		var _a, _b, _c;
+		var _a;
+		var _b;
+		var _c;
 		this.payload = {};
-		if (process.env.GITHUB_EVENT_PATH) if (existsSync(process.env.GITHUB_EVENT_PATH)) this.payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: "utf8" }));
-		else {
-			const path = process.env.GITHUB_EVENT_PATH;
-			process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL}`);
+		if (process.env.GITHUB_EVENT_PATH) {
+			if (existsSync(process.env.GITHUB_EVENT_PATH)) this.payload = JSON.parse(readFileSync(process.env.GITHUB_EVENT_PATH, { encoding: "utf8" }));
+			else {
+				const path = process.env.GITHUB_EVENT_PATH;
+				process.stdout.write(`GITHUB_EVENT_PATH ${path} does not exist${EOL}`);
+			}
 		}
 		this.eventName = process.env.GITHUB_EVENT_NAME;
 		this.sha = process.env.GITHUB_SHA;
@@ -20278,7 +20513,7 @@ var import_lib = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((export
 			req.on("socket", (sock) => {
 				socket = sock;
 			});
-			req.setTimeout(this._socketTimeout || 3 * 6e4, () => {
+			req.setTimeout(this._socketTimeout || 18e4, () => {
 				if (socket) socket.end();
 				handleResult(/* @__PURE__ */ new Error(`Request timeout: ${info.options.path}`));
 			});
@@ -20358,14 +20593,18 @@ var import_lib = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((export
 			let clientHeader;
 			if (this.requestOptions && this.requestOptions.headers) {
 				const headerValue = lowercaseKeys(this.requestOptions.headers)[Headers.ContentType];
-				if (headerValue) if (typeof headerValue === "number") clientHeader = String(headerValue);
-				else if (Array.isArray(headerValue)) clientHeader = headerValue.join(", ");
-				else clientHeader = headerValue;
+				if (headerValue) {
+					if (typeof headerValue === "number") clientHeader = String(headerValue);
+					else if (Array.isArray(headerValue)) clientHeader = headerValue.join(", ");
+					else clientHeader = headerValue;
+				}
 			}
 			const additionalValue = additionalHeaders[Headers.ContentType];
-			if (additionalValue !== void 0) if (typeof additionalValue === "number") return String(additionalValue);
-			else if (Array.isArray(additionalValue)) return additionalValue.join(", ");
-			else return additionalValue;
+			if (additionalValue !== void 0) {
+				if (typeof additionalValue === "number") return String(additionalValue);
+				else if (Array.isArray(additionalValue)) return additionalValue.join(", ");
+				else return additionalValue;
+			}
 			if (clientHeader !== void 0) return clientHeader;
 			return _default;
 		}
@@ -20618,7 +20857,7 @@ var before_after_hook_default = {
 	Collection
 };
 //#endregion
-//#region node_modules/.pnpm/@octokit+endpoint@11.0.3/node_modules/@octokit/endpoint/dist-bundle/index.js
+//#region node_modules/.pnpm/@octokit+endpoint@11.0.5/node_modules/@octokit/endpoint/dist-bundle/index.js
 var DEFAULTS = {
 	method: "GET",
 	baseUrl: "https://api.github.com",
@@ -20643,12 +20882,14 @@ function isPlainObject$1(value) {
 	const Ctor = Object.prototype.hasOwnProperty.call(proto, "constructor") && proto.constructor;
 	return typeof Ctor === "function" && Ctor instanceof Ctor && Function.prototype.call(Ctor) === Function.prototype.call(value);
 }
+__name(isPlainObject$1, "isPlainObject");
 function mergeDeep(defaults, options) {
 	const result = Object.assign({}, defaults);
 	Object.keys(options).forEach((key) => {
-		if (isPlainObject$1(options[key])) if (!(key in defaults)) Object.assign(result, { [key]: options[key] });
-		else result[key] = mergeDeep(defaults[key], options[key]);
-		else Object.assign(result, { [key]: options[key] });
+		if (isPlainObject$1(options[key])) {
+			if (!(key in defaults)) Object.assign(result, { [key]: options[key] });
+			else result[key] = mergeDeep(defaults[key], options[key]);
+		} else Object.assign(result, { [key]: options[key] });
 	});
 	return result;
 }
@@ -20720,32 +20961,35 @@ function isKeyOperator(operator) {
 	return operator === ";" || operator === "&" || operator === "?";
 }
 function getValues(context, operator, key, modifier) {
-	var value = context[key], result = [];
-	if (isDefined(value) && value !== "") if (typeof value === "string" || typeof value === "number" || typeof value === "bigint" || typeof value === "boolean") {
-		value = value.toString();
-		if (modifier && modifier !== "*") value = value.substring(0, parseInt(modifier, 10));
-		result.push(encodeValue(operator, value, isKeyOperator(operator) ? key : ""));
-	} else if (modifier === "*") if (Array.isArray(value)) value.filter(isDefined).forEach(function(value2) {
-		result.push(encodeValue(operator, value2, isKeyOperator(operator) ? key : ""));
-	});
-	else Object.keys(value).forEach(function(k) {
-		if (isDefined(value[k])) result.push(encodeValue(operator, value[k], k));
-	});
-	else {
-		const tmp = [];
-		if (Array.isArray(value)) value.filter(isDefined).forEach(function(value2) {
-			tmp.push(encodeValue(operator, value2));
-		});
-		else Object.keys(value).forEach(function(k) {
-			if (isDefined(value[k])) {
-				tmp.push(encodeUnreserved(k));
-				tmp.push(encodeValue(operator, value[k].toString()));
-			}
-		});
-		if (isKeyOperator(operator)) result.push(encodeUnreserved(key) + "=" + tmp.join(","));
-		else if (tmp.length !== 0) result.push(tmp.join(","));
-	}
-	else if (operator === ";") {
+	var value = context[key];
+	var result = [];
+	if (isDefined(value) && value !== "") {
+		if (typeof value === "string" || typeof value === "number" || typeof value === "bigint" || typeof value === "boolean") {
+			value = value.toString();
+			if (modifier && modifier !== "*") value = value.substring(0, parseInt(modifier, 10));
+			result.push(encodeValue(operator, value, isKeyOperator(operator) ? key : ""));
+		} else if (modifier === "*") {
+			if (Array.isArray(value)) value.filter(isDefined).forEach(function(value2) {
+				result.push(encodeValue(operator, value2, isKeyOperator(operator) ? key : ""));
+			});
+			else Object.keys(value).forEach(function(k) {
+				if (isDefined(value[k])) result.push(encodeValue(operator, value[k], k));
+			});
+		} else {
+			const tmp = [];
+			if (Array.isArray(value)) value.filter(isDefined).forEach(function(value2) {
+				tmp.push(encodeValue(operator, value2));
+			});
+			else Object.keys(value).forEach(function(k) {
+				if (isDefined(value[k])) {
+					tmp.push(encodeUnreserved(k));
+					tmp.push(encodeValue(operator, value[k].toString()));
+				}
+			});
+			if (isKeyOperator(operator)) result.push(encodeUnreserved(key) + "=" + tmp.join(","));
+			else if (tmp.length !== 0) result.push(tmp.join(","));
+		}
+	} else if (operator === ";") {
 		if (isDefined(value)) result.push(encodeUnreserved(key));
 	} else if (value === "" && (operator === "&" || operator === "?")) result.push(encodeUnreserved(key) + "=");
 	else if (value === "") result.push("");
@@ -20823,6 +21067,7 @@ function parse$2(options) {
 		headers
 	}, typeof body !== "undefined" ? { body } : null, options.request ? { request: options.request } : null);
 }
+__name(parse$2, "parse");
 function endpointWithDefaults(defaults, route, options) {
 	return parse$2(merge(defaults, route, options));
 }
@@ -20836,139 +21081,304 @@ function withDefaults$2(oldDefaults, newDefaults) {
 		parse: parse$2
 	});
 }
+__name(withDefaults$2, "withDefaults");
 var endpoint = withDefaults$2(null, DEFAULTS);
+//#endregion
+//#region node_modules/.pnpm/content-type@3.0.0/node_modules/content-type/dist/index.js
 /*!
 * content-type
 * Copyright(c) 2015 Douglas Christopher Wilson
 * MIT Licensed
 */
-//#endregion
-//#region node_modules/.pnpm/json-with-bigint@3.5.8/node_modules/json-with-bigint/json-with-bigint.js
-var import_dist$2 = (/* @__PURE__ */ __commonJSMin(((exports) => {
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.parse = parse;
-	/**
-	* Null object perf optimization. Faster than `Object.create(null)` and `{ __proto__: null }`.
-	*/
-	var NullObject = /* @__PURE__ */ (() => {
-		const C = function() {};
-		C.prototype = Object.create(null);
-		return C;
-	})();
-	/**
-	* Parse a `Content-Type` header.
-	*/
-	function parse(header, options) {
-		const len = header.length;
-		let index = skipOWS(header, 0, len);
-		const valueStart = index;
-		index = skipValue(header, index, len);
-		const valueEnd = trailingOWS(header, valueStart, index);
-		return {
-			type: header.slice(valueStart, valueEnd).toLowerCase(),
-			parameters: options?.parameters === false ? new NullObject() : parseParameters(header, index, len)
-		};
-	}
-	var SP = 32;
-	var HTAB = 9;
-	var SEMI = 59;
-	var EQ = 61;
-	var DQUOTE = 34;
-	var BSLASH = 92;
-	/**
-	* Parses the parameters of a `Content-Type` header starting at the given index.
-	*/
-	function parseParameters(header, index, len) {
-		const parameters = new NullObject();
-		parameter: while (index < len) {
-			index = skipOWS(header, index + 1, len);
-			const keyStart = index;
-			while (index < len) {
-				const code = header.charCodeAt(index);
-				if (code === SEMI) continue parameter;
-				if (code === EQ) {
-					const keyEnd = trailingOWS(header, keyStart, index);
-					const key = header.slice(keyStart, keyEnd).toLowerCase();
-					index = skipOWS(header, index + 1, len);
-					if (index < len && header.charCodeAt(index) === DQUOTE) {
-						index++;
-						let value = "";
-						while (index < len) {
-							const code = header.charCodeAt(index++);
-							if (code === DQUOTE) {
-								index = skipValue(header, index, len);
-								if (parameters[key] === void 0) parameters[key] = value;
-								break;
-							}
-							if (code === BSLASH && index < len) {
-								value += header[index++];
-								continue;
-							}
-							value += String.fromCharCode(code);
+/**
+* Null object perf optimization. Faster than `Object.create(null)` and `{ __proto__: null }`.
+*/
+var NullObject = /* @__PURE__ */ (() => {
+	const C = function() {};
+	C.prototype = Object.create(null);
+	return C;
+})();
+/**
+* Parse a `Content-Type` header.
+*/
+function parse$1(header, options) {
+	const stopChar = options?.comma === true ? COMMA : 65536;
+	const len = header.length;
+	let index = skipOWS(header, options?.start ?? 0, len);
+	const valueStart = index;
+	index = skipValue(header, index, len, stopChar);
+	const valueEnd = trailingOWS(header, valueStart, index);
+	const type = header.slice(valueStart, valueEnd).toLowerCase();
+	if (options?.parameters === false) return {
+		type,
+		index,
+		parameters: new NullObject()
+	};
+	return parseParameters(header, type, index, len, stopChar);
+}
+__name(parse$1, "parse");
+var SP = 32;
+var HTAB = 9;
+var SEMI = 59;
+var EQ = 61;
+var DQUOTE = 34;
+var BSLASH = 92;
+var COMMA = 44;
+/**
+* Parses the parameters of a `Content-Type` header starting at the given index.
+*/
+function parseParameters(header, type, index, len, stopChar) {
+	const parameters = new NullObject();
+	parameter: while (index < len) {
+		if (header.charCodeAt(index) === stopChar) break;
+		index = skipOWS(header, index + 1, len);
+		const keyStart = index;
+		while (index < len) {
+			const code = header.charCodeAt(index);
+			if (code === stopChar) break parameter;
+			if (code === SEMI) continue parameter;
+			if (code === EQ) {
+				const keyEnd = trailingOWS(header, keyStart, index);
+				const key = header.slice(keyStart, keyEnd).toLowerCase();
+				index = skipOWS(header, index + 1, len);
+				if (index < len && header.charCodeAt(index) === DQUOTE) {
+					index++;
+					let value = "";
+					while (index < len) {
+						const code = header.charCodeAt(index++);
+						if (code === DQUOTE) {
+							index = skipValue(header, index, len, stopChar);
+							if (parameters[key] === void 0) parameters[key] = value;
+							break;
 						}
-						continue parameter;
-					}
-					const valueStart = index;
-					index = skipValue(header, index, len);
-					if (parameters[key] === void 0) {
-						const valueEnd = trailingOWS(header, valueStart, index);
-						parameters[key] = header.slice(valueStart, valueEnd);
+						if (code === BSLASH && index < len) {
+							value += header[index++];
+							continue;
+						}
+						value += String.fromCharCode(code);
 					}
 					continue parameter;
 				}
-				index++;
+				const valueStart = index;
+				index = skipValue(header, index, len, stopChar);
+				if (parameters[key] === void 0) {
+					const valueEnd = trailingOWS(header, valueStart, index);
+					parameters[key] = header.slice(valueStart, valueEnd);
+				}
+				continue parameter;
 			}
-		}
-		return parameters;
-	}
-	/**
-	* Skip over characters until a semicolon.
-	*/
-	function skipValue(str, index, len) {
-		while (index < len) {
-			if (str.charCodeAt(index) === SEMI) break;
 			index++;
 		}
-		return index;
 	}
-	/**
-	* Skip optional whitespace (OWS) in an HTTP header value.
-	*
-	* OWS is defined in RFC 9110 sec 5.6.3 as SP (" ") or HTAB ("\t").
-	*/
-	function skipOWS(header, index, len) {
-		while (index < len) {
-			const char = header.charCodeAt(index);
-			if (char !== SP && char !== HTAB) break;
-			index++;
-		}
-		return index;
+	return {
+		type,
+		index,
+		parameters
+	};
+}
+/**
+* Skip over characters until a semicolon or other exit character.
+*/
+function skipValue(str, index, len, stopChar) {
+	while (index < len) {
+		const code = str.charCodeAt(index);
+		if (code === SEMI || code === stopChar) break;
+		index++;
 	}
-	/**
-	* Trim optional whitespace (OWS) from the end of a substring.
-	*
-	* OWS is defined in RFC 9110 sec 5.6.3 as SP (" ") or HTAB ("\t").
-	*/
-	function trailingOWS(header, start, end) {
-		while (end > start) {
-			const char = header.charCodeAt(end - 1);
-			if (char !== SP && char !== HTAB) break;
-			end--;
-		}
-		return end;
+	return index;
+}
+/**
+* Skip optional whitespace (OWS) in an HTTP header value.
+*
+* OWS is defined in RFC 9110 sec 5.6.3 as SP (" ") or HTAB ("\t").
+*/
+function skipOWS(header, index, len) {
+	while (index < len) {
+		const char = header.charCodeAt(index);
+		if (char !== SP && char !== HTAB) break;
+		index++;
 	}
-})))();
+	return index;
+}
+/**
+* Trim optional whitespace (OWS) from the end of a substring.
+*
+* OWS is defined in RFC 9110 sec 5.6.3 as SP (" ") or HTAB ("\t").
+*/
+function trailingOWS(header, start, end) {
+	while (end > start) {
+		const char = header.charCodeAt(end - 1);
+		if (char !== SP && char !== HTAB) break;
+		end--;
+	}
+	return end;
+}
+//#endregion
+//#region node_modules/.pnpm/json-with-bigint@3.5.12/node_modules/json-with-bigint/json-with-bigint.js
 var intRegex = /^-?\d+$/;
 var noiseValue = /^-?\d+n+$/;
 var originalStringify = JSON.stringify;
 var originalParse = JSON.parse;
 var customFormat = /^-?\d+n$/;
-var bigIntsStringify = /([\[:])?"(-?\d+)n"($|([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
-var noiseStringify = /([\[:])?("-?\d+n+)n("$|"([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
+var bigIntsStringify = /([\[:])?"(-?\d+)n"($|\s*[,\}\]])/g;
+var noiseStringify = /([\[:])?("-?\d+n+)n("$|"\s*[,\}\]])/g;
 /**
 * @typedef {(this: any, key: string | number | undefined, value: any) => any} Replacer
 * @typedef {(key: string | number | undefined, value: any, context?: { source: string }) => any} Reviver
 */
+/**
+* Checks if a value is unstringifiable according to native JSON.stringify rules.
+*
+* @param {any} val The value to check.
+* @returns {boolean} True if the value is undefined, a function, or a symbol.
+*/
+var isUnstringifiable = (val) => val === void 0 || typeof val === "function" || typeof val === "symbol";
+/**
+* Checks if a value is a native JSON.rawJSON object (Node.js 22+).
+*
+* @param {any} val The value to check.
+* @returns {boolean} True if the value is a RawJSON instance.
+*/
+var isRawJSON = (val) => val !== null && typeof val === "object" && val.constructor && val.constructor.name === "RawJSON";
+/**
+* Iteratively converts a JS value to a JSON string.
+* Used as a fallback when the native JSON.stringify hits the Maximum Call Stack size.
+* Fully compliant with JSON formatting (space), replacers, and toJSON behaviors.
+*
+* @param {any} rootValue The value to stringify.
+* @param {Replacer | Array<string | number> | null} [replacer] User's custom replacer function.
+* @param {string | number} [spaceParam] Indentation for pretty-printing.
+* @returns {string | undefined} The generated JSON string.
+*/
+var stringifyIteratively = (rootValue, replacer, spaceParam) => {
+	let space = "";
+	if (typeof spaceParam === "number") space = " ".repeat(Math.min(10, Math.max(0, Math.floor(spaceParam))));
+	else if (typeof spaceParam === "string") space = spaceParam.slice(0, 10);
+	const isFunctionReplacer = typeof replacer === "function";
+	const propertyList = Array.isArray(replacer) ? new Set(replacer.map(String)) : null;
+	/**
+	* Prepares a value for stringification by resolving toJSON, handling BigInts,
+	* applying custom replacers, and unwrapping primitive objects.
+	*
+	* @param {object|Array} parent The parent object or array holding the value.
+	* @param {string} key The key associated with the value.
+	* @param {any} val The raw value to process.
+	* @returns {any} The processed value ready for stringification.
+	*/
+	const prepareVal = (parent, key, val) => {
+		if (val !== null && typeof val === "object" && typeof val.toJSON === "function") val = val.toJSON(key);
+		if (typeof val === "string" && noiseValue.test(val)) return val + "n";
+		if (typeof val === "bigint") {
+			if ("rawJSON" in JSON) return JSON.rawJSON(val.toString());
+			return val.toString() + "n";
+		}
+		if (isFunctionReplacer) val = replacer.call(parent, key, val);
+		if (val !== null && typeof val === "object") {
+			if (val instanceof Number || val instanceof String || val instanceof Boolean) val = val.valueOf();
+		}
+		return val;
+	};
+	const rootProcessed = prepareVal({ "": rootValue }, "", rootValue);
+	if (isUnstringifiable(rootProcessed)) return;
+	const isRootPrimitive = rootProcessed === null || typeof rootProcessed !== "object";
+	const isRootNativeRawJSON = isRawJSON(rootProcessed);
+	if (isRootPrimitive || isRootNativeRawJSON) return originalStringify(rootProcessed);
+	const chunks = [];
+	let level = 0;
+	const stack = [{
+		parent: { "": rootProcessed },
+		key: "",
+		val: rootProcessed,
+		isArray: Array.isArray(rootProcessed),
+		keys: Array.isArray(rootProcessed) ? null : Object.keys(rootProcessed),
+		index: 0,
+		first: true
+	}];
+	const visited = new WeakSet([rootProcessed]);
+	while (stack.length > 0) {
+		const node = stack[stack.length - 1];
+		if (node.index === 0) {
+			chunks.push(node.isArray ? "[" : "{");
+			level++;
+		}
+		let isDone = false;
+		if (node.isArray) {
+			if (node.index < node.val.length) {
+				if (!node.first) chunks.push(",");
+				if (space) chunks.push("\n" + space.repeat(level));
+				const childRaw = node.val[node.index];
+				const childVal = prepareVal(node.val, String(node.index), childRaw);
+				if (isUnstringifiable(childVal)) {
+					chunks.push("null");
+					node.first = false;
+					node.index++;
+				} else {
+					const isComplexObject = childVal !== null && typeof childVal === "object";
+					const isNativeRaw = isRawJSON(childVal);
+					if (isComplexObject && !isNativeRaw) {
+						if (visited.has(childVal)) throw new TypeError("Converting circular structure to JSON");
+						visited.add(childVal);
+						stack.push({
+							parent: node.val,
+							key: String(node.index),
+							val: childVal,
+							isArray: Array.isArray(childVal),
+							keys: Array.isArray(childVal) ? null : Object.keys(childVal),
+							index: 0,
+							first: true
+						});
+						node.first = false;
+						node.index++;
+					} else {
+						chunks.push(originalStringify(childVal));
+						node.first = false;
+						node.index++;
+					}
+				}
+			} else isDone = true;
+		} else {
+			while (node.index < node.keys.length) {
+				const k = node.keys[node.index++];
+				if (propertyList && !propertyList.has(k)) continue;
+				const childRaw = node.val[k];
+				const childVal = prepareVal(node.val, k, childRaw);
+				if (isUnstringifiable(childVal)) continue;
+				if (!node.first) chunks.push(",");
+				if (space) chunks.push("\n" + space.repeat(level) + originalStringify(k) + ": ");
+				else chunks.push(originalStringify(k) + ":");
+				const isComplexObject = childVal !== null && typeof childVal === "object";
+				const isNativeRaw = isRawJSON(childVal);
+				if (isComplexObject && !isNativeRaw) {
+					if (visited.has(childVal)) throw new TypeError("Converting circular structure to JSON");
+					visited.add(childVal);
+					stack.push({
+						parent: node.val,
+						key: k,
+						val: childVal,
+						isArray: Array.isArray(childVal),
+						keys: Array.isArray(childVal) ? null : Object.keys(childVal),
+						index: 0,
+						first: true
+					});
+					node.first = false;
+					break;
+				} else {
+					chunks.push(originalStringify(childVal));
+					node.first = false;
+				}
+			}
+			if (node.index >= node.keys.length && stack[stack.length - 1] === node) isDone = true;
+		}
+		if (isDone) {
+			level--;
+			if (!node.first && space) chunks.push("\n" + space.repeat(level));
+			chunks.push(node.isArray ? "]" : "}");
+			visited.delete(node.val);
+			stack.pop();
+		}
+	}
+	return chunks.join("");
+};
 /**
 * Converts a JavaScript value to a JSON string.
 *
@@ -20980,27 +21390,37 @@ var noiseStringify = /([\[:])?("-?\d+n+)n("$|"([\\n]|\s)*(\s|[\\n])*[,\}\]])/g;
 *
 * @param {*} value The value to convert to a JSON string.
 * @param {Replacer | Array<string | number> | null} [replacer]
-*   A function that alters the behavior of the stringification process,
-*   or an array of strings/numbers to indicate properties to exclude.
+* A function that alters the behavior of the stringification process,
+* or an array of strings/numbers to indicate properties to exclude.
 * @param {string | number} [space]
-*   A string or number to specify indentation or pretty-printing.
+* A string or number to specify indentation or pretty-printing.
 * @returns {string} The JSON string representation.
 */
 var JSONStringify = (value, replacer, space) => {
-	if ("rawJSON" in JSON) return originalStringify(value, (key, value) => {
-		if (typeof value === "bigint") return JSON.rawJSON(value.toString());
-		if (typeof replacer === "function") return replacer(key, value);
-		if (Array.isArray(replacer) && replacer.includes(key)) return value;
-		return value;
-	}, space);
-	if (!value) return originalStringify(value, replacer, space);
-	return originalStringify(value, (key, value) => {
-		if (typeof value === "string" && noiseValue.test(value)) return value.toString() + "n";
-		if (typeof value === "bigint") return value.toString() + "n";
-		if (typeof replacer === "function") return replacer(key, value);
-		if (Array.isArray(replacer) && replacer.includes(key)) return value;
-		return value;
-	}, space).replace(bigIntsStringify, "$1$2$3").replace(noiseStringify, "$1$2$3");
+	try {
+		if ("rawJSON" in JSON) return originalStringify(value, (key, val) => {
+			if (typeof val === "bigint") return JSON.rawJSON(val.toString());
+			if (typeof replacer === "function") return replacer(key, val);
+			if (Array.isArray(replacer) && replacer.includes(key)) return val;
+			return val;
+		}, space);
+		if (!value) return originalStringify(value, replacer, space);
+		return originalStringify(value, (key, val) => {
+			if (typeof val === "string" && noiseValue.test(val)) return val.toString() + "n";
+			if (typeof val === "bigint") return val.toString() + "n";
+			if (typeof replacer === "function") return replacer(key, val);
+			if (Array.isArray(replacer) && replacer.includes(key)) return val;
+			return val;
+		}, space).replace(bigIntsStringify, "$1$2$3").replace(noiseStringify, "$1$2$3");
+	} catch (error) {
+		if (error instanceof RangeError) {
+			const convertedJSON = stringifyIteratively(value, replacer, space);
+			if (convertedJSON === void 0) return void 0;
+			if ("rawJSON" in JSON) return convertedJSON;
+			return convertedJSON.replace(bigIntsStringify, "$1$2$3").replace(noiseStringify, "$1$2$3");
+		}
+		throw error;
+	}
 };
 var featureCache = /* @__PURE__ */ new Map();
 /**
@@ -21036,7 +21456,7 @@ var isContextSourceSupported = () => {
 var convertMarkedBigIntsReviver = (key, value, context, userReviver) => {
 	if (typeof value === "string" && customFormat.test(value)) return BigInt(value.slice(0, -1));
 	if (typeof value === "string" && noiseValue.test(value)) return value.slice(0, -1);
-	if (typeof userReviver !== "function") return value;
+	if (!(typeof userReviver === "function")) return value;
 	return userReviver(key, value, context);
 };
 /**
@@ -21052,17 +21472,79 @@ var convertMarkedBigIntsReviver = (key, value, context, userReviver) => {
 */
 var JSONParseV2 = (text, reviver) => {
 	return JSON.parse(text, (key, value, context) => {
-		const isBigNumber = typeof value === "number" && (value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER);
+		const isNumber = typeof value === "number";
+		const isOutOfBounds = value > Number.MAX_SAFE_INTEGER || value < Number.MIN_SAFE_INTEGER;
+		const isBigNumber = isNumber && isOutOfBounds;
 		const isInt = context && intRegex.test(context.source);
 		if (isBigNumber && isInt) return BigInt(context.source);
-		if (typeof reviver !== "function") return value;
+		if (!(typeof reviver === "function")) return value;
 		return reviver(key, value, context);
 	});
 };
 var MAX_INT = Number.MAX_SAFE_INTEGER.toString();
 var MAX_DIGITS = MAX_INT.length;
-var stringsOrLargeNumbers = /"(?:\\.|[^"])*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
+var stringsOrLargeNumbers = /"(?:[^"\\]|\\.)*"|-?(0|[1-9][0-9]*)(\.[0-9]+)?([eE][+-]?[0-9]+)?/g;
 var noiseValueWithQuotes = /^"-?\d+n+"$/;
+/**
+* Iteratively traverses the parsed object bottom-up (post-order),
+* emulating the native JSON.parse reviver behavior.
+* This avoids Call Stack overflows (RangeError) on deeply nested structures.
+*
+* @param {any} parsed The natively parsed JSON object.
+* @param {Reviver} [userReviver] User's custom reviver function.
+* @returns {any} The fully processed object.
+*/
+var applyReviverIteratively = (parsed, userReviver) => {
+	const rootHolder = { "": parsed };
+	const stack = [{
+		parent: rootHolder,
+		key: "",
+		visited: false
+	}];
+	while (stack.length > 0) {
+		const node = stack[stack.length - 1];
+		if (!node.visited) {
+			node.visited = true;
+			const value = node.parent[node.key];
+			if (value !== null && typeof value === "object") {
+				const keys = Object.keys(value);
+				for (let i = keys.length - 1; i >= 0; i--) stack.push({
+					parent: value,
+					key: keys[i],
+					visited: false
+				});
+			}
+		} else {
+			const { parent, key } = node;
+			let value = parent[key];
+			if (typeof value === "string") {
+				if (customFormat.test(value)) value = BigInt(value.slice(0, -1));
+				else if (noiseValue.test(value)) value = value.slice(0, -1);
+			}
+			if (typeof userReviver === "function") value = userReviver.call(parent, key, value);
+			if (value === void 0) delete parent[key];
+			else parent[key] = value;
+			stack.pop();
+		}
+	}
+	return rootHolder[""];
+};
+/**
+* Pre-processes the JSON string to mark large numbers with an 'n' suffix.
+*
+* @param {string} text The raw JSON string.
+* @returns {string} The serialized string with marked BigInts.
+*/
+var serializeBigInts = (text) => {
+	return text.replace(stringsOrLargeNumbers, (match, digits, fractional, exponential) => {
+		const isString = match[0] === "\"";
+		if (isString && noiseValueWithQuotes.test(match)) return match.substring(0, match.length - 1) + "n\"";
+		const hasFractionalOrExponential = fractional || exponential;
+		const isLessThanMaxSafeInt = digits && (digits.length < MAX_DIGITS || digits.length === MAX_DIGITS && digits <= MAX_INT);
+		if (isString || hasFractionalOrExponential || isLessThanMaxSafeInt) return match;
+		return "\"" + match + "n\"";
+	});
+};
 /**
 * Converts a JSON string into a JavaScript value.
 *
@@ -21074,26 +21556,24 @@ var noiseValueWithQuotes = /^"-?\d+n+"$/;
 *
 * @param {string} text A valid JSON string.
 * @param {Reviver} [reviver]
-*   A function that transforms the results. This function is called for each member
-*   of the object. If a member contains nested objects, the nested objects are
-*   transformed before the parent object is.
+* A function that transforms the results. This function is called for each member
+* of the object. If a member contains nested objects, the nested objects are
+* transformed before the parent object is.
 * @returns {any} The parsed JavaScript value.
 * @throws {SyntaxError} If text is not valid JSON.
 */
 var JSONParse = (text, reviver) => {
 	if (!text) return originalParse(text, reviver);
-	if (isContextSourceSupported()) return JSONParseV2(text, reviver);
-	return originalParse(text.replace(stringsOrLargeNumbers, (text, digits, fractional, exponential) => {
-		const isString = text[0] === "\"";
-		if (isString && noiseValueWithQuotes.test(text)) return text.substring(0, text.length - 1) + "n\"";
-		const isFractionalOrExponential = fractional || exponential;
-		const isLessThanMaxSafeInt = digits && (digits.length < MAX_DIGITS || digits.length === MAX_DIGITS && digits <= MAX_INT);
-		if (isString || isFractionalOrExponential || isLessThanMaxSafeInt) return text;
-		return "\"" + text + "n\"";
-	}), (key, value, context) => convertMarkedBigIntsReviver(key, value, context, reviver));
+	try {
+		if (isContextSourceSupported()) return JSONParseV2(text, reviver);
+		return originalParse(serializeBigInts(text), (key, value, context) => convertMarkedBigIntsReviver(key, value, context, reviver));
+	} catch (error) {
+		if (error instanceof RangeError) return applyReviverIteratively(originalParse(serializeBigInts(text)), reviver);
+		throw error;
+	}
 };
 //#endregion
-//#region node_modules/.pnpm/@octokit+request-error@7.1.0/node_modules/@octokit/request-error/dist-src/index.js
+//#region node_modules/.pnpm/@octokit+request-error@7.1.1/node_modules/@octokit/request-error/dist-src/index.js
 var RequestError = class extends Error {
 	name;
 	/**
@@ -21122,8 +21602,8 @@ var RequestError = class extends Error {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@octokit+request@10.0.9/node_modules/@octokit/request/dist-bundle/index.js
-var defaults_default = { headers: { "user-agent": `octokit-request.js/10.0.9 ${getUserAgent()}` } };
+//#region node_modules/.pnpm/@octokit+request@10.0.15/node_modules/@octokit/request/dist-bundle/index.js
+var defaults_default = { headers: { "user-agent": `octokit-request.js/10.0.15 ${getUserAgent()}` } };
 function isPlainObject(value) {
 	if (typeof value !== "object" || value === null) return false;
 	if (Object.prototype.toString.call(value) !== "[object Object]") return false;
@@ -21132,7 +21612,7 @@ function isPlainObject(value) {
 	const Ctor = Object.prototype.hasOwnProperty.call(proto, "constructor") && proto.constructor;
 	return typeof Ctor === "function" && Ctor instanceof Ctor && Function.prototype.call(Ctor) === Function.prototype.call(value);
 }
-var noop$1 = () => "";
+var noop$1 = /* @__PURE__ */ __name(() => "", "noop");
 async function fetchWrapper(requestOptions) {
 	const fetch = requestOptions.request?.fetch || globalThis.fetch;
 	if (!fetch) throw new Error("fetch is not set. Please pass a fetch implementation as new Octokit({ request: { fetch }}). Learn more at https://github.com/octokit/octokit.js/#fetch-missing");
@@ -21210,7 +21690,7 @@ async function fetchWrapper(requestOptions) {
 async function getResponseData(response) {
 	const contentType = response.headers.get("content-type");
 	if (!contentType) return response.text().catch(noop$1);
-	const mimetype = (0, import_dist$2.parse)(contentType);
+	const mimetype = parse$1(contentType);
 	if (isJSONResponse(mimetype)) {
 		let text = "";
 		try {
@@ -21219,7 +21699,7 @@ async function getResponseData(response) {
 		} catch (err) {
 			return text;
 		}
-	} else if (mimetype.type.startsWith("text/") || mimetype.parameters.charset?.toLowerCase() === "utf-8") return response.text().catch(noop$1);
+	} else if (mimetype.type.startsWith("text/") || mimetype.parameters.charset?.toLowerCase() === "utf-8" && mimetype.type !== "application/octet-stream") return response.text().catch(noop$1);
 	else return response.arrayBuffer().catch(
 		/* v8 ignore next -- @preserve */
 		() => /* @__PURE__ */ new ArrayBuffer(0)
@@ -21231,9 +21711,10 @@ function isJSONResponse(mimetype) {
 function toErrorMessage(data) {
 	if (typeof data === "string") return data;
 	if (data instanceof ArrayBuffer) return "Unknown error";
-	if ("message" in data) {
-		const suffix = "documentation_url" in data ? ` - ${data.documentation_url}` : "";
-		return Array.isArray(data.errors) ? `${data.message}: ${data.errors.map((v) => JSON.stringify(v)).join(", ")}${suffix}` : `${data.message}${suffix}`;
+	if (typeof data === "object" && data !== null && "message" in data) {
+		const objectData = data;
+		const suffix = "documentation_url" in objectData ? ` - ${objectData.documentation_url}` : "";
+		return Array.isArray(objectData.errors) ? `${objectData.message}: ${objectData.errors.map((v) => JSON.stringify(v)).join(", ")}${suffix}` : `${objectData.message}${suffix}`;
 	}
 	return `Unknown error: ${JSON.stringify(data)}`;
 }
@@ -21256,11 +21737,12 @@ function withDefaults$1(oldEndpoint, newDefaults) {
 		defaults: withDefaults$1.bind(null, endpoint2)
 	});
 }
+__name(withDefaults$1, "withDefaults");
 var request = withDefaults$1(endpoint, defaults_default);
 /* v8 ignore next -- @preserve */
 /* v8 ignore else -- @preserve */
 //#endregion
-//#region node_modules/.pnpm/@octokit+graphql@9.0.3/node_modules/@octokit/graphql/dist-bundle/index.js
+//#region node_modules/.pnpm/@octokit+graphql@9.0.4/node_modules/@octokit/graphql/dist-bundle/index.js
 var VERSION$3 = "0.0.0-development";
 function _buildMessageForResponseErrors(data) {
 	return `Request failed due to following response errors:
@@ -21276,6 +21758,9 @@ var GraphqlResponseError = class extends Error {
 		this.data = response.data;
 		if (Error.captureStackTrace) Error.captureStackTrace(this, this.constructor);
 	}
+	request;
+	headers;
+	response;
 	name = "GraphqlResponseError";
 	errors;
 	data;
@@ -21346,11 +21831,12 @@ function withCustomRequest(customRequest) {
 		url: "/graphql"
 	});
 }
+/* v8 ignore if -- @preserve */
 //#endregion
 //#region node_modules/.pnpm/@octokit+auth-token@6.0.0/node_modules/@octokit/auth-token/dist-bundle/index.js
 var b64url = "(?:[a-zA-Z0-9_-]+)";
-var sep = "\\.";
-var jwtRE = new RegExp(`^${b64url}${sep}${b64url}${sep}${b64url}$`);
+var sep$1 = "\\.";
+var jwtRE = new RegExp(`^${b64url}${sep$1}${b64url}${sep$1}${b64url}$`);
 var isJWT = jwtRE.test.bind(jwtRE);
 async function auth(token) {
 	const isApp = isJWT(token);
@@ -21378,10 +21864,10 @@ var createTokenAuth = function createTokenAuth2(token) {
 	return Object.assign(auth.bind(null, token), { hook: hook.bind(null, token) });
 };
 //#endregion
-//#region node_modules/.pnpm/@octokit+core@7.0.6/node_modules/@octokit/core/dist-src/version.js
-var VERSION$2 = "7.0.6";
+//#region node_modules/.pnpm/@octokit+core@7.0.7/node_modules/@octokit/core/dist-src/version.js
+var VERSION$2 = "7.0.7";
 //#endregion
-//#region node_modules/.pnpm/@octokit+core@7.0.6/node_modules/@octokit/core/dist-src/index.js
+//#region node_modules/.pnpm/@octokit+core@7.0.7/node_modules/@octokit/core/dist-src/index.js
 var noop = () => {};
 var consoleWarn = console.warn.bind(console);
 var consoleError = console.error.bind(console);
@@ -21441,13 +21927,14 @@ var Octokit = class {
 		this.graphql = withCustomRequest(this.request).defaults(requestDefaults);
 		this.log = createLogger(options.log);
 		this.hook = hook;
-		if (!options.authStrategy) if (!options.auth) this.auth = async () => ({ type: "unauthenticated" });
-		else {
-			const auth = createTokenAuth(options.auth);
-			hook.wrap("request", auth.hook);
-			this.auth = auth;
-		}
-		else {
+		if (!options.authStrategy) {
+			if (!options.auth) this.auth = async () => ({ type: "unauthenticated" });
+			else {
+				const auth = createTokenAuth(options.auth);
+				hook.wrap("request", auth.hook);
+				this.auth = auth;
+			}
+		} else {
 			const { authStrategy, ...otherOptions } = options;
 			const auth = authStrategy(Object.assign({
 				request: this.request,
@@ -21468,10 +21955,10 @@ var Octokit = class {
 	auth;
 };
 //#endregion
-//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
+//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/version.js
 var VERSION$1 = "17.0.0";
 //#endregion
-//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
+//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/generated/endpoints.js
 var endpoints_default = {
 	actions: {
 		addCustomLabelsToSelfHostedRunnerForOrg: ["POST /orgs/{org}/actions/runners/{runner_id}/labels"],
@@ -22765,7 +23252,7 @@ var endpoints_default = {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
+//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/endpoints-to-methods.js
 var endpointMethodsMap = /* @__PURE__ */ new Map();
 for (const [scope, endpoints] of Object.entries(endpoints_default)) for (const [methodName, endpoint] of Object.entries(endpoints)) {
 	const [route, defaults, decorations] = endpoint;
@@ -22857,7 +23344,7 @@ function decorate(octokit, scope, methodName, defaults, decorations) {
 	return Object.assign(withDecorations, requestWithDefaults);
 }
 //#endregion
-//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
+//#region node_modules/.pnpm/@octokit+plugin-rest-endpoint-methods@17.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-rest-endpoint-methods/dist-src/index.js
 function restEndpointMethods(octokit) {
 	return { rest: endpointsToMethods(octokit) };
 }
@@ -22871,7 +23358,7 @@ function legacyRestEndpointMethods(octokit) {
 }
 legacyRestEndpointMethods.VERSION = VERSION$1;
 //#endregion
-//#region node_modules/.pnpm/@octokit+plugin-paginate-rest@14.0.0_@octokit+core@7.0.6/node_modules/@octokit/plugin-paginate-rest/dist-bundle/index.js
+//#region node_modules/.pnpm/@octokit+plugin-paginate-rest@14.0.0_@octokit+core@7.0.7/node_modules/@octokit/plugin-paginate-rest/dist-bundle/index.js
 var VERSION = "0.0.0-development";
 function normalizePaginatedListResponse(response) {
 	if (!response.data) return {
@@ -22967,7 +23454,7 @@ var defaults = {
 Octokit.plugin(restEndpointMethods, paginateRest).defaults(defaults);
 new Context();
 //#endregion
-//#region node_modules/.pnpm/@actions-rs-plus+core@0.7.5/node_modules/@actions-rs-plus/core/dist/commands/base-program.js
+//#region node_modules/.pnpm/@actions-rs-plus+core@0.10.0_supports-color@7.2.0/node_modules/@actions-rs-plus/core/dist/commands/base-program.js
 var BaseProgram = class {
 	path;
 	constructor(path) {
@@ -22978,7 +23465,7 @@ var BaseProgram = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@actions-rs-plus+core@0.7.5/node_modules/@actions-rs-plus/core/dist/commands/crates.js
+//#region node_modules/.pnpm/@actions-rs-plus+core@0.10.0_supports-color@7.2.0/node_modules/@actions-rs-plus/core/dist/commands/crates.js
 async function resolveVersion(crate) {
 	const url = `https://crates.io/api/v1/crates/${crate}`;
 	const response = await new HttpClient("@actions-rs-plus (https://github.com/actions-rs-plus/)").getJson(url);
@@ -23063,12 +23550,13 @@ function ensureAbsoluteRoot(root, itemPath) {
 		if (itemPath.match(/^[A-Z]:[^\\/]|^[A-Z]:$/i)) {
 			let cwd = process.cwd();
 			assert(cwd.match(/^[A-Z]:\\/i), `Expected current directory to start with an absolute drive root. Actual '${cwd}'`);
-			if (itemPath[0].toUpperCase() === cwd[0].toUpperCase()) if (itemPath.length === 2) return `${itemPath[0]}:\\${cwd.substr(3)}`;
-			else {
-				if (!cwd.endsWith("\\")) cwd += "\\";
-				return `${itemPath[0]}:\\${cwd.substr(3)}${itemPath.substr(2)}`;
-			}
-			else return `${itemPath[0]}:\\${itemPath.substr(2)}`;
+			if (itemPath[0].toUpperCase() === cwd[0].toUpperCase()) {
+				if (itemPath.length === 2) return `${itemPath[0]}:\\${cwd.substr(3)}`;
+				else {
+					if (!cwd.endsWith("\\")) cwd += "\\";
+					return `${itemPath[0]}:\\${cwd.substr(3)}${itemPath.substr(2)}`;
+				}
+			} else return `${itemPath[0]}:\\${itemPath.substr(2)}`;
 		} else if (normalizeSeparators(itemPath).match(/^\\$|^\\[^\\]/)) {
 			const cwd = process.cwd();
 			assert(cwd.match(/^[A-Z]:\\/i), `Expected current directory to start with an absolute drive root. Actual '${cwd}'`);
@@ -23227,7 +23715,11 @@ var require_balanced_match = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	}
 	balanced.range = range;
 	function range(a, b, str) {
-		var begs, beg, left, right, result;
+		var begs;
+		var beg;
+		var left;
+		var right;
+		var result;
 		var ai = str.indexOf(a);
 		var bi = str.indexOf(b, ai + 1);
 		var i = ai;
@@ -23256,9 +23748,9 @@ var require_balanced_match = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	}
 }));
 //#endregion
-//#region node_modules/.pnpm/brace-expansion@1.1.14/node_modules/brace-expansion/index.js
+//#region node_modules/.pnpm/brace-expansion@1.1.18/node_modules/brace-expansion/index.js
 var require_brace_expansion = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-	var concatMap = require_concat_map();
+	require_concat_map();
 	var balanced = require_balanced_match();
 	module.exports = expandTop;
 	var escSlash = "\0SLASH" + Math.random() + "\0";
@@ -23266,6 +23758,8 @@ var require_brace_expansion = /* @__PURE__ */ __commonJSMin(((exports, module) =
 	var escClose = "\0CLOSE" + Math.random() + "\0";
 	var escComma = "\0COMMA" + Math.random() + "\0";
 	var escPeriod = "\0PERIOD" + Math.random() + "\0";
+	var EXPANSION_MAX = 1e5;
+	var EXPANSION_MAX_LENGTH = 4e6;
 	function numeric(str) {
 		return parseInt(str, 10) == str ? parseInt(str, 10) : str.charCodeAt(0);
 	}
@@ -23296,9 +23790,10 @@ var require_brace_expansion = /* @__PURE__ */ __commonJSMin(((exports, module) =
 	function expandTop(str, options) {
 		if (!str) return [];
 		options = options || {};
-		var max = options.max == null ? Infinity : options.max;
+		var max = options.max == null ? EXPANSION_MAX : options.max;
+		var maxLength = options.maxLength == null ? EXPANSION_MAX_LENGTH : options.maxLength;
 		if (str.substr(0, 2) === "{}") str = "\\{\\}" + str.substr(2);
-		return expand(escapeBraces(str), max, true).map(unescapeBraces);
+		return expand(escapeBraces(str), max, maxLength, true).map(unescapeBraces);
 	}
 	function embrace(str) {
 		return "{" + str + "}";
@@ -23312,76 +23807,128 @@ var require_brace_expansion = /* @__PURE__ */ __commonJSMin(((exports, module) =
 	function gte(i, y) {
 		return i >= y;
 	}
-	function expand(str, max, isTop) {
-		var expansions = [];
-		var m = balanced("{", "}", str);
-		if (!m || /\$$/.test(m.pre)) return [str];
-		var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
-		var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
-		var isSequence = isNumericSequence || isAlphaSequence;
-		var isOptions = m.body.indexOf(",") >= 0;
-		if (!isSequence && !isOptions) {
-			if (m.post.match(/,(?!,).*\}/)) {
-				str = m.pre + "{" + m.body + escClose + m.post;
-				return expand(str, max, true);
-			}
-			return [str];
+	function combine(acc, base, pre, values, max, maxLength, dropEmpties, outBase) {
+		var out = [];
+		var length = 0;
+		for (var a = 0; a < acc.length; a++) for (var v = 0; v < values.length; v++) {
+			if (out.length >= max) return out;
+			var expansion = acc[a] + pre + values[v];
+			if (dropEmpties && expansion.length === base[a]) continue;
+			if (length + expansion.length > maxLength) return out;
+			out.push(expansion);
+			outBase.push(base[a]);
+			length += expansion.length;
 		}
-		var n;
-		if (isSequence) n = m.body.split(/\.\./);
-		else {
-			n = parseCommaParts(m.body);
-			if (n.length === 1) {
-				n = expand(n[0], max, false).map(embrace);
-				if (n.length === 1) {
-					var post = m.post.length ? expand(m.post, max, false) : [""];
-					return post.map(function(p) {
-						return m.pre + n[0] + p;
-					});
-				}
-			}
+		return out;
+	}
+	function expandSequence(body, isAlphaSequence, max, maxLength) {
+		var n = body.split(/\.\./);
+		var N = [];
+		/* c8 ignore start */
+		if (n[0] === void 0 || n[1] === void 0) return N;
+		/* c8 ignore stop */
+		var x = numeric(n[0]);
+		var y = numeric(n[1]);
+		var width = Math.max(n[0].length, n[1].length);
+		var incr = n.length === 3 && n[2] !== void 0 ? Math.max(Math.abs(numeric(n[2])), 1) : 1;
+		var test = lte;
+		if (y < x) {
+			incr *= -1;
+			test = gte;
 		}
-		var pre = m.pre;
-		var post = m.post.length ? expand(m.post, max, false) : [""];
-		var N;
-		if (isSequence) {
-			var x = numeric(n[0]);
-			var y = numeric(n[1]);
-			var width = Math.max(n[0].length, n[1].length);
-			var incr = n.length == 3 ? Math.max(Math.abs(numeric(n[2])), 1) : 1;
-			var test = lte;
-			if (y < x) {
-				incr *= -1;
-				test = gte;
-			}
-			var pad = n.some(isPadded);
-			N = [];
-			for (var i = x; test(i, y); i += incr) {
-				var c;
-				if (isAlphaSequence) {
-					c = String.fromCharCode(i);
-					if (c === "\\") c = "";
-				} else {
-					c = String(i);
-					if (pad) {
-						var need = width - c.length;
-						if (need > 0) {
-							var z = new Array(need + 1).join("0");
-							if (i < 0) c = "-" + z + c.slice(1);
-							else c = z + c;
-						}
+		var pad = n.some(isPadded);
+		var length = 0;
+		for (var i = x; test(i, y) && N.length < max; i += incr) {
+			var c;
+			if (isAlphaSequence) {
+				c = String.fromCharCode(i);
+				if (c === "\\") c = "";
+			} else {
+				c = String(i);
+				if (pad) {
+					var need = width - c.length;
+					if (need > 0) {
+						var z = new Array(need + 1).join("0");
+						if (i < 0) c = "-" + z + c.slice(1);
+						else c = z + c;
 					}
 				}
-				N.push(c);
 			}
-		} else N = concatMap(n, function(el) {
-			return expand(el, max, false);
-		});
-		for (var j = 0; j < N.length; j++) for (var k = 0; k < post.length && expansions.length < max; k++) {
-			var expansion = pre + N[j] + post[k];
-			if (!isTop || isSequence || expansion) expansions.push(expansion);
+			if (length + c.length > maxLength) break;
+			N.push(c);
+			length += c.length;
 		}
-		return expansions;
+		return N;
+	}
+	function expand(str, max, maxLength, isTop) {
+		var acc = [""];
+		var accBase = [0];
+		var dropEmpties = false;
+		var firstGroup = true;
+		var nextBase;
+		for (;;) {
+			var m = balanced("{", "}", str);
+			if (!m) return combine(acc, accBase, str, [""], max, maxLength, dropEmpties, []);
+			var pre = m.pre;
+			if (/\$$/.test(pre)) return combine(acc, accBase, str, [""], max, maxLength, dropEmpties, []);
+			var isNumericSequence = /^-?\d+\.\.-?\d+(?:\.\.-?\d+)?$/.test(m.body);
+			var isAlphaSequence = /^[a-zA-Z]\.\.[a-zA-Z](?:\.\.-?\d+)?$/.test(m.body);
+			var isSequence = isNumericSequence || isAlphaSequence;
+			var isOptions = m.body.indexOf(",") >= 0;
+			if (!isSequence && !isOptions) {
+				if (m.post.match(/,(?!,).*\}/)) {
+					str = m.pre + "{" + m.body + escClose + m.post;
+					isTop = true;
+					firstGroup = true;
+					dropEmpties = false;
+					accBase = [];
+					for (var b = 0; b < acc.length; b++) accBase.push(acc[b].length);
+					continue;
+				}
+				return combine(acc, accBase, pre + "{" + m.body + "}" + m.post, [""], max, maxLength, dropEmpties, []);
+			}
+			if (firstGroup) {
+				dropEmpties = isTop && !isSequence;
+				firstGroup = false;
+			}
+			var values;
+			if (isSequence) values = expandSequence(m.body, isAlphaSequence, max, maxLength);
+			else {
+				var n = parseCommaParts(m.body);
+				if (n.length === 1 && n[0] !== void 0) {
+					n = expand(n[0], max, maxLength, false).map(embrace);
+					/* c8 ignore start */
+					if (n.length === 1) {
+						nextBase = [];
+						acc = combine(acc, accBase, pre + n[0], [""], max, maxLength, dropEmpties && !m.post.length, nextBase);
+						accBase = nextBase;
+						if (!m.post.length) break;
+						str = m.post;
+						continue;
+					}
+				}
+				var dropsEmpties = dropEmpties && !m.post.length && !pre;
+				for (var d = 0; dropsEmpties && d < acc.length; d++) if (acc[d].length !== accBase[d]) dropsEmpties = false;
+				values = [];
+				var valuesLength = 0;
+				outer: for (var j = 0; j < n.length; j++) {
+					var expanded = expand(n[j], max, maxLength, false);
+					for (var k = 0; k < expanded.length; k++) {
+						var v = expanded[k];
+						if (dropsEmpties && !v) continue;
+						if (values.length >= max || valuesLength + v.length > maxLength) break outer;
+						values.push(v);
+						valuesLength += v.length;
+					}
+				}
+			}
+			nextBase = [];
+			acc = combine(acc, accBase, pre, values, max, maxLength, dropEmpties && !m.post.length, nextBase);
+			accBase = nextBase;
+			if (!m.post.length) break;
+			str = m.post;
+		}
+		return acc;
 	}
 }));
 //#endregion
@@ -23556,14 +24103,16 @@ var import_minimatch = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((
 	};
 	Minimatch.prototype.braceExpand = braceExpand;
 	function braceExpand(pattern, options) {
-		if (!options) if (this instanceof Minimatch) options = this.options;
-		else options = {};
+		if (!options) {
+			if (this instanceof Minimatch) options = this.options;
+			else options = {};
+		}
 		pattern = typeof pattern === "undefined" ? this.pattern : pattern;
 		assertValidPattern(pattern);
 		if (options.nobrace || !/\{(?:(?!\{).)*\}/.test(pattern)) return [pattern];
 		return expand(pattern);
 	}
-	var MAX_PATTERN_LENGTH = 1024 * 64;
+	var MAX_PATTERN_LENGTH = 65536;
 	var assertValidPattern = function(pattern) {
 		if (typeof pattern !== "string") throw new TypeError("invalid pattern");
 		if (pattern.length > MAX_PATTERN_LENGTH) throw new TypeError("pattern is too long");
@@ -23573,8 +24122,10 @@ var import_minimatch = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((
 	function parse(pattern, isSub) {
 		assertValidPattern(pattern);
 		var options = this.options;
-		if (pattern === "**") if (!options.noglobstar) return GLOBSTAR;
-		else pattern = "*";
+		if (pattern === "**") {
+			if (!options.noglobstar) return GLOBSTAR;
+			else pattern = "*";
+		}
 		if (pattern === "") return "";
 		var re = "";
 		var hasMagic = !!options.nocase;
@@ -23598,9 +24149,7 @@ var import_minimatch = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((
 						re += qmark;
 						hasMagic = true;
 						break;
-					default:
-						re += "\\" + stateChar;
-						break;
+					default: re += "\\" + stateChar;
 				}
 				self.debug("clearStateChar %j %j", stateChar, re);
 				stateChar = false;
@@ -23765,7 +24314,7 @@ var import_minimatch = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((
 		var flags = options.nocase ? "i" : "";
 		try {
 			var regExp = new RegExp("^" + re + "$", flags);
-		} catch (er) 		/* istanbul ignore next - should be impossible */ {
+		} catch (er) /* istanbul ignore next - should be impossible */ {
 			return /* @__PURE__ */ new RegExp("$.");
 		}
 		regExp._glob = pattern;
@@ -23795,7 +24344,7 @@ var import_minimatch = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((
 		if (this.negate) re = "^(?!" + re + ").*$";
 		try {
 			this.regexp = new RegExp(re, flags);
-		} catch (ex) 		/* istanbul ignore next - should be impossible */ {
+		} catch (ex) /* istanbul ignore next - should be impossible */ {
 			this.regexp = false;
 		}
 		return this.regexp;
@@ -23928,7 +24477,10 @@ var import_minimatch = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((
 		return partial || null;
 	};
 	Minimatch.prototype._matchOne = function(file, pattern, partial, fileIndex, patternIndex) {
-		var fi, pi, fl, pl;
+		var fi;
+		var pi;
+		var fl;
+		var pl;
 		for (fi = fileIndex, pi = patternIndex, fl = file.length, pl = pattern.length; fi < fl && pi < pl; fi++, pi++) {
 			this.debug("matchOne loop");
 			var p = pattern[pi];
@@ -24196,7 +24748,8 @@ var __awaiter$13 = function(thisArg, _arguments, P, generator) {
 };
 var __asyncValues$2 = function(o) {
 	if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-	var m = o[Symbol.asyncIterator], i;
+	var m = o[Symbol.asyncIterator];
+	var i;
 	return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
 		return this;
 	}, i);
@@ -24221,7 +24774,9 @@ var __await = function(v) {
 };
 var __asyncGenerator = function(thisArg, _arguments, generator) {
 	if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-	var g = generator.apply(thisArg, _arguments || []), i, q = [];
+	var g = generator.apply(thisArg, _arguments || []);
+	var i;
+	var q = [];
 	return i = Object.create((typeof AsyncIterator === "function" ? AsyncIterator : Object).prototype), verb("next"), verb("throw"), verb("return", awaitReturn), i[Symbol.asyncIterator] = function() {
 		return this;
 	}, i;
@@ -24277,7 +24832,10 @@ var DefaultGlobber = class DefaultGlobber {
 	}
 	glob() {
 		return __awaiter$13(this, void 0, void 0, function* () {
-			var _a, e_1, _b, _c;
+			var _a;
+			var e_1;
+			var _b;
+			var _c;
 			const result = [];
 			try {
 				for (var _d = true, _e = __asyncValues$2(this.globGenerator()), _f; _f = yield _e.next(), _a = _f.done, !_a; _d = true) {
@@ -24423,16 +24981,14 @@ function create(patterns, options) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/internal/constants.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/internal/constants.js
 var require_constants = /* @__PURE__ */ __commonJSMin(((exports, module) => {
-	var SEMVER_SPEC_VERSION = "2.0.0";
-	var MAX_LENGTH = 256;
-	var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER || 9007199254740991;
 	module.exports = {
-		MAX_LENGTH,
+		MAX_LENGTH: 256,
 		MAX_SAFE_COMPONENT_LENGTH: 16,
-		MAX_SAFE_BUILD_LENGTH: MAX_LENGTH - 6,
-		MAX_SAFE_INTEGER,
+		MAX_SAFE_BUILD_LENGTH: 250,
+		MAX_SAFE_INTEGER: Number.MAX_SAFE_INTEGER || 
+		/* istanbul ignore next */ 9007199254740991,
 		RELEASE_TYPES: [
 			"major",
 			"premajor",
@@ -24442,18 +24998,18 @@ var require_constants = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			"prepatch",
 			"prerelease"
 		],
-		SEMVER_SPEC_VERSION,
+		SEMVER_SPEC_VERSION: "2.0.0",
 		FLAG_INCLUDE_PRERELEASE: 1,
 		FLAG_LOOSE: 2
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/internal/debug.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/internal/debug.js
 var require_debug = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = typeof process === "object" && process.env && process.env.NODE_DEBUG && /\bsemver\b/i.test(process.env.NODE_DEBUG) ? (...args) => console.error("SEMVER", ...args) : () => {};
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/internal/re.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/internal/re.js
 var require_re = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var { MAX_SAFE_COMPONENT_LENGTH, MAX_SAFE_BUILD_LENGTH, MAX_LENGTH } = require_constants();
 	var debug = require_debug();
@@ -24532,7 +25088,7 @@ var require_re = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	createToken("GTE0PRE", "^\\s*>=\\s*0\\.0\\.0-0\\s*$");
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/internal/parse-options.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/internal/parse-options.js
 var require_parse_options = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var looseOption = Object.freeze({ loose: true });
 	var emptyOpts = Object.freeze({});
@@ -24544,7 +25100,7 @@ var require_parse_options = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	module.exports = parseOptions;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/internal/identifiers.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/internal/identifiers.js
 var require_identifiers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var numeric = /^[0-9]+$/;
 	var compareIdentifiers = (a, b) => {
@@ -24564,19 +25120,26 @@ var require_identifiers = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/classes/semver.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/classes/semver.js
 var require_semver$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var debug = require_debug();
 	var { MAX_LENGTH, MAX_SAFE_INTEGER } = require_constants();
 	var { safeRe: re, t } = require_re();
 	var parseOptions = require_parse_options();
 	var { compareIdentifiers } = require_identifiers();
+	var isPrereleaseIdentifier = (prerelease, identifier) => {
+		const identifiers = identifier.split(".");
+		if (identifiers.length > prerelease.length) return false;
+		for (let i = 0; i < identifiers.length; i++) if (compareIdentifiers(prerelease[i], identifiers[i]) !== 0) return false;
+		return true;
+	};
 	module.exports = class SemVer {
 		constructor(version, options) {
 			options = parseOptions(options);
-			if (version instanceof SemVer) if (version.loose === !!options.loose && version.includePrerelease === !!options.includePrerelease) return version;
-			else version = version.version;
-			else if (typeof version !== "string") throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version}".`);
+			if (version instanceof SemVer) {
+				if (version.loose === !!options.loose && version.includePrerelease === !!options.includePrerelease) return version;
+				else version = version.version;
+			} else if (typeof version !== "string") throw new TypeError(`Invalid version. Must be a string. Got type "${typeof version}".`);
 			if (version.length > MAX_LENGTH) throw new TypeError(`version is longer than ${MAX_LENGTH} characters`);
 			debug("SemVer", version, options);
 			this.options = options;
@@ -24727,8 +25290,9 @@ var require_semver$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 					if (identifier) {
 						let prerelease = [identifier, base];
 						if (identifierBase === false) prerelease = [identifier];
-						if (compareIdentifiers(this.prerelease[0], identifier) === 0) {
-							if (isNaN(this.prerelease[1])) this.prerelease = prerelease;
+						if (isPrereleaseIdentifier(this.prerelease, identifier)) {
+							const prereleaseBase = this.prerelease[identifier.split(".").length];
+							if (isNaN(prereleaseBase)) this.prerelease = prerelease;
 						} else this.prerelease = prerelease;
 					}
 					break;
@@ -24742,7 +25306,7 @@ var require_semver$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/parse.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/parse.js
 var require_parse = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var parse = (version, options, throwErrors = false) => {
@@ -24757,7 +25321,7 @@ var require_parse = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = parse;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/valid.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/valid.js
 var require_valid$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var valid = (version, options) => {
@@ -24767,7 +25331,7 @@ var require_valid$1 = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = valid;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/clean.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/clean.js
 var require_clean = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var clean = (version, options) => {
@@ -24777,7 +25341,7 @@ var require_clean = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = clean;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/inc.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/inc.js
 var require_inc = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var inc = (version, release, options, identifier, identifierBase) => {
@@ -24795,7 +25359,7 @@ var require_inc = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = inc;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/diff.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/diff.js
 var require_diff = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var diff = (version1, version2) => {
@@ -24823,28 +25387,28 @@ var require_diff = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = diff;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/major.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/major.js
 var require_major = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var major = (a, loose) => new SemVer(a, loose).major;
 	module.exports = major;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/minor.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/minor.js
 var require_minor = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var minor = (a, loose) => new SemVer(a, loose).minor;
 	module.exports = minor;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/patch.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/patch.js
 var require_patch = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var patch = (a, loose) => new SemVer(a, loose).patch;
 	module.exports = patch;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/prerelease.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/prerelease.js
 var require_prerelease = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var prerelease = (version, options) => {
@@ -24854,28 +25418,28 @@ var require_prerelease = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = prerelease;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/compare.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/compare.js
 var require_compare = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var compare = (a, b, loose) => new SemVer(a, loose).compare(new SemVer(b, loose));
 	module.exports = compare;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/rcompare.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/rcompare.js
 var require_rcompare = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var rcompare = (a, b, loose) => compare(b, a, loose);
 	module.exports = rcompare;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/compare-loose.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/compare-loose.js
 var require_compare_loose = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var compareLoose = (a, b) => compare(a, b, true);
 	module.exports = compareLoose;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/compare-build.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/compare-build.js
 var require_compare_build = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var compareBuild = (a, b, loose) => {
@@ -24886,63 +25450,63 @@ var require_compare_build = /* @__PURE__ */ __commonJSMin(((exports, module) => 
 	module.exports = compareBuild;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/sort.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/sort.js
 var require_sort = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compareBuild = require_compare_build();
 	var sort = (list, loose) => list.sort((a, b) => compareBuild(a, b, loose));
 	module.exports = sort;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/rsort.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/rsort.js
 var require_rsort = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compareBuild = require_compare_build();
 	var rsort = (list, loose) => list.sort((a, b) => compareBuild(b, a, loose));
 	module.exports = rsort;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/gt.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/gt.js
 var require_gt = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var gt = (a, b, loose) => compare(a, b, loose) > 0;
 	module.exports = gt;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/lt.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/lt.js
 var require_lt = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var lt = (a, b, loose) => compare(a, b, loose) < 0;
 	module.exports = lt;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/eq.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/eq.js
 var require_eq = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var eq = (a, b, loose) => compare(a, b, loose) === 0;
 	module.exports = eq;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/neq.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/neq.js
 var require_neq = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var neq = (a, b, loose) => compare(a, b, loose) !== 0;
 	module.exports = neq;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/gte.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/gte.js
 var require_gte = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var gte = (a, b, loose) => compare(a, b, loose) >= 0;
 	module.exports = gte;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/lte.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/lte.js
 var require_lte = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var compare = require_compare();
 	var lte = (a, b, loose) => compare(a, b, loose) <= 0;
 	module.exports = lte;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/cmp.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/cmp.js
 var require_cmp = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var eq = require_eq();
 	var neq = require_neq();
@@ -24974,7 +25538,7 @@ var require_cmp = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = cmp;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/coerce.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/coerce.js
 var require_coerce = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var parse = require_parse();
@@ -25002,7 +25566,7 @@ var require_coerce = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = coerce;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/truncate.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/truncate.js
 var require_truncate = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var parse = require_parse();
 	var constants = require_constants();
@@ -25023,9 +25587,7 @@ var require_truncate = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 				version.minor = 0;
 				version.patch = 0;
 				break;
-			case "minor":
-				version.patch = 0;
-				break;
+			case "minor": version.patch = 0;
 		}
 		return version.format();
 	};
@@ -25035,7 +25597,7 @@ var require_truncate = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = truncate;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/internal/lrucache.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/internal/lrucache.js
 var require_lrucache = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var LRUCache = class {
 		constructor() {
@@ -25068,14 +25630,16 @@ var require_lrucache = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = LRUCache;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/classes/range.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/classes/range.js
 var require_range = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SPACE_CHARACTERS = /\s+/g;
 	module.exports = class Range {
 		constructor(range, options) {
 			options = parseOptions(options);
-			if (range instanceof Range) if (range.loose === !!options.loose && range.includePrerelease === !!options.includePrerelease) return range;
-			else return new Range(range.raw, options);
+			if (range instanceof Range) {
+				if (range.loose === !!options.loose && range.includePrerelease === !!options.includePrerelease) return range;
+				else return new Range(range.raw, options);
+			}
 			if (range instanceof Comparator) {
 				this.raw = range.value;
 				this.set = [[range]];
@@ -25212,17 +25776,19 @@ var require_range = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		return comp;
 	};
 	var isX = (id) => !id || id.toLowerCase() === "x" || id === "*";
+	var invalidXRangeOrder = (M, m, p) => isX(M) && !isX(m) || isX(m) && p && !isX(p);
 	var replaceTildes = (comp, options) => {
 		return comp.trim().split(/\s+/).map((c) => replaceTilde(c, options)).join(" ");
 	};
 	var replaceTilde = (comp, options) => {
 		const r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE];
+		const z = options.includePrerelease ? "-0" : "";
 		return comp.replace(r, (_, M, m, p, pr) => {
 			debug("tilde", comp, _, M, m, p, pr);
 			let ret;
 			if (isX(M)) ret = "";
-			else if (isX(m)) ret = `>=${M}.0.0 <${+M + 1}.0.0-0`;
-			else if (isX(p)) ret = `>=${M}.${m}.0 <${M}.${+m + 1}.0-0`;
+			else if (isX(m)) ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`;
+			else if (isX(p)) ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
 			else if (pr) {
 				debug("replaceTilde pr", pr);
 				ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
@@ -25243,18 +25809,21 @@ var require_range = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			let ret;
 			if (isX(M)) ret = "";
 			else if (isX(m)) ret = `>=${M}.0.0${z} <${+M + 1}.0.0-0`;
-			else if (isX(p)) if (M === "0") ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
-			else ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
-			else if (pr) {
+			else if (isX(p)) {
+				if (M === "0") ret = `>=${M}.${m}.0${z} <${M}.${+m + 1}.0-0`;
+				else ret = `>=${M}.${m}.0${z} <${+M + 1}.0.0-0`;
+			} else if (pr) {
 				debug("replaceCaret pr", pr);
-				if (M === "0") if (m === "0") ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
-				else ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
-				else ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
+				if (M === "0") {
+					if (m === "0") ret = `>=${M}.${m}.${p}-${pr} <${M}.${m}.${+p + 1}-0`;
+					else ret = `>=${M}.${m}.${p}-${pr} <${M}.${+m + 1}.0-0`;
+				} else ret = `>=${M}.${m}.${p}-${pr} <${+M + 1}.0.0-0`;
 			} else {
 				debug("no pr");
-				if (M === "0") if (m === "0") ret = `>=${M}.${m}.${p}${z} <${M}.${m}.${+p + 1}-0`;
-				else ret = `>=${M}.${m}.${p}${z} <${M}.${+m + 1}.0-0`;
-				else ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
+				if (M === "0") {
+					if (m === "0") ret = `>=${M}.${m}.${p} <${M}.${m}.${+p + 1}-0`;
+					else ret = `>=${M}.${m}.${p} <${M}.${+m + 1}.0-0`;
+				} else ret = `>=${M}.${m}.${p} <${+M + 1}.0.0-0`;
 			}
 			debug("caret return", ret);
 			return ret;
@@ -25269,15 +25838,17 @@ var require_range = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		const r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE];
 		return comp.replace(r, (ret, gtlt, M, m, p, pr) => {
 			debug("xRange", comp, ret, gtlt, M, m, p, pr);
+			if (invalidXRangeOrder(M, m, p)) return comp;
 			const xM = isX(M);
 			const xm = xM || isX(m);
 			const xp = xm || isX(p);
 			const anyX = xp;
 			if (gtlt === "=" && anyX) gtlt = "";
 			pr = options.includePrerelease ? "-0" : "";
-			if (xM) if (gtlt === ">" || gtlt === "<") ret = "<0.0.0-0";
-			else ret = "*";
-			else if (gtlt && anyX) {
+			if (xM) {
+				if (gtlt === ">" || gtlt === "<") ret = "<0.0.0-0";
+				else ret = "*";
+			} else if (gtlt && anyX) {
 				if (xm) m = 0;
 				p = 0;
 				if (gtlt === ">") {
@@ -25342,7 +25913,7 @@ var require_range = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/classes/comparator.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/classes/comparator.js
 var require_comparator = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var ANY = Symbol("SemVer ANY");
 	module.exports = class Comparator {
@@ -25351,8 +25922,10 @@ var require_comparator = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 		}
 		constructor(comp, options) {
 			options = parseOptions(options);
-			if (comp instanceof Comparator) if (comp.loose === !!options.loose) return comp;
-			else comp = comp.value;
+			if (comp instanceof Comparator) {
+				if (comp.loose === !!options.loose) return comp;
+				else comp = comp.value;
+			}
 			comp = comp.trim().split(/\s+/).join(" ");
 			debug("comparator", comp, options);
 			this.options = options;
@@ -25412,7 +25985,7 @@ var require_comparator = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/functions/satisfies.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/functions/satisfies.js
 var require_satisfies = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var satisfies = (version, range, options) => {
@@ -25426,14 +25999,14 @@ var require_satisfies = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = satisfies;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/to-comparators.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/to-comparators.js
 var require_to_comparators = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var toComparators = (range, options) => new Range(range, options).set.map((comp) => comp.map((c) => c.value).join(" ").trim().split(" "));
 	module.exports = toComparators;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/max-satisfying.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/max-satisfying.js
 var require_max_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Range = require_range();
@@ -25459,7 +26032,7 @@ var require_max_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	module.exports = maxSatisfying;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/min-satisfying.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/min-satisfying.js
 var require_min_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Range = require_range();
@@ -25485,7 +26058,7 @@ var require_min_satisfying = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	module.exports = minSatisfying;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/min-version.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/min-version.js
 var require_min_version = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Range = require_range();
@@ -25525,7 +26098,7 @@ var require_min_version = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = minVersion;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/valid.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/valid.js
 var require_valid = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var validRange = (range, options) => {
@@ -25538,7 +26111,7 @@ var require_valid = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = validRange;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/outside.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/outside.js
 var require_outside = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var SemVer = require_semver$1();
 	var Comparator = require_comparator();
@@ -25552,7 +26125,11 @@ var require_outside = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var outside = (version, range, hilo, options) => {
 		version = new SemVer(version, options);
 		range = new Range(range, options);
-		let gtfn, ltefn, ltfn, comp, ecomp;
+		let gtfn;
+		let ltefn;
+		let ltfn;
+		let comp;
+		let ecomp;
 		switch (hilo) {
 			case ">":
 				gtfn = gt;
@@ -25591,21 +26168,21 @@ var require_outside = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = outside;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/gtr.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/gtr.js
 var require_gtr = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var outside = require_outside();
 	var gtr = (version, range, options) => outside(version, range, ">", options);
 	module.exports = gtr;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/ltr.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/ltr.js
 var require_ltr = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var outside = require_outside();
 	var ltr = (version, range, options) => outside(version, range, "<", options);
 	module.exports = ltr;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/intersects.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/intersects.js
 var require_intersects = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var intersects = (r1, r2, options) => {
@@ -25616,7 +26193,7 @@ var require_intersects = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = intersects;
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/simplify.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/simplify.js
 var require_simplify = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var satisfies = require_satisfies();
 	var compare = require_compare();
@@ -25646,7 +26223,7 @@ var require_simplify = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/semver@7.8.1/node_modules/semver/ranges/subset.js
+//#region node_modules/.pnpm/semver@7.8.5/node_modules/semver/ranges/subset.js
 var require_subset = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var Range = require_range();
 	var Comparator = require_comparator();
@@ -25672,13 +26249,18 @@ var require_subset = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var minimumVersion = [new Comparator(">=0.0.0")];
 	var simpleSubset = (sub, dom, options) => {
 		if (sub === dom) return true;
-		if (sub.length === 1 && sub[0].semver === ANY) if (dom.length === 1 && dom[0].semver === ANY) return true;
-		else if (options.includePrerelease) sub = minimumVersionWithPreRelease;
-		else sub = minimumVersion;
-		if (dom.length === 1 && dom[0].semver === ANY) if (options.includePrerelease) return true;
-		else dom = minimumVersion;
+		if (sub.length === 1 && sub[0].semver === ANY) {
+			if (dom.length === 1 && dom[0].semver === ANY) return true;
+			else if (options.includePrerelease) sub = minimumVersionWithPreRelease;
+			else sub = minimumVersion;
+		}
+		if (dom.length === 1 && dom[0].semver === ANY) {
+			if (options.includePrerelease) return true;
+			else dom = minimumVersion;
+		}
 		const eqSet = /* @__PURE__ */ new Set();
-		let gt, lt;
+		let gt;
+		let lt;
 		for (const c of sub) if (c.operator === ">" || c.operator === ">=") gt = higherGT(gt, c, options);
 		else if (c.operator === "<" || c.operator === "<=") lt = lowerLT(lt, c, options);
 		else eqSet.add(c.semver);
@@ -25695,8 +26277,10 @@ var require_subset = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			for (const c of dom) if (!satisfies(eq, String(c), options)) return false;
 			return true;
 		}
-		let higher, lower;
-		let hasDomLT, hasDomGT;
+		let higher;
+		let lower;
+		let hasDomLT;
+		let hasDomGT;
 		let needDomLTPre = lt && !options.includePrerelease && lt.semver.prerelease.length ? lt.semver : false;
 		let needDomGTPre = gt && !options.includePrerelease && gt.semver.prerelease.length ? gt.semver : false;
 		if (needDomLTPre && needDomLTPre.prerelease.length === 1 && lt.operator === "<" && needDomLTPre.prerelease[0] === 0) needDomLTPre = false;
@@ -25741,7 +26325,7 @@ var require_subset = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = subset;
 }));
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/constants.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/constants.js
 var import_semver = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	var internalRe = require_re();
 	var constants = require_constants();
@@ -25819,8 +26403,9 @@ var SystemTarPathOnWindows = `${process.env["SYSTEMDRIVE"]}\\Windows\\System32\\
 var TarFilename = "cache.tar";
 var ManifestFilename = "manifest.txt";
 10 * Math.pow(1024, 3);
+var CacheReadDeniedMessagePrefix = "cache read denied:";
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/cacheUtils.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/cacheUtils.js
 var __awaiter$10 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -25850,7 +26435,8 @@ var __awaiter$10 = function(thisArg, _arguments, P, generator) {
 };
 var __asyncValues = function(o) {
 	if (!Symbol.asyncIterator) throw new TypeError("Symbol.asyncIterator is not defined.");
-	var m = o[Symbol.asyncIterator], i;
+	var m = o[Symbol.asyncIterator];
+	var i;
 	return m ? m.call(o) : (o = typeof __values === "function" ? __values(o) : o[Symbol.iterator](), i = {}, verb("next"), verb("throw"), verb("return"), i[Symbol.asyncIterator] = function() {
 		return this;
 	}, i);
@@ -25882,7 +26468,7 @@ function createTempDirectory() {
 			else baseLocation = "/home";
 			tempDirectory = path$2.join(baseLocation, "actions", "temp");
 		}
-		const dest = path$2.join(tempDirectory, crypto$1.randomUUID());
+		const dest = path$2.join(tempDirectory, crypto.randomUUID());
 		yield mkdirP(dest);
 		return dest;
 	});
@@ -25892,7 +26478,10 @@ function getArchiveFileSizeInBytes(filePath) {
 }
 function resolvePaths(patterns) {
 	return __awaiter$10(this, void 0, void 0, function* () {
-		var _a, e_1, _b, _c;
+		var _a;
+		var e_1;
+		var _b;
+		var _c;
 		var _d;
 		const paths = [];
 		const workspace = (_d = process.env["GITHUB_WORKSPACE"]) !== null && _d !== void 0 ? _d : process.cwd();
@@ -25972,7 +26561,7 @@ function getCacheVersion(paths, compressionMethod, enableCrossOsArchive = false)
 	if (compressionMethod) components.push(compressionMethod);
 	if (process.platform === "win32" && !enableCrossOsArchive) components.push("windows-only");
 	components.push(versionSalt);
-	return crypto$1.createHash("sha256").update(components.join("|")).digest("hex");
+	return crypto.createHash("sha256").update(components.join("|")).digest("hex");
 }
 function getRuntimeToken() {
 	const token = process.env["ACTIONS_RUNTIME_TOKEN"];
@@ -25980,7 +26569,7 @@ function getRuntimeToken() {
 	return token;
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/abort-controller/AbortError.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/abort-controller/AbortError.js
 /**
 * This error is thrown when an asynchronous operation has been aborted.
 * Check for this error by testing the `name` that the name property of the
@@ -26011,19 +26600,34 @@ function getRuntimeToken() {
 * ```
 */
 var AbortError$1 = class extends Error {
+	static {
+		__name(this, "AbortError");
+	}
 	constructor(message) {
 		super(message);
 		this.name = "AbortError";
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/logger/log.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/logger/log.js
 function log(message, ...args) {
 	process$1.stderr.write(`${util.format(message, ...args)}${EOL$1}`);
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/logger/debug.js
-var debugEnvVariable = typeof process !== "undefined" && process.env && process.env.DEBUG || void 0;
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/env.js
+/**
+* Returns the value of the specified environment variable.
+*
+* @internal
+*/
+function getEnvironmentVariable(name) {
+	return process$1.env[name];
+}
+typeof process$1.versions.deno === "string" && process$1.versions.deno.length;
+typeof process$1.versions.bun === "string" && process$1.versions.bun.length;
+//#endregion
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/logger/debug.js
+var debugEnvVariable = getEnvironmentVariable("DEBUG");
 var enabledString;
 var enabledNamespaces = [];
 var skippedNamespaces = [];
@@ -26144,7 +26748,7 @@ function extend(namespace) {
 	return newDebugger;
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/logger/logger.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/logger/logger.js
 var TYPESPEC_RUNTIME_LOG_LEVELS = [
 	"verbose",
 	"info",
@@ -26172,7 +26776,7 @@ function isTypeSpecRuntimeLogLevel(level) {
 */
 function createLoggerContext(options) {
 	const registeredLoggers = /* @__PURE__ */ new Set();
-	const logLevelFromEnv = typeof process !== "undefined" && process.env && process.env[options.logLevelEnvVarName] || void 0;
+	const logLevelFromEnv = getEnvironmentVariable(options.logLevelEnvVarName);
 	let logLevel;
 	const clientLogger = debugObj(options.namespace);
 	clientLogger.log = (...args) => {
@@ -26185,8 +26789,10 @@ function createLoggerContext(options) {
 		for (const logger of registeredLoggers) if (shouldEnable(logger)) enabledNamespaces.push(logger.namespace);
 		debugObj.enable(enabledNamespaces.join(","));
 	}
-	if (logLevelFromEnv) if (isTypeSpecRuntimeLogLevel(logLevelFromEnv)) contextSetLogLevel(logLevelFromEnv);
-	else console.error(`${options.logLevelEnvVarName} set to unknown log level '${logLevelFromEnv}'; logging is not enabled. Acceptable values: ${TYPESPEC_RUNTIME_LOG_LEVELS.join(", ")}.`);
+	if (logLevelFromEnv) {
+		if (isTypeSpecRuntimeLogLevel(logLevelFromEnv)) contextSetLogLevel(logLevelFromEnv);
+		else console.error(`${options.logLevelEnvVarName} set to unknown log level '${logLevelFromEnv}'; logging is not enabled. Acceptable values: ${TYPESPEC_RUNTIME_LOG_LEVELS.join(", ")}.`);
+	}
 	function shouldEnable(logger) {
 		return Boolean(logLevel && levelMap[logger.level] <= levelMap[logLevel]);
 	}
@@ -26233,10 +26839,19 @@ context$1.logger;
 function createClientLogger$1(namespace) {
 	return context$1.createClientLogger(namespace);
 }
+__name(createClientLogger$1, "createClientLogger");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/httpHeaders.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/httpHeaders.js
 function normalizeName(name) {
 	return name.toLowerCase();
+}
+/**
+* Removes CR and LF characters from a header value to prevent obs-fold
+* (line folding) sequences, as forbidden by RFC 7230 §3.2.4.
+* @param value - The header value to sanitize.
+*/
+function normalizeValue(value) {
+	return String(value).trim().replace(/[\r\n]/g, "");
 }
 function* headerIterator(map) {
 	for (const entry of map.values()) yield [entry.name, entry.value];
@@ -26256,7 +26871,7 @@ var HttpHeadersImpl = class {
 	set(name, value) {
 		this._headersMap.set(normalizeName(name), {
 			name,
-			value: String(value).trim()
+			value: normalizeValue(value)
 		});
 	}
 	/**
@@ -26310,18 +26925,20 @@ var HttpHeadersImpl = class {
 function createHttpHeaders$1(rawHeaders) {
 	return new HttpHeadersImpl(rawHeaders);
 }
+__name(createHttpHeaders$1, "createHttpHeaders");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/uuidUtils.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/uuidUtils.js
 /**
 * Generated Universally Unique Identifier
 *
 * @returns RFC4122 v4 UUID.
 */
 function randomUUID$1() {
-	return crypto.randomUUID();
+	return globalThis.crypto.randomUUID();
 }
+__name(randomUUID$1, "randomUUID");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/pipelineRequest.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/pipelineRequest.js
 var PipelineRequestImpl = class {
 	url;
 	method;
@@ -26372,9 +26989,10 @@ var PipelineRequestImpl = class {
 function createPipelineRequest$1(options) {
 	return new PipelineRequestImpl(options);
 }
+__name(createPipelineRequest$1, "createPipelineRequest");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/pipeline.js
-var ValidPhaseNames = new Set([
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/pipeline.js
+var ValidPhaseNames = /* @__PURE__ */ new Set([
 	"Deserialize",
 	"Serialize",
 	"Retry",
@@ -26571,8 +27189,9 @@ var HttpPipeline = class HttpPipeline {
 function createEmptyPipeline$1() {
 	return HttpPipeline.create();
 }
+__name(createEmptyPipeline$1, "createEmptyPipeline");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/object.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/object.js
 /**
 * Helper to determine when an input is a generic JS object.
 * @returns true when input is an object type that is not null, Array, RegExp, or Date.
@@ -26581,7 +27200,7 @@ function isObject(input) {
 	return typeof input === "object" && input !== null && !Array.isArray(input) && !(input instanceof RegExp) && !(input instanceof Date);
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/error.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/error.js
 /**
 * Typeguard for an error object shape (has name and message)
 * @param e - Something caught by a catch clause.
@@ -26594,11 +27213,12 @@ function isError$1(e) {
 	}
 	return false;
 }
+__name(isError$1, "isError");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/inspect.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/inspect.js
 var custom = inspect.custom;
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/sanitizer.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/sanitizer.js
 var RedactedString = "REDACTED";
 var defaultAllowedHeaderNames = [
 	"x-ms-client-request-id",
@@ -26707,12 +27327,15 @@ var Sanitizer = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/restError.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/restError.js
 var errorSanitizer = new Sanitizer();
 /**
 * A custom error type for failed pipeline requests.
 */
 var RestError$1 = class RestError$1 extends Error {
+	static {
+		__name(this, "RestError");
+	}
 	/**
 	* Something went wrong when making the request.
 	* This means the actual request failed for some reason,
@@ -26787,22 +27410,34 @@ function isRestError$1(e) {
 	if (e instanceof RestError$1) return true;
 	return isError$1(e) && e.name === "RestError";
 }
+__name(isRestError$1, "isRestError");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/bytesEncoding.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/bytesEncoding.js
+/**
+* The helper that transforms bytes with specific character encoding into string
+* @param bytes - the uint8array bytes
+* @param format - the format we use to encode the byte
+* @returns a string of the encoded string
+*/
+function uint8ArrayToString$1(bytes, format) {
+	return Buffer.from(bytes).toString(format);
+}
+__name(uint8ArrayToString$1, "uint8ArrayToString");
 /**
 * The helper that transforms string to specific character encoded bytes array.
 * @param value - the string to be converted
 * @param format - the format we use to decode the value
 * @returns a uint8array
 */
-function stringToUint8Array(value, format) {
+function stringToUint8Array$1(value, format) {
 	return Buffer.from(value, format);
 }
+__name(stringToUint8Array$1, "stringToUint8Array");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/log.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/log.js
 var logger$4 = createClientLogger$1("ts-http-runtime");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/nodeHttpClient.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/nodeHttpClient.js
 var DEFAULT_TLS_SETTINGS = {};
 function isReadableStream(body) {
 	return body && typeof body.pipe === "function";
@@ -26954,13 +27589,14 @@ var NodeHttpClient = class {
 				reject(abortError);
 			});
 			if (body && isReadableStream(body)) body.pipe(req);
-			else if (body) if (typeof body === "string" || Buffer.isBuffer(body)) req.end(body);
-			else if (isArrayBuffer(body)) req.end(ArrayBuffer.isView(body) ? Buffer.from(body.buffer) : Buffer.from(body));
-			else {
-				logger$4.error("Unrecognized body type", body);
-				reject(new RestError$1("Unrecognized body type"));
-			}
-			else req.end();
+			else if (body) {
+				if (typeof body === "string" || Buffer.isBuffer(body)) req.end(body);
+				else if (isArrayBuffer(body)) req.end(ArrayBuffer.isView(body) ? Buffer.from(body.buffer, body.byteOffset, body.byteLength) : Buffer.from(body));
+				else {
+					logger$4.error("Unrecognized body type", body);
+					reject(new RestError$1("Unrecognized body type"));
+				}
+			} else req.end();
 		});
 	}
 	getOrCreateAgent(request, isInsecure) {
@@ -27040,15 +27676,16 @@ function createNodeHttpClient() {
 	return new NodeHttpClient();
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/defaultHttpClient.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/defaultHttpClient.js
 /**
 * Create the correct HttpClient for the current environment.
 */
 function createDefaultHttpClient$1() {
 	return createNodeHttpClient();
 }
+__name(createDefaultHttpClient$1, "createDefaultHttpClient");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/logPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/logPolicy.js
 /**
 * The programmatic identifier of the logPolicy.
 */
@@ -27070,80 +27707,14 @@ function logPolicy$1(options = {}) {
 			logger(`Request: ${sanitizer.sanitize(request)}`);
 			const response = await next(request);
 			logger(`Response status code: ${response.status}`);
-			logger(`Headers: ${sanitizer.sanitize(response.headers)}`);
+			logger(`Headers: ${sanitizer.sanitize({ headers: response.headers })}`);
 			return response;
 		}
 	};
 }
+__name(logPolicy$1, "logPolicy");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/redirectPolicy.js
-/**
-* The programmatic identifier of the redirectPolicy.
-*/
-var redirectPolicyName$1 = "redirectPolicy";
-/**
-* Methods that are allowed to follow redirects 301 and 302
-*/
-var allowedRedirect = ["GET", "HEAD"];
-/**
-* A policy to follow Location headers from the server in order
-* to support server-side redirection.
-* In the browser, this policy is not used.
-* @param options - Options to control policy behavior.
-*/
-function redirectPolicy$1(options = {}) {
-	const { maxRetries = 20, allowCrossOriginRedirects = false } = options;
-	return {
-		name: redirectPolicyName$1,
-		async sendRequest(request, next) {
-			return handleRedirect(next, await next(request), maxRetries, allowCrossOriginRedirects);
-		}
-	};
-}
-async function handleRedirect(next, response, maxRetries, allowCrossOriginRedirects, currentRetries = 0) {
-	const { request, status, headers } = response;
-	const locationHeader = headers.get("location");
-	if (locationHeader && (status === 300 || status === 301 && allowedRedirect.includes(request.method) || status === 302 && allowedRedirect.includes(request.method) || status === 303 && request.method === "POST" || status === 307) && currentRetries < maxRetries) {
-		const url = new URL(locationHeader, request.url);
-		if (!allowCrossOriginRedirects) {
-			const originalUrl = new URL(request.url);
-			if (url.origin !== originalUrl.origin) {
-				logger$4.verbose(`Skipping cross-origin redirect from ${originalUrl.origin} to ${url.origin}.`);
-				return response;
-			}
-		}
-		request.url = url.toString();
-		if (status === 303) {
-			request.method = "GET";
-			request.headers.delete("Content-Length");
-			delete request.body;
-		}
-		request.headers.delete("Authorization");
-		return handleRedirect(next, await next(request), maxRetries, allowCrossOriginRedirects, currentRetries + 1);
-	}
-	return response;
-}
-//#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/decompressResponsePolicy.js
-/**
-* The programmatic identifier of the decompressResponsePolicy.
-*/
-var decompressResponsePolicyName$1 = "decompressResponsePolicy";
-/**
-* A policy to enable response decompression according to Accept-Encoding header
-* https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
-*/
-function decompressResponsePolicy$1() {
-	return {
-		name: decompressResponsePolicyName$1,
-		async sendRequest(request, next) {
-			if (request.method !== "HEAD") request.headers.set("Accept-Encoding", "gzip,deflate");
-			return next(request);
-		}
-	};
-}
-//#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/random.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/random.js
 /**
 * Returns a random integer value between a lower and upper bound,
 * inclusive of both bounds.
@@ -27158,7 +27729,7 @@ function getRandomIntegerInclusive(min, max) {
 	return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/delay.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/delay.js
 /**
 * Calculates the delay interval for retry attempts using exponential delay with jitter.
 * @param retryAttempt - The current retry attempt number.
@@ -27171,7 +27742,7 @@ function calculateRetryDelay(retryAttempt, config) {
 	return { retryAfterInMs: clampedDelay / 2 + getRandomIntegerInclusive(0, clampedDelay / 2) };
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/helpers.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/helpers.js
 var StandardAbortMessage$1 = "The operation was aborted.";
 /**
 * A wrapper for setTimeout that resolves a promise after delayInMs milliseconds.
@@ -27205,6 +27776,7 @@ function delay$2(delayInMs, value, options) {
 		if (options?.abortSignal) options.abortSignal.addEventListener("abort", onAborted);
 	});
 }
+__name(delay$2, "delay");
 /**
 * @internal
 * @returns the parsed value or undefined if the parsed value is invalid.
@@ -27217,7 +27789,7 @@ function parseHeaderValueAsNumber(response, headerName) {
 	return valueAsNum;
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/retryStrategies/throttlingRetryStrategy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/retryStrategies/throttlingRetryStrategy.js
 /**
 * The header that comes back from services representing
 * the amount of time (minimum) to wait to retry (in seconds or timestamp after which we can retry).
@@ -27277,9 +27849,9 @@ function throttlingRetryStrategy() {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/retryStrategies/exponentialRetryStrategy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/retryStrategies/exponentialRetryStrategy.js
 var DEFAULT_CLIENT_RETRY_INTERVAL = 1e3;
-var DEFAULT_CLIENT_MAX_RETRY_INTERVAL = 1e3 * 64;
+var DEFAULT_CLIENT_MAX_RETRY_INTERVAL = 64e3;
 /**
 * A retry strategy that retries with an exponentially increasing delay in these two cases:
 * - When there are errors in the underlying transport layer (e.g. DNS lookup failures).
@@ -27320,7 +27892,7 @@ function isSystemError(err) {
 	return err.code === "ETIMEDOUT" || err.code === "ESOCKETTIMEDOUT" || err.code === "ECONNREFUSED" || err.code === "ECONNRESET" || err.code === "ENOENT" || err.code === "ENOTFOUND";
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/retryPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/retryPolicy.js
 var retryPolicyLogger = createClientLogger$1("ts-http-runtime retryPolicy");
 /**
 * The programmatic identifier of the retryPolicy.
@@ -27403,7 +27975,7 @@ function retryPolicy(strategies, options = { maxRetries: 3 }) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/defaultRetryPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/defaultRetryPolicy.js
 /**
 * Name of the {@link defaultRetryPolicy}
 */
@@ -27420,29 +27992,33 @@ function defaultRetryPolicy$1(options = {}) {
 		sendRequest: retryPolicy([throttlingRetryStrategy(), exponentialRetryStrategy(options)], { maxRetries: options.maxRetries ?? 3 }).sendRequest
 	};
 }
-typeof window !== "undefined" && window.document;
-typeof self === "object" && typeof self?.importScripts === "function" && (self.constructor?.name === "DedicatedWorkerGlobalScope" || self.constructor?.name === "ServiceWorkerGlobalScope" || self.constructor?.name);
-typeof Deno !== "undefined" && typeof Deno.version !== "undefined" && Deno.version.deno;
-typeof Bun !== "undefined" && Bun.version;
-/**
-* A constant that indicates whether the environment the code is running is a Node.js compatible environment.
-*/
-var isNodeLike$1 = typeof globalThis.process !== "undefined" && Boolean(globalThis.process.version) && Boolean(globalThis.process.versions?.node);
-typeof navigator !== "undefined" && navigator?.product;
+__name(defaultRetryPolicy$1, "defaultRetryPolicy");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/formDataPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/formData.js
+/**
+* If the request body is a native FormData, convert it to our FormDataMap
+* representation and clear the body. Node.js's HTTP stack doesn't handle
+* FormData natively, so the pipeline must serialize it later.
+*
+* @internal
+*/
+function convertBodyToFormDataMap(body) {
+	if (typeof FormData !== "undefined" && body instanceof FormData) {
+		const formDataMap = {};
+		for (const [key, value] of body.entries()) {
+			const existing = formDataMap[key];
+			if (Array.isArray(existing)) existing.push(value);
+			else formDataMap[key] = existing !== void 0 ? [existing, value] : [value];
+		}
+		return formDataMap;
+	}
+}
+//#endregion
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/formDataPolicy.js
 /**
 * The programmatic identifier of the formDataPolicy.
 */
 var formDataPolicyName = "formDataPolicy";
-function formDataToFormDataMap(formData) {
-	const formDataMap = {};
-	for (const [key, value] of formData.entries()) {
-		formDataMap[key] ??= [];
-		formDataMap[key].push(value);
-	}
-	return formDataMap;
-}
 /**
 * A policy that encodes FormData on the request into the body.
 */
@@ -27450,8 +28026,9 @@ function formDataPolicy$1() {
 	return {
 		name: formDataPolicyName,
 		async sendRequest(request, next) {
-			if (isNodeLike$1 && typeof FormData !== "undefined" && request.body instanceof FormData) {
-				request.formData = formDataToFormDataMap(request.body);
+			const converted = convertBodyToFormDataMap(request.body);
+			if (converted) {
+				request.formData = converted;
 				request.body = void 0;
 			}
 			if (request.formData) {
@@ -27464,6 +28041,7 @@ function formDataPolicy$1() {
 		}
 	};
 }
+__name(formDataPolicy$1, "formDataPolicy");
 function wwwFormUrlEncode(formData) {
 	const urlSearchParams = new URLSearchParams();
 	for (const [key, value] of Object.entries(formData)) if (Array.isArray(value)) for (const subValue of value) urlSearchParams.append(key, subValue.toString());
@@ -27477,7 +28055,7 @@ async function prepareFormData(formData, request) {
 	const parts = [];
 	for (const [fieldName, values] of Object.entries(formData)) for (const value of Array.isArray(values) ? values : [values]) if (typeof value === "string") parts.push({
 		headers: createHttpHeaders$1({ "Content-Disposition": `form-data; name="${fieldName}"` }),
-		body: stringToUint8Array(value, "utf-8")
+		body: stringToUint8Array$1(value, "utf-8")
 	});
 	else if (value === void 0 || value === null || typeof value !== "object") throw new Error(`Unexpected value for key ${fieldName}: ${value}. Value should be serialized to string first.`);
 	else {
@@ -27492,6 +28070,44 @@ async function prepareFormData(formData, request) {
 	}
 	request.multipartBody = { parts };
 }
+//#endregion
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/agentPolicy.js
+/**
+* Name of the Agent Policy
+*/
+var agentPolicyName = "agentPolicy";
+/**
+* Gets a pipeline policy that sets http.agent
+*/
+function agentPolicy$1(agent) {
+	return {
+		name: agentPolicyName,
+		sendRequest: async (req, next) => {
+			if (!req.agent) req.agent = agent;
+			return next(req);
+		}
+	};
+}
+__name(agentPolicy$1, "agentPolicy");
+//#endregion
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/tlsPolicy.js
+/**
+* Name of the TLS Policy
+*/
+var tlsPolicyName = "tlsPolicy";
+/**
+* Gets a pipeline policy that adds the client certificate to the HttpClient agent for authentication.
+*/
+function tlsPolicy$1(tlsSettings) {
+	return {
+		name: tlsPolicyName,
+		sendRequest: async (req, next) => {
+			if (!req.tlsSettings) req.tlsSettings = tlsSettings;
+			return next(req);
+		}
+	};
+}
+__name(tlsPolicy$1, "tlsPolicy");
 //#endregion
 //#region node_modules/.pnpm/ms@2.1.3/node_modules/ms/index.js
 var require_ms = /* @__PURE__ */ __commonJSMin(((exports, module) => {
@@ -27611,7 +28227,7 @@ var require_ms = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	}
 }));
 //#endregion
-//#region node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/common.js
+//#region node_modules/.pnpm/debug@4.4.3_supports-color@7.2.0/node_modules/debug/src/common.js
 var require_common = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* This is the common logic for both the Node.js and web browser
@@ -27750,15 +28366,16 @@ var require_common = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 			let templateIndex = 0;
 			let starIndex = -1;
 			let matchIndex = 0;
-			while (searchIndex < search.length) if (templateIndex < template.length && (template[templateIndex] === search[searchIndex] || template[templateIndex] === "*")) if (template[templateIndex] === "*") {
-				starIndex = templateIndex;
-				matchIndex = searchIndex;
-				templateIndex++;
-			} else {
-				searchIndex++;
-				templateIndex++;
-			}
-			else if (starIndex !== -1) {
+			while (searchIndex < search.length) if (templateIndex < template.length && (template[templateIndex] === search[searchIndex] || template[templateIndex] === "*")) {
+				if (template[templateIndex] === "*") {
+					starIndex = templateIndex;
+					matchIndex = searchIndex;
+					templateIndex++;
+				} else {
+					searchIndex++;
+					templateIndex++;
+				}
+			} else if (starIndex !== -1) {
 				templateIndex = starIndex + 1;
 				matchIndex++;
 				searchIndex = matchIndex;
@@ -27813,7 +28430,7 @@ var require_common = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = setup;
 }));
 //#endregion
-//#region node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/browser.js
+//#region node_modules/.pnpm/debug@4.4.3_supports-color@7.2.0/node_modules/debug/src/browser.js
 var require_browser = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* This is the web browser implementation of `debug()`.
@@ -28028,9 +28645,11 @@ var require_supports_color = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	var forceColor;
 	if (hasFlag("no-color") || hasFlag("no-colors") || hasFlag("color=false") || hasFlag("color=never")) forceColor = 0;
 	else if (hasFlag("color") || hasFlag("colors") || hasFlag("color=true") || hasFlag("color=always")) forceColor = 1;
-	if ("FORCE_COLOR" in env) if (env.FORCE_COLOR === "true") forceColor = 1;
-	else if (env.FORCE_COLOR === "false") forceColor = 0;
-	else forceColor = env.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env.FORCE_COLOR, 10), 3);
+	if ("FORCE_COLOR" in env) {
+		if (env.FORCE_COLOR === "true") forceColor = 1;
+		else if (env.FORCE_COLOR === "false") forceColor = 0;
+		else forceColor = env.FORCE_COLOR.length === 0 ? 1 : Math.min(parseInt(env.FORCE_COLOR, 10), 3);
+	}
 	function translateLevel(level) {
 		if (level === 0) return false;
 		return {
@@ -28087,7 +28706,7 @@ var require_supports_color = /* @__PURE__ */ __commonJSMin(((exports, module) =>
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/node.js
+//#region node_modules/.pnpm/debug@4.4.3_supports-color@7.2.0/node_modules/debug/src/node.js
 var require_node = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* Module dependencies.
@@ -28294,7 +28913,7 @@ var require_node = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/debug@4.4.3/node_modules/debug/src/index.js
+//#region node_modules/.pnpm/debug@4.4.3_supports-color@7.2.0/node_modules/debug/src/index.js
 var require_src = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	/**
 	* Detect Electron renderer / nwjs process, which is node, but we should
@@ -28498,7 +29117,7 @@ var require_dist$2 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.Agent = Agent;
 }));
 //#endregion
-//#region node_modules/.pnpm/https-proxy-agent@7.0.6/node_modules/https-proxy-agent/dist/parse-proxy-response.js
+//#region node_modules/.pnpm/https-proxy-agent@7.0.6_supports-color@7.2.0/node_modules/https-proxy-agent/dist/parse-proxy-response.js
 var require_parse_proxy_response = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var __importDefault = exports && exports.__importDefault || function(mod) {
 		return mod && mod.__esModule ? mod : { "default": mod };
@@ -28583,7 +29202,7 @@ var require_parse_proxy_response = /* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.parseProxyResponse = parseProxyResponse;
 }));
 //#endregion
-//#region node_modules/.pnpm/https-proxy-agent@7.0.6/node_modules/https-proxy-agent/dist/index.js
+//#region node_modules/.pnpm/https-proxy-agent@7.0.6_supports-color@7.2.0/node_modules/https-proxy-agent/dist/index.js
 var require_dist$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
 		if (k2 === void 0) k2 = k;
@@ -28730,7 +29349,7 @@ var require_dist$1 = /* @__PURE__ */ __commonJSMin(((exports) => {
 	}
 }));
 //#endregion
-//#region node_modules/.pnpm/http-proxy-agent@7.0.2/node_modules/http-proxy-agent/dist/index.js
+//#region node_modules/.pnpm/http-proxy-agent@7.0.2_supports-color@7.2.0/node_modules/http-proxy-agent/dist/index.js
 var require_dist = /* @__PURE__ */ __commonJSMin(((exports) => {
 	var __createBinding = exports && exports.__createBinding || (Object.create ? (function(o, m, k, k2) {
 		if (k2 === void 0) k2 = k;
@@ -28851,7 +29470,7 @@ var require_dist = /* @__PURE__ */ __commonJSMin(((exports) => {
 	}
 }));
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/proxyPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/proxyPolicy.js
 var import_dist = require_dist$1();
 var import_dist$1 = require_dist();
 var HTTPS_PROXY = "HTTPS_PROXY";
@@ -28924,6 +29543,7 @@ function getDefaultProxySettings$1(proxyUrl) {
 		password: parsedUrl.password
 	};
 }
+__name(getDefaultProxySettings$1, "getDefaultProxySettings");
 /**
 * This method attempts to parse a proxy URL from the environment
 * variables `HTTPS_PROXY` or `HTTP_PROXY`.
@@ -28976,49 +29596,83 @@ function proxyPolicy$1(proxySettings, options) {
 		}
 	};
 }
+__name(proxyPolicy$1, "proxyPolicy");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/agentPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/decompressResponsePolicy.js
 /**
-* Name of the Agent Policy
+* The programmatic identifier of the decompressResponsePolicy.
 */
-var agentPolicyName = "agentPolicy";
+var decompressResponsePolicyName$1 = "decompressResponsePolicy";
 /**
-* Gets a pipeline policy that sets http.agent
+* A policy to enable response decompression according to Accept-Encoding header
+* https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
 */
-function agentPolicy$1(agent) {
+function decompressResponsePolicy$1() {
 	return {
-		name: agentPolicyName,
-		sendRequest: async (req, next) => {
-			if (!req.agent) req.agent = agent;
-			return next(req);
+		name: decompressResponsePolicyName$1,
+		async sendRequest(request, next) {
+			if (request.method !== "HEAD") request.headers.set("Accept-Encoding", "gzip,deflate");
+			return next(request);
 		}
 	};
 }
+__name(decompressResponsePolicy$1, "decompressResponsePolicy");
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/tlsPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/redirectPolicy.js
 /**
-* Name of the TLS Policy
+* The programmatic identifier of the redirectPolicy.
 */
-var tlsPolicyName = "tlsPolicy";
+var redirectPolicyName$1 = "redirectPolicy";
 /**
-* Gets a pipeline policy that adds the client certificate to the HttpClient agent for authentication.
+* Methods that are allowed to follow redirects 301 and 302
 */
-function tlsPolicy$1(tlsSettings) {
+var allowedRedirect = ["GET", "HEAD"];
+/**
+* A policy to follow Location headers from the server in order
+* to support server-side redirection.
+* In the browser, this policy is not used.
+* @param options - Options to control policy behavior.
+*/
+function redirectPolicy$1(options = {}) {
+	const { maxRetries = 20, allowCrossOriginRedirects = false } = options;
 	return {
-		name: tlsPolicyName,
-		sendRequest: async (req, next) => {
-			if (!req.tlsSettings) req.tlsSettings = tlsSettings;
-			return next(req);
+		name: redirectPolicyName$1,
+		async sendRequest(request, next) {
+			return handleRedirect(next, await next(request), maxRetries, allowCrossOriginRedirects);
 		}
 	};
 }
+__name(redirectPolicy$1, "redirectPolicy");
+async function handleRedirect(next, response, maxRetries, allowCrossOriginRedirects, currentRetries = 0) {
+	const { request, status, headers } = response;
+	const locationHeader = headers.get("location");
+	if (locationHeader && (status === 300 || status === 301 && allowedRedirect.includes(request.method) || status === 302 && allowedRedirect.includes(request.method) || status === 303 && request.method === "POST" || status === 307) && currentRetries < maxRetries) {
+		const url = new URL(locationHeader, request.url);
+		if (!allowCrossOriginRedirects) {
+			const originalUrl = new URL(request.url);
+			if (url.origin !== originalUrl.origin) {
+				logger$4.verbose(`Skipping cross-origin redirect from ${originalUrl.origin} to ${url.origin}.`);
+				return response;
+			}
+		}
+		request.url = url.toString();
+		if (status === 303) {
+			request.method = "GET";
+			request.headers.delete("Content-Length");
+			delete request.body;
+		}
+		request.headers.delete("Authorization");
+		return handleRedirect(next, await next(request), maxRetries, allowCrossOriginRedirects, currentRetries + 1);
+	}
+	return response;
+}
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/typeGuards.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/typeGuards.js
 function isBlob(x) {
-	return typeof Blob !== "undefined" && x instanceof Blob;
+	return x instanceof Blob;
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/util/concat.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/util/concat.js
 async function* streamAsyncIterator() {
 	const reader = this.getReader();
 	try {
@@ -29064,7 +29718,7 @@ async function concat(sources) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.5/node_modules/@typespec/ts-http-runtime/dist/esm/policies/multipartPolicy.js
+//#region node_modules/.pnpm/@typespec+ts-http-runtime@0.3.8_supports-color@7.2.0/node_modules/@typespec/ts-http-runtime/dist/esm/policies/multipartPolicy.js
 function generateBoundary() {
 	return `----AzSDKFormBoundary${randomUUID$1()}`;
 }
@@ -29089,15 +29743,15 @@ function getTotalLength(sources) {
 }
 async function buildRequestBody(request, parts, boundary) {
 	const sources = [
-		stringToUint8Array(`--${boundary}`, "utf-8"),
+		stringToUint8Array$1(`--${boundary}`, "utf-8"),
 		...parts.flatMap((part) => [
-			stringToUint8Array("\r\n", "utf-8"),
-			stringToUint8Array(encodeHeaders(part.headers), "utf-8"),
-			stringToUint8Array("\r\n", "utf-8"),
+			stringToUint8Array$1("\r\n", "utf-8"),
+			stringToUint8Array$1(encodeHeaders(part.headers), "utf-8"),
+			stringToUint8Array$1("\r\n", "utf-8"),
 			part.body,
-			stringToUint8Array(`\r\n--${boundary}`, "utf-8")
+			stringToUint8Array$1(`\r\n--${boundary}`, "utf-8")
 		]),
-		stringToUint8Array("--\r\n\r\n", "utf-8")
+		stringToUint8Array$1("--\r\n\r\n", "utf-8")
 	];
 	const contentLength = getTotalLength(sources);
 	if (contentLength) request.headers.set("Content-Length", contentLength);
@@ -29138,8 +29792,9 @@ function multipartPolicy$1() {
 		}
 	};
 }
+__name(multipartPolicy$1, "multipartPolicy");
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/pipeline.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/pipeline.js
 /**
 * Creates a totally empty pipeline.
 * Useful for testing or creating a custom one.
@@ -29148,7 +29803,7 @@ function createEmptyPipeline() {
 	return createEmptyPipeline$1();
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+logger@1.3.0/node_modules/@azure/logger/dist/esm/index.js
+//#region node_modules/.pnpm/@azure+logger@1.4.0_supports-color@7.2.0/node_modules/@azure/logger/dist/esm/index.js
 var context = createLoggerContext({
 	logLevelEnvVarName: "AZURE_LOG_LEVEL",
 	namespace: "azure"
@@ -29163,10 +29818,10 @@ function createClientLogger(namespace) {
 	return context.createClientLogger(namespace);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/log.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/log.js
 var logger$3 = createClientLogger("core-rest-pipeline");
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/logPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/logPolicy.js
 /**
 * A policy that logs all requests and responses.
 * @param options - Options to configure logPolicy.
@@ -29178,7 +29833,7 @@ function logPolicy(options = {}) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/redirectPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/redirectPolicy.js
 /**
 * The programmatic identifier of the redirectPolicy.
 */
@@ -29193,7 +29848,7 @@ function redirectPolicy(options = {}) {
 	return redirectPolicy$1(options);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/userAgentPlatform.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/userAgentPlatform.js
 /**
 * @internal
 */
@@ -29206,17 +29861,16 @@ function getHeaderName() {
 async function setPlatformSpecificData(map) {
 	if (process$1 && process$1.versions) {
 		const osInfo = `${os$1.type()} ${os$1.release()}; ${os$1.arch()}`;
-		const versions = process$1.versions;
-		if (versions.bun) map.set("Bun", `${versions.bun} (${osInfo})`);
-		else if (versions.deno) map.set("Deno", `${versions.deno} (${osInfo})`);
-		else if (versions.node) map.set("Node", `${versions.node} (${osInfo})`);
+		if (process$1.versions.bun) map.set("Bun", `${process$1.versions.bun} (${osInfo})`);
+		else if (process$1.versions.deno) map.set("Deno", `${process$1.versions.deno} (${osInfo})`);
+		else if (process$1.versions.node) map.set("Node", `${process$1.versions.node} (${osInfo})`);
 	}
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/constants.js
-var SDK_VERSION$1 = "1.22.3";
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/constants.js
+var SDK_VERSION$1 = "1.25.0";
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/userAgent.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/userAgent.js
 function getUserAgentString$1(telemetryInfo) {
 	const parts = [];
 	for (const [key, value] of telemetryInfo) {
@@ -29225,6 +29879,7 @@ function getUserAgentString$1(telemetryInfo) {
 	}
 	return parts.join(" ");
 }
+__name(getUserAgentString$1, "getUserAgentString");
 /**
 * @internal
 */
@@ -29242,7 +29897,7 @@ async function getUserAgentValue(prefix) {
 	return prefix ? `${prefix} ${defaultAgent}` : defaultAgent;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/userAgentPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/userAgentPolicy.js
 var UserAgentHeaderName = getUserAgentHeaderName();
 /**
 * The programmatic identifier of the userAgentPolicy.
@@ -29264,20 +29919,118 @@ function userAgentPolicy(options = {}) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+abort-controller@2.1.2/node_modules/@azure/abort-controller/dist/esm/AbortError.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/file.js
+/**
+* Private symbol used as key on objects created using createFile containing the
+* original source of the file object.
+*
+* This is used in Node to access the original Node stream without using Blob#stream, which
+* returns a web stream. This is done to avoid a couple of bugs to do with Blob#stream and
+* Readable#to/fromWeb in Node versions we support:
+* - https://github.com/nodejs/node/issues/42694 (fixed in Node 18.14)
+* - https://github.com/nodejs/node/issues/48916 (fixed in Node 20.6)
+*
+* Once these versions are no longer supported, we may be able to stop doing this.
+*
+* @internal
+*/
+var rawContent = Symbol("rawContent");
+/**
+* Type guard to check if a given object is a blob-like object with a raw content property.
+*/
+function hasRawContent(x) {
+	return typeof x[rawContent] === "function";
+}
+/**
+* Extract the raw content from a given blob-like object. If the input was created using createFile
+* or createFileFromStream, the exact content passed into createFile/createFileFromStream will be used.
+* For true instances of Blob and File, returns the actual blob.
+*
+* @internal
+*/
+function getRawContent$1(blob) {
+	if (hasRawContent(blob)) return blob[rawContent]();
+	else return blob;
+}
+__name(getRawContent$1, "getRawContent");
+//#endregion
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/multipartPolicy.js
+/**
+* Name of multipart policy
+*/
+var multipartPolicyName = multipartPolicyName$1;
+/**
+* Pipeline policy for multipart requests
+*/
+function multipartPolicy() {
+	const tspPolicy = multipartPolicy$1();
+	return {
+		name: multipartPolicyName,
+		sendRequest: async (request, next) => {
+			if (request.multipartBody) {
+				for (const part of request.multipartBody.parts) if (hasRawContent(part.body)) part.body = getRawContent$1(part.body);
+			}
+			return tspPolicy.sendRequest(request, next);
+		}
+	};
+}
+//#endregion
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/decompressResponsePolicy.js
+/**
+* The programmatic identifier of the decompressResponsePolicy.
+*/
+var decompressResponsePolicyName = decompressResponsePolicyName$1;
+/**
+* A policy to enable response decompression according to Accept-Encoding header
+* https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
+*/
+function decompressResponsePolicy() {
+	return decompressResponsePolicy$1();
+}
+//#endregion
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/defaultRetryPolicy.js
+/**
+* A policy that retries according to three strategies:
+* - When the server sends a 429 response with a Retry-After header.
+* - When there are errors in the underlying transport layer (e.g. DNS lookup failures).
+* - Or otherwise if the outgoing request fails, it will retry with an exponentially increasing delay.
+*/
+function defaultRetryPolicy(options = {}) {
+	return defaultRetryPolicy$1(options);
+}
+//#endregion
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/formDataPolicy.js
+/**
+* A policy that encodes FormData on the request into the body.
+*/
+function formDataPolicy() {
+	return formDataPolicy$1();
+}
+//#endregion
+//#region node_modules/.pnpm/@azure+abort-controller@2.2.0/node_modules/@azure/abort-controller/dist/esm/AbortError.js
 /**
 * This error is thrown when an asynchronous operation has been aborted.
 * Check for this error by testing the `name` that the name property of the
 * error matches `"AbortError"`.
 *
 * @example
-* ```ts
+* ```ts snippet:AbortErrorSample
+* import { AbortError } from "@azure/abort-controller";
+*
+* async function doAsyncWork(options: { abortSignal: AbortSignal }): Promise<void> {
+*   if (options.abortSignal.aborted) {
+*     throw new AbortError();
+*   }
+*
+*   // do async work
+* }
+*
 * const controller = new AbortController();
 * controller.abort();
 * try {
-*   doAsyncWork(controller.signal)
+*   doAsyncWork({ abortSignal: controller.signal });
 * } catch (e) {
-*   if (e.name === 'AbortError') {
+*   if (e instanceof Error && e.name === "AbortError") {
 *     // handle abort error here.
 *   }
 * }
@@ -29290,7 +30043,7 @@ var AbortError = class extends Error {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+core-util@1.13.1/node_modules/@azure/core-util/dist/esm/createAbortablePromise.js
+//#region node_modules/.pnpm/@azure+core-util@1.14.0_supports-color@7.2.0/node_modules/@azure/core-util/dist/esm/createAbortablePromise.js
 /**
 * Creates an abortable promise.
 * @param buildPromise - A function that takes the resolve and reject functions as parameters.
@@ -29327,7 +30080,7 @@ function createAbortablePromise(buildPromise, options) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-util@1.13.1/node_modules/@azure/core-util/dist/esm/delay.js
+//#region node_modules/.pnpm/@azure+core-util@1.14.0_supports-color@7.2.0/node_modules/@azure/core-util/dist/esm/delay.js
 var StandardAbortMessage = "The delay was aborted.";
 /**
 * A wrapper for setTimeout that resolves a promise after timeInMs milliseconds.
@@ -29346,8 +30099,9 @@ function delay$1(timeInMs, options) {
 		abortErrorMsg: abortErrorMsg ?? StandardAbortMessage
 	});
 }
+__name(delay$1, "delay");
 //#endregion
-//#region node_modules/.pnpm/@azure+core-util@1.13.1/node_modules/@azure/core-util/dist/esm/error.js
+//#region node_modules/.pnpm/@azure+core-util@1.14.0_supports-color@7.2.0/node_modules/@azure/core-util/dist/esm/error.js
 /**
 * Given what is thought to be an error object, return the message if possible.
 * If the message is missing, returns a stringified version of the input.
@@ -29368,7 +30122,7 @@ function getErrorMessage(e) {
 	}
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-util@1.13.1/node_modules/@azure/core-util/dist/esm/index.js
+//#region node_modules/.pnpm/@azure+core-util@1.14.0_supports-color@7.2.0/node_modules/@azure/core-util/dist/esm/index.js
 /**
 * Typeguard for an error object shape (has name and message)
 *
@@ -29388,96 +30142,27 @@ function randomUUID() {
 /**
 * A constant that indicates whether the environment the code is running is a Node.js compatible environment.
 */
-var isNodeLike = isNodeLike$1;
-//#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/file.js
+var isNodeLike = true;
 /**
-* Private symbol used as key on objects created using createFile containing the
-* original source of the file object.
-*
-* This is used in Node to access the original Node stream without using Blob#stream, which
-* returns a web stream. This is done to avoid a couple of bugs to do with Blob#stream and
-* Readable#to/fromWeb in Node versions we support:
-* - https://github.com/nodejs/node/issues/42694 (fixed in Node 18.14)
-* - https://github.com/nodejs/node/issues/48916 (fixed in Node 20.6)
-*
-* Once these versions are no longer supported, we may be able to stop doing this.
-*
-* @internal
+* The helper that transforms bytes with specific character encoding into string
+* @param bytes - the uint8array bytes
+* @param format - the format we use to encode the byte
+* @returns a string of the encoded string
 */
-var rawContent = Symbol("rawContent");
-/**
-* Type guard to check if a given object is a blob-like object with a raw content property.
-*/
-function hasRawContent(x) {
-	return typeof x[rawContent] === "function";
+function uint8ArrayToString(bytes, format) {
+	return uint8ArrayToString$1(bytes, format);
 }
 /**
-* Extract the raw content from a given blob-like object. If the input was created using createFile
-* or createFileFromStream, the exact content passed into createFile/createFileFromStream will be used.
-* For true instances of Blob and File, returns the actual blob.
-*
-* @internal
+* The helper that transforms string to specific character encoded bytes array.
+* @param value - the string to be converted
+* @param format - the format we use to decode the value
+* @returns a uint8array
 */
-function getRawContent$1(blob) {
-	if (hasRawContent(blob)) return blob[rawContent]();
-	else return blob;
+function stringToUint8Array(value, format) {
+	return stringToUint8Array$1(value, format);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/multipartPolicy.js
-/**
-* Name of multipart policy
-*/
-var multipartPolicyName = multipartPolicyName$1;
-/**
-* Pipeline policy for multipart requests
-*/
-function multipartPolicy() {
-	const tspPolicy = multipartPolicy$1();
-	return {
-		name: multipartPolicyName,
-		sendRequest: async (request, next) => {
-			if (request.multipartBody) {
-				for (const part of request.multipartBody.parts) if (hasRawContent(part.body)) part.body = getRawContent$1(part.body);
-			}
-			return tspPolicy.sendRequest(request, next);
-		}
-	};
-}
-//#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/decompressResponsePolicy.js
-/**
-* The programmatic identifier of the decompressResponsePolicy.
-*/
-var decompressResponsePolicyName = decompressResponsePolicyName$1;
-/**
-* A policy to enable response decompression according to Accept-Encoding header
-* https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Encoding
-*/
-function decompressResponsePolicy() {
-	return decompressResponsePolicy$1();
-}
-//#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/defaultRetryPolicy.js
-/**
-* A policy that retries according to three strategies:
-* - When the server sends a 429 response with a Retry-After header.
-* - When there are errors in the underlying transport layer (e.g. DNS lookup failures).
-* - Or otherwise if the outgoing request fails, it will retry with an exponentially increasing delay.
-*/
-function defaultRetryPolicy(options = {}) {
-	return defaultRetryPolicy$1(options);
-}
-//#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/formDataPolicy.js
-/**
-* A policy that encodes FormData on the request into the body.
-*/
-function formDataPolicy() {
-	return formDataPolicy$1();
-}
-//#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/proxyPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/proxyPolicy.js
 /**
 * This method converts a proxy url into `ProxySettings` for use with ProxyPolicy.
 * If no argument is given, it attempts to parse a proxy URL from the environment
@@ -29499,7 +30184,7 @@ function proxyPolicy(proxySettings, options) {
 	return proxyPolicy$1(proxySettings, options);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/setClientRequestIdPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/setClientRequestIdPolicy.js
 /**
 * The programmatic identifier of the setClientRequestIdPolicy.
 */
@@ -29520,7 +30205,7 @@ function setClientRequestIdPolicy(requestIdHeaderName = "x-ms-client-request-id"
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/agentPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/agentPolicy.js
 /**
 * Gets a pipeline policy that sets http.agent
 */
@@ -29528,7 +30213,7 @@ function agentPolicy(agent) {
 	return agentPolicy$1(agent);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/tlsPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/tlsPolicy.js
 /**
 * Gets a pipeline policy that adds the client certificate to the HttpClient agent for authentication.
 */
@@ -29536,7 +30221,7 @@ function tlsPolicy(tlsSettings) {
 	return tlsPolicy$1(tlsSettings);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-tracing@1.3.1/node_modules/@azure/core-tracing/dist/esm/tracingContext.js
+//#region node_modules/.pnpm/@azure+core-tracing@1.4.0/node_modules/@azure/core-tracing/dist/esm/tracingContext.js
 /** @internal */
 var knownContextKeys = {
 	span: Symbol.for("@azure/core-tracing span"),
@@ -29589,7 +30274,7 @@ var state$1 = (/* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.state = { instrumenterImplementation: void 0 };
 })))().state;
 //#endregion
-//#region node_modules/.pnpm/@azure+core-tracing@1.3.1/node_modules/@azure/core-tracing/dist/esm/instrumenter.js
+//#region node_modules/.pnpm/@azure+core-tracing@1.4.0/node_modules/@azure/core-tracing/dist/esm/instrumenter.js
 function createDefaultTracingSpan() {
 	return {
 		end: () => {},
@@ -29627,7 +30312,7 @@ function getInstrumenter() {
 	return state$1.instrumenterImplementation;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-tracing@1.3.1/node_modules/@azure/core-tracing/dist/esm/tracingClient.js
+//#region node_modules/.pnpm/@azure+core-tracing@1.4.0/node_modules/@azure/core-tracing/dist/esm/tracingClient.js
 /**
 * Creates a new tracing client.
 *
@@ -29658,7 +30343,7 @@ function createTracingClient(options) {
 	async function withSpan(name, operationOptions, callback, spanOptions) {
 		const { span, updatedOptions } = startSpan(name, operationOptions, spanOptions);
 		try {
-			const result = await withContext(updatedOptions.tracingOptions.tracingContext, () => Promise.resolve(callback(updatedOptions, span)));
+			const result = await withContext(updatedOptions.tracingOptions.tracingContext, () => callback(updatedOptions, span));
 			span.setStatus({ status: "success" });
 			return result;
 		} catch (err) {
@@ -29701,7 +30386,7 @@ function createTracingClient(options) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/restError.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/restError.js
 /**
 * A custom error type for failed pipeline requests.
 */
@@ -29714,7 +30399,7 @@ function isRestError(e) {
 	return isRestError$1(e);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/tracingPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/tracingPolicy.js
 /**
 * The programmatic identifier of the tracingPolicy.
 */
@@ -29811,7 +30496,7 @@ function tryProcessResponse(span, response) {
 	}
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/wrapAbortSignal.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/wrapAbortSignal.js
 /**
 * Creates a native AbortSignal which reflects the state of the provided AbortSignalLike.
 * If the AbortSignalLike is already a native AbortSignal, it is returned as is.
@@ -29820,7 +30505,7 @@ function tryProcessResponse(span, response) {
 */
 function wrapAbortSignalLike(abortSignalLike) {
 	if (abortSignalLike instanceof AbortSignal) return { abortSignal: abortSignalLike };
-	if (abortSignalLike.aborted) return { abortSignal: AbortSignal.abort(abortSignalLike.reason) };
+	if (abortSignalLike.aborted) return { abortSignal: AbortSignal.abort("reason" in abortSignalLike ? abortSignalLike.reason : void 0) };
 	const controller = new AbortController();
 	let needsCleanup = true;
 	function cleanup() {
@@ -29830,7 +30515,7 @@ function wrapAbortSignalLike(abortSignalLike) {
 		}
 	}
 	function listener() {
-		controller.abort(abortSignalLike.reason);
+		controller.abort("reason" in abortSignalLike ? abortSignalLike.reason : void 0);
 		cleanup();
 	}
 	abortSignalLike.addEventListener("abort", listener);
@@ -29840,7 +30525,7 @@ function wrapAbortSignalLike(abortSignalLike) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/wrapAbortSignalLikePolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/wrapAbortSignalLikePolicy.js
 var wrapAbortSignalLikePolicyName = "wrapAbortSignalLikePolicy";
 /**
 * Policy that ensure that any AbortSignalLike is wrapped in a native AbortSignal for processing by the pipeline.
@@ -29864,7 +30549,7 @@ function wrapAbortSignalLikePolicy() {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/createPipelineFromOptions.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/createPipelineFromOptions.js
 /**
 * Create a new pipeline with a default set of customizable policies.
 * @param options - Options to configure a custom pipeline.
@@ -29892,7 +30577,7 @@ function createPipelineFromOptions(options) {
 	return pipeline;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/defaultHttpClient.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/defaultHttpClient.js
 /**
 * Create the correct HttpClient for the current environment.
 */
@@ -29909,7 +30594,7 @@ function createDefaultHttpClient() {
 	} };
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/httpHeaders.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/httpHeaders.js
 /**
 * Creates an object that satisfies the `HttpHeaders` interface.
 * @param rawHeaders - A simple object representing initial headers
@@ -29918,7 +30603,7 @@ function createHttpHeaders(rawHeaders) {
 	return createHttpHeaders$1(rawHeaders);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/pipelineRequest.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/pipelineRequest.js
 /**
 * Creates a new pipeline request with the given options.
 * This method is to allow for the easy setting of default values and not required.
@@ -29928,11 +30613,11 @@ function createPipelineRequest(options) {
 	return createPipelineRequest$1(options);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/tokenCycler.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/util/tokenCycler.js
 var DEFAULT_CYCLER_OPTIONS = {
 	forcedRefreshWindowInMs: 1e3,
 	retryIntervalInMs: 3e3,
-	refreshWindowInMs: 1e3 * 60 * 2
+	refreshWindowInMs: 12e4
 };
 /**
 * Converts an an unreliable access token getter (which may resolve with null)
@@ -30002,9 +30687,10 @@ function createTokenCycler(credential, tokenCyclerOptions) {
 		* window and not already refreshing)
 		*/
 		get shouldRefresh() {
+			if (token === null) return true;
 			if (cycler.isRefreshing) return false;
-			if (token?.refreshAfterTimestamp && token.refreshAfterTimestamp < Date.now()) return true;
-			return (token?.expiresOnTimestamp ?? 0) - options.refreshWindowInMs < Date.now();
+			if (token.refreshAfterTimestamp && token.refreshAfterTimestamp < Date.now()) return true;
+			return token.expiresOnTimestamp - options.refreshWindowInMs < Date.now();
 		},
 		/**
 		* Produces true if the cycler MUST refresh (null or nearly-expired
@@ -30045,7 +30731,7 @@ function createTokenCycler(credential, tokenCyclerOptions) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/bearerTokenAuthenticationPolicy.js
+//#region node_modules/.pnpm/@azure+core-rest-pipeline@1.25.0_supports-color@7.2.0/node_modules/@azure/core-rest-pipeline/dist/esm/policies/bearerTokenAuthenticationPolicy.js
 /**
 * The programmatic identifier of the bearerTokenAuthenticationPolicy.
 */
@@ -30168,7 +30854,7 @@ function bearerTokenAuthenticationPolicy(options) {
 					});
 					if (shouldSendRequest) [response, error] = await trySendRequest(request, next);
 					if (isChallengeResponse(response)) {
-						claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate"));
+						claims = getCaeChallengeClaims(response.headers.get("WWW-Authenticate") ?? "");
 						if (claims) {
 							let parsedClaim;
 							try {
@@ -30228,7 +30914,7 @@ function getCaeChallengeClaims(challenges) {
 	return parseChallenges(challenges).find((x) => x.scheme === "Bearer" && x.params.claims && x.params.error === "insufficient_claims")?.params.claims;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-auth@1.10.1/node_modules/@azure/core-auth/dist/esm/tokenCredential.js
+//#region node_modules/.pnpm/@azure+core-auth@1.11.0_supports-color@7.2.0/node_modules/@azure/core-auth/dist/esm/tokenCredential.js
 /**
 * Tests an object to determine whether it implements TokenCredential.
 *
@@ -30239,12 +30925,12 @@ function isTokenCredential(credential) {
 	return castCredential && typeof castCredential.getToken === "function" && (castCredential.signRequest === void 0 || castCredential.getToken.length > 0);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-http-compat@2.4.0_@azure+core-client@1.10.1_@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-http-compat/dist/esm/policies/disableKeepAlivePolicy.js
+//#region node_modules/.pnpm/@azure+core-http-compat@2.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__@azure+co_d787bc7df786cb651d567e8aaf5a6964/node_modules/@azure/core-http-compat/dist/esm/policies/disableKeepAlivePolicy.js
 var disableKeepAlivePolicyName = "DisableKeepAlivePolicy";
 function createDisableKeepAlivePolicy() {
 	return {
 		name: disableKeepAlivePolicyName,
-		async sendRequest(request, next) {
+		sendRequest(request, next) {
 			request.disableKeepAlive = true;
 			return next(request);
 		}
@@ -30257,14 +30943,14 @@ function pipelineContainsDisableKeepAlivePolicy(pipeline) {
 	return pipeline.getOrderedPolicies().some((policy) => policy.name === disableKeepAlivePolicyName);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/base64.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/base64.js
 /**
 * Encodes a byte array in base64 format.
-* @param value - the Uint8Aray to encode
+* @param value - the Uint8Array to encode
 * @internal
 */
 function encodeByteArray(value) {
-	return (value instanceof Buffer ? value : Buffer.from(value.buffer)).toString("base64");
+	return uint8ArrayToString(value, "base64");
 }
 /**
 * Decodes a base64 string into a byte array.
@@ -30272,10 +30958,10 @@ function encodeByteArray(value) {
 * @internal
 */
 function decodeString(value) {
-	return Buffer.from(value, "base64");
+	return stringToUint8Array(value, "base64");
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/utils.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/utils.js
 /**
 * A type guard for a primitive response body.
 * @param value - Value to test
@@ -30366,7 +31052,7 @@ function flattenResponse(fullResponse, responseSpec) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/serializer.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/serializer.js
 var SerializerImpl = class {
 	modelMappers;
 	isXML;
@@ -30483,10 +31169,11 @@ var SerializerImpl = class {
 			if (mapperType.match(/^Number$/i) !== null) {
 				payload = parseFloat(responseBody);
 				if (isNaN(payload)) payload = responseBody;
-			} else if (mapperType.match(/^Boolean$/i) !== null) if (responseBody === "true") payload = true;
-			else if (responseBody === "false") payload = false;
-			else payload = responseBody;
-			else if (mapperType.match(/^(String|Enum|Object|Stream|Uuid|TimeSpan|any)$/i) !== null) payload = responseBody;
+			} else if (mapperType.match(/^Boolean$/i) !== null) {
+				if (responseBody === "true") payload = true;
+				else if (responseBody === "false") payload = false;
+				else payload = responseBody;
+			} else if (mapperType.match(/^(String|Enum|Object|Stream|Uuid|TimeSpan|any)$/i) !== null) payload = responseBody;
 			else if (mapperType.match(/^(Date|DateTime|DateTimeRfc1123)$/i) !== null) payload = new Date(responseBody);
 			else if (mapperType.match(/^UnixTime$/i) !== null) payload = unixTimeToDate(responseBody);
 			else if (mapperType.match(/^ByteArray$/i) !== null) payload = decodeString(responseBody);
@@ -30607,7 +31294,7 @@ function serializeDateTypes(typeName, value, objectName) {
 function serializeSequenceType(serializer, mapper, object, objectName, isXml, options) {
 	if (!Array.isArray(object)) throw new Error(`${objectName} must be of type Array.`);
 	let elementType = mapper.type.element;
-	if (!elementType || typeof elementType !== "object") throw new Error(`element" metadata for an Array must be defined in the mapper and it must of type "object" in ${objectName}.`);
+	if (!elementType || typeof elementType !== "object") throw new Error(`"element" metadata for an Array must be defined in the mapper and it must be of type "object" in ${objectName}.`);
 	if (elementType.type.name === "Composite" && elementType.type.className) elementType = serializer.modelMappers[elementType.type.className] ?? elementType;
 	const tempArray = [];
 	for (let i = 0; i < object.length; i++) {
@@ -30687,9 +31374,10 @@ function serializeCompositeType(serializer, mapper, object, objectName, isXml, o
 			if (propertyMapper.readOnly) continue;
 			let propName;
 			let parentObject = payload;
-			if (serializer.isXML) if (propertyMapper.xmlIsWrapped) propName = propertyMapper.xmlName;
-			else propName = propertyMapper.xmlElementName || propertyMapper.xmlName;
-			else {
+			if (serializer.isXML) {
+				if (propertyMapper.xmlIsWrapped) propName = propertyMapper.xmlName;
+				else propName = propertyMapper.xmlElementName || propertyMapper.xmlName;
+			} else {
 				const paths = splitSerializeName(propertyMapper.serializedName);
 				propName = paths.pop();
 				for (const pathName of paths) {
@@ -30724,7 +31412,12 @@ function serializeCompositeType(serializer, mapper, object, objectName, isXml, o
 		const additionalPropertiesMapper = resolveAdditionalProperties(serializer, mapper, objectName);
 		if (additionalPropertiesMapper) {
 			const propNames = Object.keys(modelProps);
-			for (const clientPropName in object) if (propNames.every((pn) => pn !== clientPropName)) payload[clientPropName] = serializer.serialize(additionalPropertiesMapper, object[clientPropName], objectName + "[\"" + clientPropName + "\"]", options);
+			for (const clientPropName of Object.keys(object)) if (propNames.every((pn) => pn !== clientPropName)) Object.defineProperty(payload, clientPropName, {
+				value: serializer.serialize(additionalPropertiesMapper, object[clientPropName], objectName + "[\"" + clientPropName + "\"]", options),
+				enumerable: true,
+				configurable: true,
+				writable: true
+			});
 		}
 		return payload;
 	}
@@ -30733,11 +31426,13 @@ function serializeCompositeType(serializer, mapper, object, objectName, isXml, o
 function getXmlObjectValue(propertyMapper, serializedValue, isXml, options) {
 	if (!isXml || !propertyMapper.xmlNamespace) return serializedValue;
 	const xmlNamespace = { [propertyMapper.xmlNamespacePrefix ? `xmlns:${propertyMapper.xmlNamespacePrefix}` : "xmlns"]: propertyMapper.xmlNamespace };
-	if (["Composite"].includes(propertyMapper.type.name)) if (serializedValue["$"]) return serializedValue;
-	else {
-		const result = { ...serializedValue };
-		result["$"] = xmlNamespace;
-		return result;
+	if (["Composite"].includes(propertyMapper.type.name)) {
+		if (serializedValue["$"]) return serializedValue;
+		else {
+			const result = { ...serializedValue };
+			result["$"] = xmlNamespace;
+			return result;
+		}
 	}
 	const result = {};
 	result[options.xml.xmlCharKey] = serializedValue;
@@ -30768,23 +31463,29 @@ function deserializeCompositeType(serializer, mapper, responseBody, objectName, 
 				handledPropertyNames.push(headerKey);
 			}
 			instance[key] = dictionary;
-		} else if (serializer.isXML) if (propertyMapper.xmlIsAttribute && responseBody["$"]) instance[key] = serializer.deserialize(propertyMapper, responseBody["$"][xmlName], propertyObjectName, options);
-		else if (propertyMapper.xmlIsMsText) {
-			if (responseBody[xmlCharKey] !== void 0) instance[key] = responseBody[xmlCharKey];
-			else if (typeof responseBody === "string") instance[key] = responseBody;
-		} else {
-			const propertyName = xmlElementName || xmlName || serializedName;
-			if (propertyMapper.xmlIsWrapped) {
-				const elementList = responseBody[xmlName]?.[xmlElementName] ?? [];
-				instance[key] = serializer.deserialize(propertyMapper, elementList, propertyObjectName, options);
-				handledPropertyNames.push(xmlName);
+		} else if (serializer.isXML) {
+			if (propertyMapper.xmlIsAttribute && responseBody["$"]) instance[key] = serializer.deserialize(propertyMapper, responseBody["$"][xmlName], propertyObjectName, options);
+			else if (propertyMapper.xmlIsMsText) {
+				if (responseBody[xmlCharKey] !== void 0) instance[key] = responseBody[xmlCharKey];
+				else if (typeof responseBody === "string") instance[key] = responseBody;
 			} else {
-				const property = responseBody[propertyName];
-				instance[key] = serializer.deserialize(propertyMapper, property, propertyObjectName, options);
-				handledPropertyNames.push(propertyName);
+				const propertyName = xmlElementName || xmlName || serializedName;
+				if (propertyMapper.xmlIsWrapped) {
+					const elementList = responseBody[xmlName]?.[xmlElementName] ?? [];
+					Object.defineProperty(instance, key, {
+						value: serializer.deserialize(propertyMapper, elementList, propertyObjectName, options),
+						enumerable: true,
+						configurable: true,
+						writable: true
+					});
+					handledPropertyNames.push(xmlName);
+				} else {
+					const property = responseBody[propertyName];
+					instance[key] = serializer.deserialize(propertyMapper, property, propertyObjectName, options);
+					handledPropertyNames.push(propertyName);
+				}
 			}
-		}
-		else {
+		} else {
 			let propertyInstance;
 			let res = responseBody;
 			let steps = 0;
@@ -30812,12 +31513,25 @@ function deserializeCompositeType(serializer, mapper, responseBody, objectName, 
 	const additionalPropertiesMapper = mapper.type.additionalProperties;
 	if (additionalPropertiesMapper) {
 		const isAdditionalProperty = (responsePropName) => {
-			for (const clientPropName in modelProps) if (splitSerializeName(modelProps[clientPropName].serializedName)[0] === responsePropName) return false;
+			for (const clientPropName of Object.keys(modelProps)) if (splitSerializeName(modelProps[clientPropName].serializedName)[0] === responsePropName) return false;
 			return true;
 		};
-		for (const responsePropName in responseBody) if (isAdditionalProperty(responsePropName)) instance[responsePropName] = serializer.deserialize(additionalPropertiesMapper, responseBody[responsePropName], objectName + "[\"" + responsePropName + "\"]", options);
+		for (const responsePropName of Object.keys(responseBody)) if (isAdditionalProperty(responsePropName)) {
+			const deserializedValue = serializer.deserialize(additionalPropertiesMapper, responseBody[responsePropName], objectName + "[\"" + responsePropName + "\"]", options);
+			Object.defineProperty(instance, responsePropName, {
+				value: deserializedValue,
+				enumerable: true,
+				configurable: true,
+				writable: true
+			});
+		}
 	} else if (responseBody && !options.ignoreUnknownProperties) {
-		for (const key of Object.keys(responseBody)) if (instance[key] === void 0 && !handledPropertyNames.includes(key) && !isSpecialXmlProperty(key, options)) instance[key] = responseBody[key];
+		for (const key of Object.keys(responseBody)) if (instance[key] === void 0 && !handledPropertyNames.includes(key) && !isSpecialXmlProperty(key, options)) Object.defineProperty(instance, key, {
+			value: responseBody[key],
+			enumerable: true,
+			configurable: true,
+			writable: true
+		});
 	}
 	return instance;
 }
@@ -30833,7 +31547,7 @@ function deserializeDictionaryType(serializer, mapper, responseBody, objectName,
 }
 function deserializeSequenceType(serializer, mapper, responseBody, objectName, options) {
 	let element = mapper.type.element;
-	if (!element || typeof element !== "object") throw new Error(`element" metadata for an Array must be defined in the mapper and it must of type "object" in ${objectName}`);
+	if (!element || typeof element !== "object") throw new Error(`"element" metadata for an Array must be defined in the mapper and it must be of type "object" in ${objectName}`);
 	if (responseBody) {
 		if (!Array.isArray(responseBody)) responseBody = [responseBody];
 		if (element.type.name === "Composite" && element.type.className) element = serializer.modelMappers[element.type.className] ?? element;
@@ -30907,7 +31621,7 @@ var state = (/* @__PURE__ */ __commonJSMin(((exports) => {
 	exports.state = { operationRequestMap: /* @__PURE__ */ new WeakMap() };
 })))().state;
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/operationHelpers.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/operationHelpers.js
 /**
 * @internal
 * Retrieves the value to use for a given operation argument
@@ -30922,26 +31636,32 @@ function getOperationArgumentValueFromParameter(operationArguments, parameter, f
 	let value;
 	if (typeof parameterPath === "string") parameterPath = [parameterPath];
 	if (Array.isArray(parameterPath)) {
-		if (parameterPath.length > 0) if (parameterMapper.isConstant) value = parameterMapper.defaultValue;
-		else {
-			let propertySearchResult = getPropertyFromParameterPath(operationArguments, parameterPath);
-			if (!propertySearchResult.propertyFound && fallbackObject) propertySearchResult = getPropertyFromParameterPath(fallbackObject, parameterPath);
-			let useDefaultValue = false;
-			if (!propertySearchResult.propertyFound) useDefaultValue = parameterMapper.required || parameterPath[0] === "options" && parameterPath.length === 2;
-			value = useDefaultValue ? parameterMapper.defaultValue : propertySearchResult.propertyValue;
+		if (parameterPath.length > 0) {
+			if (parameterMapper.isConstant) value = parameterMapper.defaultValue;
+			else {
+				let propertySearchResult = getPropertyFromParameterPath(operationArguments, parameterPath);
+				if (!propertySearchResult.propertyFound && fallbackObject) propertySearchResult = getPropertyFromParameterPath(fallbackObject, parameterPath);
+				let useDefaultValue = false;
+				if (!propertySearchResult.propertyFound) useDefaultValue = parameterMapper.required || parameterPath[0] === "options" && parameterPath.length === 2;
+				value = useDefaultValue ? parameterMapper.defaultValue : propertySearchResult.propertyValue;
+			}
 		}
 	} else {
 		if (parameterMapper.required) value = {};
-		for (const propertyName in parameterPath) {
+		for (const [propertyName, propertyPath] of Object.entries(parameterPath)) {
 			const propertyMapper = parameterMapper.type.modelProperties[propertyName];
-			const propertyPath = parameterPath[propertyName];
 			const propertyValue = getOperationArgumentValueFromParameter(operationArguments, {
 				parameterPath: propertyPath,
 				mapper: propertyMapper
 			}, fallbackObject);
 			if (propertyValue !== void 0) {
 				if (!value) value = {};
-				value[propertyName] = propertyValue;
+				Object.defineProperty(value, propertyName, {
+					value: propertyValue,
+					enumerable: true,
+					configurable: true,
+					writable: true
+				});
 			}
 		}
 	}
@@ -30975,7 +31695,7 @@ function getOperationRequestInfo(request) {
 	return info;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/deserializationPolicy.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/deserializationPolicy.js
 var defaultJsonContentTypes = ["application/json", "text/json"];
 var defaultXmlContentTypes = ["application/xml", "application/atom+xml"];
 /**
@@ -30998,7 +31718,8 @@ function deserializationPolicy(options = {}) {
 	return {
 		name: deserializationPolicyName,
 		async sendRequest(request, next) {
-			return deserializeResponseBody(jsonContentTypes, xmlContentTypes, await next(request), updatedOptions, parseXML);
+			const response = await next(request);
+			return deserializeResponseBody(jsonContentTypes, xmlContentTypes, response, updatedOptions, parseXML);
 		}
 	};
 }
@@ -31007,8 +31728,10 @@ function getOperationResponseMap(parsedResponse) {
 	const request = parsedResponse.request;
 	const operationInfo = getOperationRequestInfo(request);
 	const operationSpec = operationInfo?.operationSpec;
-	if (operationSpec) if (!operationInfo?.operationResponseGetter) result = operationSpec.responses[parsedResponse.status];
-	else result = operationInfo?.operationResponseGetter(operationSpec, parsedResponse);
+	if (operationSpec) {
+		if (!operationInfo?.operationResponseGetter) result = operationSpec.responses[parsedResponse.status];
+		else result = operationInfo?.operationResponseGetter(operationSpec, parsedResponse);
+	}
 	return result;
 }
 function shouldDeserializeResponse(parsedResponse) {
@@ -31056,15 +31779,17 @@ function isOperationSpecEmpty(operationSpec) {
 }
 function handleErrorResponse(parsedResponse, operationSpec, responseSpec, options) {
 	const isSuccessByStatus = 200 <= parsedResponse.status && parsedResponse.status < 300;
-	if (isOperationSpecEmpty(operationSpec) ? isSuccessByStatus : !!responseSpec) if (responseSpec) {
-		if (!responseSpec.isError) return {
+	if (isOperationSpecEmpty(operationSpec) ? isSuccessByStatus : !!responseSpec) {
+		if (responseSpec) {
+			if (!responseSpec.isError) return {
+				error: null,
+				shouldReturnResponse: false
+			};
+		} else return {
 			error: null,
 			shouldReturnResponse: false
 		};
-	} else return {
-		error: null,
-		shouldReturnResponse: false
-	};
+	}
 	const errorResponseSpec = responseSpec ?? operationSpec.responses.default;
 	const error = new RestError(parsedResponse.request.streamResponseStatusCodes?.has(parsedResponse.status) ? `Unexpected status code: ${parsedResponse.status}` : parsedResponse.bodyAsText, {
 		statusCode: parsedResponse.status,
@@ -31127,17 +31852,14 @@ async function parse(jsonContentTypes, xmlContentTypes, operationResponse, opts,
 	return operationResponse;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/interfaceHelpers.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/interfaceHelpers.js
 /**
 * Gets the list of status codes for streaming responses.
 * @internal
 */
 function getStreamingResponseStatusCodes(operationSpec) {
 	const result = /* @__PURE__ */ new Set();
-	for (const statusCode in operationSpec.responses) {
-		const operationResponse = operationSpec.responses[statusCode];
-		if (operationResponse.bodyMapper && operationResponse.bodyMapper.type.name === MapperTypeNames.Stream) result.add(Number(statusCode));
-	}
+	for (const [statusCode, operationResponse] of Object.entries(operationSpec.responses)) if (operationResponse.bodyMapper && operationResponse.bodyMapper.type.name === MapperTypeNames.Stream) result.add(Number(statusCode));
 	return result;
 }
 /**
@@ -31155,7 +31877,7 @@ function getPathStringFromParameter(parameter) {
 	return result;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/serializationPolicy.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/serializationPolicy.js
 /**
 * The programmatic identifier of the serializationPolicy.
 */
@@ -31168,7 +31890,7 @@ function serializationPolicy(options = {}) {
 	const stringifyXML = options.stringifyXML;
 	return {
 		name: serializationPolicyName,
-		async sendRequest(request, next) {
+		sendRequest(request, next) {
 			const operationInfo = getOperationRequestInfo(request);
 			const operationSpec = operationInfo?.operationSpec;
 			const operationArguments = operationInfo?.operationArguments;
@@ -31271,7 +31993,7 @@ function prepareXMLRootList(obj, elementName, xmlNamespaceKey, xmlNamespace) {
 	return result;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/pipeline.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/pipeline.js
 /**
 * Creates a new Pipeline for use with a Service Client.
 * Adds in deserializationPolicy by default.
@@ -31289,14 +32011,15 @@ function createClientPipeline(options = {}) {
 	return pipeline;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/httpClientCache.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/httpClientCache.js
 var cachedHttpClient;
 function getCachedDefaultHttpClient$1() {
 	if (!cachedHttpClient) cachedHttpClient = createDefaultHttpClient();
 	return cachedHttpClient;
 }
+__name(getCachedDefaultHttpClient$1, "getCachedDefaultHttpClient");
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/urlHelpers.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/urlHelpers.js
 var CollectionFormatToDelimiterMap = {
 	CSV: ",",
 	SSV: " ",
@@ -31358,7 +32081,7 @@ function appendPath(url, pathToAppend) {
 		newPath = newPath + path;
 		if (search) parsedUrl.search = parsedUrl.search ? `${parsedUrl.search}&${search}` : search;
 	} else newPath = newPath + pathToAppend;
-	parsedUrl.pathname = newPath;
+	Object.assign(parsedUrl, { pathname: newPath });
 	return parsedUrl.toString();
 }
 function calculateQueryParameters(operationSpec, operationArguments, fallbackObject) {
@@ -31376,10 +32099,12 @@ function calculateQueryParameters(operationSpec, operationArguments, fallbackObj
 			});
 			if (queryParameter.collectionFormat === "Multi" && queryParameterValue.length === 0) continue;
 			else if (Array.isArray(queryParameterValue) && (queryParameter.collectionFormat === "SSV" || queryParameter.collectionFormat === "TSV")) queryParameterValue = queryParameterValue.join(delimiter);
-			if (!queryParameter.skipEncoding) if (Array.isArray(queryParameterValue)) queryParameterValue = queryParameterValue.map((item) => {
-				return encodeURIComponent(item);
-			});
-			else queryParameterValue = encodeURIComponent(queryParameterValue);
+			if (!queryParameter.skipEncoding) {
+				if (Array.isArray(queryParameterValue)) queryParameterValue = queryParameterValue.map((item) => {
+					return encodeURIComponent(item);
+				});
+				else queryParameterValue = encodeURIComponent(queryParameterValue);
+			}
 			if (Array.isArray(queryParameterValue) && (queryParameter.collectionFormat === "CSV" || queryParameter.collectionFormat === "Pipes")) queryParameterValue = queryParameterValue.join(delimiter);
 			result.set(queryParameter.mapper.serializedName || getPathStringFromParameter(queryParameter), queryParameterValue);
 		}
@@ -31397,9 +32122,10 @@ function simpleParseQueryParams(queryString) {
 	for (const pair of pairs) {
 		const [name, value] = pair.split("=", 2);
 		const existingValue = result.get(name);
-		if (existingValue) if (Array.isArray(existingValue)) existingValue.push(value);
-		else result.set(name, [existingValue, value]);
-		else result.set(name, value);
+		if (existingValue) {
+			if (Array.isArray(existingValue)) existingValue.push(value);
+			else result.set(name, [existingValue, value]);
+		} else result.set(name, value);
 	}
 	return result;
 }
@@ -31410,12 +32136,13 @@ function appendQueryParams(url, queryParams, sequenceParams, noOverwrite = false
 	const combinedParams = simpleParseQueryParams(parsedUrl.search);
 	for (const [name, value] of queryParams) {
 		const existingValue = combinedParams.get(name);
-		if (Array.isArray(existingValue)) if (Array.isArray(value)) {
-			existingValue.push(...value);
-			const valueSet = new Set(existingValue);
-			combinedParams.set(name, Array.from(valueSet));
-		} else existingValue.push(value);
-		else if (existingValue) {
+		if (Array.isArray(existingValue)) {
+			if (Array.isArray(value)) {
+				existingValue.push(...value);
+				const valueSet = new Set(existingValue);
+				combinedParams.set(name, Array.from(valueSet));
+			} else existingValue.push(value);
+		} else if (existingValue) {
 			if (Array.isArray(value)) value.unshift(existingValue);
 			else if (sequenceParams.has(name)) combinedParams.set(name, [existingValue, value]);
 			if (!noOverwrite) combinedParams.set(name, value);
@@ -31429,10 +32156,10 @@ function appendQueryParams(url, queryParams, sequenceParams, noOverwrite = false
 	return parsedUrl.toString();
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/log.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/log.js
 var logger$2 = createClientLogger("core-client");
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/serviceClient.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/serviceClient.js
 /**
 * Initializes a new instance of the ServiceClient.
 */
@@ -31478,7 +32205,7 @@ var ServiceClient = class {
 	/**
 	* Send the provided httpRequest.
 	*/
-	async sendRequest(request) {
+	sendRequest(request) {
 		return this.pipeline.sendRequest(this._httpClient, request);
 	}
 	/**
@@ -31543,10 +32270,10 @@ function getCredentialScopes(options) {
 	if (options.credentialScopes) return options.credentialScopes;
 	if (options.endpoint) return `${options.endpoint}/.default`;
 	if (options.baseUri) return `${options.baseUri}/.default`;
-	if (options.credential && !options.credentialScopes) throw new Error(`When using credentials, the ServiceClientOptions must contain either a endpoint or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`);
+	if (options.credential) throw new Error(`When using credentials, the ServiceClientOptions must contain either a endpoint or a credentialScopes. Unable to create a bearerTokenAuthenticationPolicy`);
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-client@1.10.1/node_modules/@azure/core-client/dist/esm/authorizeRequestOnTenantChallenge.js
+//#region node_modules/.pnpm/@azure+core-client@1.11.0_supports-color@7.2.0/node_modules/@azure/core-client/dist/esm/authorizeRequestOnTenantChallenge.js
 /**
 * A set of constants used internally when processing requests.
 */
@@ -31604,8 +32331,7 @@ function extractTenantId(challengeInfo) {
 function buildScopes(challengeOptions, challengeInfo) {
 	if (!challengeInfo.resource_id) return challengeOptions.scopes;
 	const challengeScopes = new URL(challengeInfo.resource_id);
-	challengeScopes.pathname = Constants.DefaultScope;
-	let scope = challengeScopes.toString();
+	let scope = new URL(Constants.DefaultScope, challengeScopes.origin).toString();
 	if (scope === "https://disk.azure.com/.default") scope = "https://disk.azure.com//.default";
 	return [scope];
 }
@@ -31640,9 +32366,25 @@ function requestToOptions(request) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-http-compat@2.4.0_@azure+core-client@1.10.1_@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-http-compat/dist/esm/util.js
+//#region node_modules/.pnpm/@azure+core-http-compat@2.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__@azure+co_d787bc7df786cb651d567e8aaf5a6964/node_modules/@azure/core-http-compat/dist/esm/util.js
 var originalRequestSymbol = Symbol("Original PipelineRequest");
 var originalClientRequestSymbol = Symbol.for("@azure/core-client original request");
+var passThroughProps = /* @__PURE__ */ new Set([
+	"url",
+	"method",
+	"withCredentials",
+	"timeout",
+	"requestId",
+	"abortSignal",
+	"body",
+	"formData",
+	"onDownloadProgress",
+	"onUploadProgress",
+	"proxySettings",
+	"streamResponseStatusCodes",
+	"agent",
+	"requestOverrides"
+]);
 function toPipelineRequest(webResource, options = {}) {
 	const request = webResource[originalRequestSymbol];
 	const headers = createHttpHeaders(webResource.headers.toJson({ preserveCase: true }));
@@ -31714,22 +32456,7 @@ function toWebResourceLike(request, options) {
 		},
 		set(target, prop, value, receiver) {
 			if (prop === "keepAlive") request.disableKeepAlive = !value;
-			if (typeof prop === "string" && [
-				"url",
-				"method",
-				"withCredentials",
-				"timeout",
-				"requestId",
-				"abortSignal",
-				"body",
-				"formData",
-				"onDownloadProgress",
-				"onUploadProgress",
-				"proxySettings",
-				"streamResponseStatusCodes",
-				"agent",
-				"requestOverrides"
-			].includes(prop)) request[prop] = value;
+			if (typeof prop === "string" && passThroughProps.has(prop)) request[prop] = value;
 			return Reflect.set(target, prop, value, receiver);
 		}
 	});
@@ -31862,7 +32589,7 @@ var HttpHeaders = class HttpHeaders {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+core-http-compat@2.4.0_@azure+core-client@1.10.1_@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-http-compat/dist/esm/response.js
+//#region node_modules/.pnpm/@azure+core-http-compat@2.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__@azure+co_d787bc7df786cb651d567e8aaf5a6964/node_modules/@azure/core-http-compat/dist/esm/response.js
 var originalResponse = Symbol("Original FullOperationResponse");
 /**
 * A helper to convert response objects from the new pipeline back to the old one.
@@ -31908,7 +32635,7 @@ function toPipelineResponse(compatResponse) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-http-compat@2.4.0_@azure+core-client@1.10.1_@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-http-compat/dist/esm/extendedClient.js
+//#region node_modules/.pnpm/@azure+core-http-compat@2.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__@azure+co_d787bc7df786cb651d567e8aaf5a6964/node_modules/@azure/core-http-compat/dist/esm/extendedClient.js
 /**
 * Client to provide compatability between core V1 & V2.
 */
@@ -31942,7 +32669,7 @@ var ExtendedServiceClient = class extends ServiceClient {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+core-http-compat@2.4.0_@azure+core-client@1.10.1_@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-http-compat/dist/esm/policies/requestPolicyFactoryPolicy.js
+//#region node_modules/.pnpm/@azure+core-http-compat@2.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__@azure+co_d787bc7df786cb651d567e8aaf5a6964/node_modules/@azure/core-http-compat/dist/esm/policies/requestPolicyFactoryPolicy.js
 /**
 * An enum for compatibility with RequestPolicy
 */
@@ -31982,7 +32709,7 @@ function createRequestPolicyFactoryPolicy(factories) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-http-compat@2.4.0_@azure+core-client@1.10.1_@azure+core-rest-pipeline@1.23.0/node_modules/@azure/core-http-compat/dist/esm/httpClientAdapter.js
+//#region node_modules/.pnpm/@azure+core-http-compat@2.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__@azure+co_d787bc7df786cb651d567e8aaf5a6964/node_modules/@azure/core-http-compat/dist/esm/httpClientAdapter.js
 /**
 * Converts a RequestPolicy based HttpClient to a PipelineRequest based HttpClient.
 * @param requestPolicyClient - A HttpClient compatible with core-http
@@ -31994,7 +32721,10 @@ function convertHttpClient(requestPolicyClient) {
 	} };
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/util.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/util.js
+var nameStartChar = ":A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD";
+var nameChar = nameStartChar + "\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040";
+"" + nameStartChar + nameChar;
 var regexName = /* @__PURE__ */ new RegExp("^[:A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD][:A-Za-z_\\u00C0-\\u00D6\\u00D8-\\u00F6\\u00F8-\\u02FF\\u0370-\\u037D\\u037F-\\u1FFF\\u200C-\\u200D\\u2070-\\u218F\\u2C00-\\u2FEF\\u3001-\\uD7FF\\uF900-\\uFDCF\\uFDF0-\\uFFFD\\-.\\d\\u00B7\\u0300-\\u036F\\u203F-\\u2040]*$");
 function getAllMatches(string, regex) {
 	const matches = [];
@@ -32034,7 +32764,7 @@ var criticalProperties = [
 	"prototype"
 ];
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/validator.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/validator.js
 var defaultOptions$2 = {
 	allowBooleanAttributes: false,
 	unpairedTags: []
@@ -32084,18 +32814,19 @@ function validate(xmlData, options) {
 				const isValid = validateAttributeString(attrStr, options);
 				if (isValid === true) tagFound = true;
 				else return getErrorObject(isValid.err.code, isValid.err.msg, getLineNumberForPosition(xmlData, attrStrStart + isValid.err.line));
-			} else if (closingTag) if (!result.tagClosed) return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' doesn't have proper closing.", getLineNumberForPosition(xmlData, i));
-			else if (attrStr.trim().length > 0) return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' can't have attributes or invalid starting.", getLineNumberForPosition(xmlData, tagStartPos));
-			else if (tags.length === 0) return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' has not been opened.", getLineNumberForPosition(xmlData, tagStartPos));
-			else {
-				const otg = tags.pop();
-				if (tagName !== otg.tagName) {
-					let openPos = getLineNumberForPosition(xmlData, otg.tagStartPos);
-					return getErrorObject("InvalidTag", "Expected closing tag '" + otg.tagName + "' (opened in line " + openPos.line + ", col " + openPos.col + ") instead of closing tag '" + tagName + "'.", getLineNumberForPosition(xmlData, tagStartPos));
+			} else if (closingTag) {
+				if (!result.tagClosed) return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' doesn't have proper closing.", getLineNumberForPosition(xmlData, i));
+				else if (attrStr.trim().length > 0) return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' can't have attributes or invalid starting.", getLineNumberForPosition(xmlData, tagStartPos));
+				else if (tags.length === 0) return getErrorObject("InvalidTag", "Closing tag '" + tagName + "' has not been opened.", getLineNumberForPosition(xmlData, tagStartPos));
+				else {
+					const otg = tags.pop();
+					if (tagName !== otg.tagName) {
+						let openPos = getLineNumberForPosition(xmlData, otg.tagStartPos);
+						return getErrorObject("InvalidTag", "Expected closing tag '" + otg.tagName + "' (opened in line " + openPos.line + ", col " + openPos.col + ") instead of closing tag '" + tagName + "'.", getLineNumberForPosition(xmlData, tagStartPos));
+					}
+					if (tags.length == 0) reachedRoot = true;
 				}
-				if (tags.length == 0) reachedRoot = true;
-			}
-			else {
+			} else {
 				const isValid = validateAttributeString(attrStr, options);
 				if (isValid !== true) return getErrorObject(isValid.err.code, isValid.err.msg, getLineNumberForPosition(xmlData, i - attrStr.length + isValid.err.line));
 				if (reachedRoot === true) return getErrorObject("InvalidXml", "Multiple possible root nodes found.", getLineNumberForPosition(xmlData, i));
@@ -32105,15 +32836,16 @@ function validate(xmlData, options) {
 				});
 				tagFound = true;
 			}
-			for (i++; i < xmlData.length; i++) if (xmlData[i] === "<") if (xmlData[i + 1] === "!") {
-				i++;
-				i = readCommentAndCDATA(xmlData, i);
-				continue;
-			} else if (xmlData[i + 1] === "?") {
-				i = readPI(xmlData, ++i);
-				if (i.err) return i;
-			} else break;
-			else if (xmlData[i] === "&") {
+			for (i++; i < xmlData.length; i++) if (xmlData[i] === "<") {
+				if (xmlData[i + 1] === "!") {
+					i++;
+					i = readCommentAndCDATA(xmlData, i);
+					continue;
+				} else if (xmlData[i + 1] === "?") {
+					i = readPI(xmlData, ++i);
+					if (i.err) return i;
+				} else break;
+			} else if (xmlData[i] === "&") {
 				const afterAmp = validateAmpersand(xmlData, i);
 				if (afterAmp == -1) return getErrorObject("InvalidChar", "char '&' is not expected.", getLineNumberForPosition(xmlData, i));
 				i = afterAmp;
@@ -32185,9 +32917,10 @@ function readAttributeStr(xmlData, i) {
 	let startChar = "";
 	let tagClosed = false;
 	for (; i < xmlData.length; i++) {
-		if (xmlData[i] === doubleQuote || xmlData[i] === singleQuote) if (startChar === "") startChar = xmlData[i];
-		else if (startChar !== xmlData[i]) {} else startChar = "";
-		else if (xmlData[i] === ">") {
+		if (xmlData[i] === doubleQuote || xmlData[i] === singleQuote) {
+			if (startChar === "") startChar = xmlData[i];
+			else if (startChar !== xmlData[i]) {} else startChar = "";
+		} else if (xmlData[i] === ">") {
 			if (startChar === "") {
 				tagClosed = true;
 				break;
@@ -32203,11 +32936,86 @@ function readAttributeStr(xmlData, i) {
 	};
 }
 /**
-* Select all the attributes whether valid or invalid.
+* Walk `attrStr` once, left to right, splitting it into attribute tokens.
+*
+* This replaces a regex that used to do the same job
+* (`(\s*)([^\s=]+)(\s*=)?(\s*(['"])(([\s\S])*?)\5)?`). That regex led with an
+* optional whitespace group followed by a required "non-whitespace" group.
+* On a long run of whitespace that never resolves into an attribute name
+* (e.g. a tag with thousands of trailing spaces before `>`), the engine
+* backtracks the whitespace group one character at a time before giving up
+* and moving to the next starting position — one full backtrack per
+* position, which is quadratic in the length of the run.
+*
+* A single forward-only scan can never backtrack, so it can't be made slow
+* this way no matter how much whitespace the input contains — it's always
+* proportional to the length of the string, once.
+*
+* Each returned token mirrors the shape the old regex match array had, so
+* the validation logic below (which reads token[1]..token[6]) didn't need
+* to change:
+*   token.startIndex - where this token begins in attrStr
+*   token[1]          - leading whitespace before the name
+*   token[2]          - the attribute name
+*   token[3]          - whitespace + '=' if present, else undefined
+*   token[4]          - marker (any defined value) if a quoted value was found
+*   token[5]          - the quote character used ('"' or "'")
+*   token[6]          - the value's text, without the surrounding quotes
+*
+* A malformed leading character (e.g. a stray '=' with no name before it)
+* is simply skipped over, one character at a time — the same outcome the
+* old regex produced by failing to match at that position and retrying at
+* the next one.
 */
-var validAttrStrRegxp = /* @__PURE__ */ new RegExp("(\\s*)([^\\s=]+)(\\s*=)?(\\s*(['\"])(([\\s\\S])*?)\\5)?", "g");
+function scanAttributeTokens(attrStr) {
+	const tokens = [];
+	const len = attrStr.length;
+	let i = 0;
+	while (i < len) {
+		const tokenStart = i;
+		while (i < len && isWhiteSpace(attrStr[i])) i++;
+		if (i >= len) break;
+		if (attrStr[i] === "=") {
+			i = tokenStart + 1;
+			continue;
+		}
+		const leadingWs = attrStr.slice(tokenStart, i);
+		const nameStart = i;
+		while (i < len && !isWhiteSpace(attrStr[i]) && attrStr[i] !== "=") i++;
+		const name = attrStr.slice(nameStart, i);
+		let equalsGroup;
+		let j = i;
+		while (j < len && isWhiteSpace(attrStr[j])) j++;
+		if (j < len && attrStr[j] === "=") {
+			equalsGroup = attrStr.slice(i, j + 1);
+			i = j + 1;
+		}
+		let quoteChar;
+		let value;
+		let k = i;
+		while (k < len && isWhiteSpace(attrStr[k])) k++;
+		if (k < len && (attrStr[k] === "\"" || attrStr[k] === "'")) {
+			const valueStart = k + 1;
+			const closeIdx = attrStr.indexOf(attrStr[k], valueStart);
+			if (closeIdx !== -1) {
+				quoteChar = attrStr[k];
+				value = attrStr.slice(valueStart, closeIdx);
+				i = closeIdx + 1;
+			}
+		}
+		const token = { startIndex: tokenStart };
+		token[1] = leadingWs;
+		token[2] = name;
+		token[3] = equalsGroup;
+		token[4] = quoteChar !== void 0 ? true : void 0;
+		token[5] = quoteChar;
+		token[6] = value;
+		tokens.push(token);
+	}
+	return tokens;
+}
 function validateAttributeString(attrStr, options) {
-	const matches = getAllMatches(attrStr, validAttrStrRegxp);
+	const matches = scanAttributeTokens(attrStr);
 	const attrNames = {};
 	for (let i = 0; i < matches.length; i++) {
 		if (matches[i][1].length === 0) return getErrorObject("InvalidAttr", "Attribute '" + matches[i][2] + "' has no space in starting.", getPositionFromMatch(matches[i]));
@@ -32272,997 +33080,7 @@ function getPositionFromMatch(match) {
 	return match.startIndex + match[1].length;
 }
 //#endregion
-//#region node_modules/.pnpm/@nodable+entities@2.1.0/node_modules/@nodable/entities/src/entities.js
-/**
-* Basic Latin & Special Characters
-* @type {Record<string, string>}
-*/
-var BASIC_LATIN = {
-	amp: "&",
-	AMP: "&",
-	lt: "<",
-	LT: "<",
-	gt: ">",
-	GT: ">",
-	quot: "\"",
-	QUOT: "\"",
-	apos: "'",
-	lsquo: "‘",
-	rsquo: "’",
-	ldquo: "“",
-	rdquo: "”",
-	lsquor: "‚",
-	rsquor: "’",
-	ldquor: "„",
-	bdquo: "„",
-	comma: ",",
-	period: ".",
-	colon: ":",
-	semi: ";",
-	excl: "!",
-	quest: "?",
-	num: "#",
-	dollar: "$",
-	percent: "%",
-	amp: "&",
-	ast: "*",
-	commat: "@",
-	lowbar: "_",
-	verbar: "|",
-	vert: "|",
-	sol: "/",
-	bsol: "\\",
-	lbrace: "{",
-	rbrace: "}",
-	lbrack: "[",
-	rbrack: "]",
-	lpar: "(",
-	rpar: ")",
-	nbsp: "\xA0",
-	iexcl: "¡",
-	cent: "¢",
-	pound: "£",
-	curren: "¤",
-	yen: "¥",
-	brvbar: "¦",
-	sect: "§",
-	uml: "¨",
-	copy: "©",
-	COPY: "©",
-	ordf: "ª",
-	laquo: "«",
-	not: "¬",
-	shy: "­",
-	reg: "®",
-	REG: "®",
-	macr: "¯",
-	deg: "°",
-	plusmn: "±",
-	sup2: "²",
-	sup3: "³",
-	acute: "´",
-	micro: "µ",
-	para: "¶",
-	middot: "·",
-	cedil: "¸",
-	sup1: "¹",
-	ordm: "º",
-	raquo: "»",
-	frac14: "¼",
-	frac12: "½",
-	half: "½",
-	frac34: "¾",
-	iquest: "¿",
-	times: "×",
-	div: "÷",
-	divide: "÷"
-};
-/**
-* Latin Extended & Accented Letters (A-Z)
-* @type {Record<string, string>}
-*/
-var LATIN_ACCENTS = {
-	Agrave: "À",
-	agrave: "à",
-	Aacute: "Á",
-	aacute: "á",
-	Acirc: "Â",
-	acirc: "â",
-	Atilde: "Ã",
-	atilde: "ã",
-	Auml: "Ä",
-	auml: "ä",
-	Aring: "Å",
-	aring: "å",
-	AElig: "Æ",
-	aelig: "æ",
-	Ccedil: "Ç",
-	ccedil: "ç",
-	Egrave: "È",
-	egrave: "è",
-	Eacute: "É",
-	eacute: "é",
-	Ecirc: "Ê",
-	ecirc: "ê",
-	Euml: "Ë",
-	euml: "ë",
-	Igrave: "Ì",
-	igrave: "ì",
-	Iacute: "Í",
-	iacute: "í",
-	Icirc: "Î",
-	icirc: "î",
-	Iuml: "Ï",
-	iuml: "ï",
-	ETH: "Ð",
-	eth: "ð",
-	Ntilde: "Ñ",
-	ntilde: "ñ",
-	Ograve: "Ò",
-	ograve: "ò",
-	Oacute: "Ó",
-	oacute: "ó",
-	Ocirc: "Ô",
-	ocirc: "ô",
-	Otilde: "Õ",
-	otilde: "õ",
-	Ouml: "Ö",
-	ouml: "ö",
-	Oslash: "Ø",
-	oslash: "ø",
-	Ugrave: "Ù",
-	ugrave: "ù",
-	Uacute: "Ú",
-	uacute: "ú",
-	Ucirc: "Û",
-	ucirc: "û",
-	Uuml: "Ü",
-	uuml: "ü",
-	Yacute: "Ý",
-	yacute: "ý",
-	THORN: "Þ",
-	thorn: "þ",
-	szlig: "ß",
-	yuml: "ÿ",
-	Yuml: "Ÿ"
-};
-/**
-* Latin Extended (Letters with diacritics)
-* @type {Record<string, string>}
-*/
-var LATIN_EXTENDED = {
-	Amacr: "Ā",
-	amacr: "ā",
-	Abreve: "Ă",
-	abreve: "ă",
-	Aogon: "Ą",
-	aogon: "ą",
-	Cacute: "Ć",
-	cacute: "ć",
-	Ccirc: "Ĉ",
-	ccirc: "ĉ",
-	Cdot: "Ċ",
-	cdot: "ċ",
-	Ccaron: "Č",
-	ccaron: "č",
-	Dcaron: "Ď",
-	dcaron: "ď",
-	Dstrok: "Đ",
-	dstrok: "đ",
-	Emacr: "Ē",
-	emacr: "ē",
-	Ecaron: "Ě",
-	ecaron: "ě",
-	Edot: "Ė",
-	edot: "ė",
-	Eogon: "Ę",
-	eogon: "ę",
-	Gcirc: "Ĝ",
-	gcirc: "ĝ",
-	Gbreve: "Ğ",
-	gbreve: "ğ",
-	Gdot: "Ġ",
-	gdot: "ġ",
-	Gcedil: "Ģ",
-	Hcirc: "Ĥ",
-	hcirc: "ĥ",
-	Hstrok: "Ħ",
-	hstrok: "ħ",
-	Itilde: "Ĩ",
-	itilde: "ĩ",
-	Imacr: "Ī",
-	imacr: "ī",
-	Iogon: "Į",
-	iogon: "į",
-	Idot: "İ",
-	IJlig: "Ĳ",
-	ijlig: "ĳ",
-	Jcirc: "Ĵ",
-	jcirc: "ĵ",
-	Kcedil: "Ķ",
-	kcedil: "ķ",
-	kgreen: "ĸ",
-	Lacute: "Ĺ",
-	lacute: "ĺ",
-	Lcedil: "Ļ",
-	lcedil: "ļ",
-	Lcaron: "Ľ",
-	lcaron: "ľ",
-	Lmidot: "Ŀ",
-	lmidot: "ŀ",
-	Lstrok: "Ł",
-	lstrok: "ł",
-	Nacute: "Ń",
-	nacute: "ń",
-	Ncaron: "Ň",
-	ncaron: "ň",
-	Ncedil: "Ņ",
-	ncedil: "ņ",
-	ENG: "Ŋ",
-	eng: "ŋ",
-	Omacr: "Ō",
-	omacr: "ō",
-	Odblac: "Ő",
-	odblac: "ő",
-	OElig: "Œ",
-	oelig: "œ",
-	Racute: "Ŕ",
-	racute: "ŕ",
-	Rcaron: "Ř",
-	rcaron: "ř",
-	Rcedil: "Ŗ",
-	rcedil: "ŗ",
-	Sacute: "Ś",
-	sacute: "ś",
-	Scirc: "Ŝ",
-	scirc: "ŝ",
-	Scedil: "Ş",
-	scedil: "ş",
-	Scaron: "Š",
-	scaron: "š",
-	Tcedil: "Ţ",
-	tcedil: "ţ",
-	Tcaron: "Ť",
-	tcaron: "ť",
-	Tstrok: "Ŧ",
-	tstrok: "ŧ",
-	Utilde: "Ũ",
-	utilde: "ũ",
-	Umacr: "Ū",
-	umacr: "ū",
-	Ubreve: "Ŭ",
-	ubreve: "ŭ",
-	Uring: "Ů",
-	uring: "ů",
-	Udblac: "Ű",
-	udblac: "ű",
-	Uogon: "Ų",
-	uogon: "ų",
-	Wcirc: "Ŵ",
-	wcirc: "ŵ",
-	Ycirc: "Ŷ",
-	ycirc: "ŷ",
-	Zacute: "Ź",
-	zacute: "ź",
-	Zdot: "Ż",
-	zdot: "ż",
-	Zcaron: "Ž",
-	zcaron: "ž"
-};
-/**
-* Greek Letters
-* @type {Record<string, string>}
-*/
-var GREEK = {
-	Alpha: "Α",
-	alpha: "α",
-	Beta: "Β",
-	beta: "β",
-	Gamma: "Γ",
-	gamma: "γ",
-	Delta: "Δ",
-	delta: "δ",
-	Epsilon: "Ε",
-	epsilon: "ε",
-	epsiv: "ϵ",
-	varepsilon: "ϵ",
-	Zeta: "Ζ",
-	zeta: "ζ",
-	Eta: "Η",
-	eta: "η",
-	Theta: "Θ",
-	theta: "θ",
-	thetasym: "ϑ",
-	vartheta: "ϑ",
-	Iota: "Ι",
-	iota: "ι",
-	Kappa: "Κ",
-	kappa: "κ",
-	kappav: "ϰ",
-	varkappa: "ϰ",
-	Lambda: "Λ",
-	lambda: "λ",
-	Mu: "Μ",
-	mu: "μ",
-	Nu: "Ν",
-	nu: "ν",
-	Xi: "Ξ",
-	xi: "ξ",
-	Omicron: "Ο",
-	omicron: "ο",
-	Pi: "Π",
-	pi: "π",
-	piv: "ϖ",
-	varpi: "ϖ",
-	Rho: "Ρ",
-	rho: "ρ",
-	rhov: "ϱ",
-	varrho: "ϱ",
-	Sigma: "Σ",
-	sigma: "σ",
-	sigmaf: "ς",
-	sigmav: "ς",
-	varsigma: "ς",
-	Tau: "Τ",
-	tau: "τ",
-	Upsilon: "Υ",
-	upsilon: "υ",
-	upsi: "υ",
-	Upsi: "ϒ",
-	upsih: "ϒ",
-	Phi: "Φ",
-	phi: "φ",
-	phiv: "ϕ",
-	varphi: "ϕ",
-	Chi: "Χ",
-	chi: "χ",
-	Psi: "Ψ",
-	psi: "ψ",
-	Omega: "Ω",
-	omega: "ω",
-	ohm: "Ω",
-	Gammad: "Ϝ",
-	gammad: "ϝ",
-	digamma: "ϝ"
-};
-/**
-* Cyrillic Letters
-* @type {Record<string, string>}
-*/
-var CYRILLIC = {
-	Afr: "𝔄",
-	afr: "𝔞",
-	Acy: "А",
-	acy: "а",
-	Bcy: "Б",
-	bcy: "б",
-	Vcy: "В",
-	vcy: "в",
-	Gcy: "Г",
-	gcy: "г",
-	Dcy: "Д",
-	dcy: "д",
-	IEcy: "Е",
-	iecy: "е",
-	IOcy: "Ё",
-	iocy: "ё",
-	ZHcy: "Ж",
-	zhcy: "ж",
-	Zcy: "З",
-	zcy: "з",
-	Icy: "И",
-	icy: "и",
-	Jcy: "Й",
-	jcy: "й",
-	Kcy: "К",
-	kcy: "к",
-	Lcy: "Л",
-	lcy: "л",
-	Mcy: "М",
-	mcy: "м",
-	Ncy: "Н",
-	ncy: "н",
-	Ocy: "О",
-	ocy: "о",
-	Pcy: "П",
-	pcy: "п",
-	Rcy: "Р",
-	rcy: "р",
-	Scy: "С",
-	scy: "с",
-	Tcy: "Т",
-	tcy: "т",
-	Ucy: "У",
-	ucy: "у",
-	Fcy: "Ф",
-	fcy: "ф",
-	KHcy: "Х",
-	khcy: "х",
-	TScy: "Ц",
-	tscy: "ц",
-	CHcy: "Ч",
-	chcy: "ч",
-	SHcy: "Ш",
-	shcy: "ш",
-	SHCHcy: "Щ",
-	shchcy: "щ",
-	HARDcy: "Ъ",
-	hardcy: "ъ",
-	Ycy: "Ы",
-	ycy: "ы",
-	SOFTcy: "Ь",
-	softcy: "ь",
-	Ecy: "Э",
-	ecy: "э",
-	YUcy: "Ю",
-	yucy: "ю",
-	YAcy: "Я",
-	yacy: "я",
-	DJcy: "Ђ",
-	djcy: "ђ",
-	GJcy: "Ѓ",
-	gjcy: "ѓ",
-	Jukcy: "Є",
-	jukcy: "є",
-	DScy: "Ѕ",
-	dscy: "ѕ",
-	Iukcy: "І",
-	iukcy: "і",
-	YIcy: "Ї",
-	yicy: "ї",
-	Jsercy: "Ј",
-	jsercy: "ј",
-	LJcy: "Љ",
-	ljcy: "љ",
-	NJcy: "Њ",
-	njcy: "њ",
-	TSHcy: "Ћ",
-	tshcy: "ћ",
-	KJcy: "Ќ",
-	kjcy: "ќ",
-	Ubrcy: "Ў",
-	ubrcy: "ў",
-	DZcy: "Џ",
-	dzcy: "џ"
-};
-/**
-* Mathematical Operators & Relations
-* @type {Record<string, string>}
-*/
-var MATH = {
-	plus: "+",
-	minus: "−",
-	mnplus: "∓",
-	mp: "∓",
-	pm: "±",
-	times: "×",
-	div: "÷",
-	divide: "÷",
-	sdot: "⋅",
-	star: "☆",
-	starf: "★",
-	bigstar: "★",
-	lowast: "∗",
-	ast: "*",
-	midast: "*",
-	compfn: "∘",
-	smallcircle: "∘",
-	bullet: "•",
-	bull: "•",
-	nbsp: "\xA0",
-	hellip: "…",
-	mldr: "…",
-	prime: "′",
-	Prime: "″",
-	tprime: "‴",
-	bprime: "‵",
-	backprime: "‵",
-	minus: "−",
-	minusd: "∸",
-	dotminus: "∸",
-	plusdo: "∔",
-	dotplus: "∔",
-	plusmn: "±",
-	minusplus: "∓",
-	mnplus: "∓",
-	mp: "∓",
-	setminus: "∖",
-	smallsetminus: "∖",
-	Backslash: "∖",
-	setmn: "∖",
-	ssetmn: "∖",
-	lowbar: "_",
-	verbar: "|",
-	vert: "|",
-	VerticalLine: "|",
-	colon: ":",
-	Colon: "∷",
-	Proportion: "∷",
-	ratio: "∶",
-	equals: "=",
-	ne: "≠",
-	nequiv: "≢",
-	equiv: "≡",
-	Congruent: "≡",
-	sim: "∼",
-	thicksim: "∼",
-	thksim: "∼",
-	sime: "≃",
-	simeq: "≃",
-	TildeEqual: "≃",
-	asymp: "≈",
-	approx: "≈",
-	thickapprox: "≈",
-	thkap: "≈",
-	TildeTilde: "≈",
-	ncong: "≇",
-	cong: "≅",
-	TildeFullEqual: "≅",
-	asympeq: "≍",
-	CupCap: "≍",
-	bump: "≎",
-	Bumpeq: "≎",
-	HumpDownHump: "≎",
-	bumpe: "≏",
-	bumpeq: "≏",
-	HumpEqual: "≏",
-	dotminus: "∸",
-	minusd: "∸",
-	plusdo: "∔",
-	dotplus: "∔",
-	le: "≤",
-	LessEqual: "≤",
-	ge: "≥",
-	GreaterEqual: "≥",
-	lesseqgtr: "⋚",
-	lesseqqgtr: "⪋",
-	greater: ">",
-	less: "<"
-};
-/**
-* Mathematical Operators (Advanced)
-* @type {Record<string, string>}
-*/
-var MATH_ADVANCED = {
-	alefsym: "ℵ",
-	aleph: "ℵ",
-	beth: "ℶ",
-	gimel: "ℷ",
-	daleth: "ℸ",
-	forall: "∀",
-	ForAll: "∀",
-	part: "∂",
-	PartialD: "∂",
-	exist: "∃",
-	Exists: "∃",
-	nexist: "∄",
-	nexists: "∄",
-	empty: "∅",
-	emptyset: "∅",
-	emptyv: "∅",
-	varnothing: "∅",
-	nabla: "∇",
-	Del: "∇",
-	isin: "∈",
-	isinv: "∈",
-	in: "∈",
-	Element: "∈",
-	notin: "∉",
-	notinva: "∉",
-	ni: "∋",
-	niv: "∋",
-	SuchThat: "∋",
-	ReverseElement: "∋",
-	notni: "∌",
-	notniva: "∌",
-	prod: "∏",
-	Product: "∏",
-	coprod: "∐",
-	Coproduct: "∐",
-	sum: "∑",
-	Sum: "∑",
-	minus: "−",
-	mp: "∓",
-	plusdo: "∔",
-	dotplus: "∔",
-	setminus: "∖",
-	lowast: "∗",
-	radic: "√",
-	Sqrt: "√",
-	prop: "∝",
-	propto: "∝",
-	Proportional: "∝",
-	varpropto: "∝",
-	infin: "∞",
-	infintie: "⧝",
-	ang: "∠",
-	angle: "∠",
-	angmsd: "∡",
-	measuredangle: "∡",
-	angsph: "∢",
-	mid: "∣",
-	VerticalBar: "∣",
-	nmid: "∤",
-	nsmid: "∤",
-	npar: "∦",
-	parallel: "∥",
-	spar: "∥",
-	nparallel: "∦",
-	nspar: "∦",
-	and: "∧",
-	wedge: "∧",
-	or: "∨",
-	vee: "∨",
-	cap: "∩",
-	cup: "∪",
-	int: "∫",
-	Integral: "∫",
-	conint: "∮",
-	ContourIntegral: "∮",
-	Conint: "∯",
-	DoubleContourIntegral: "∯",
-	Cconint: "∰",
-	there4: "∴",
-	therefore: "∴",
-	Therefore: "∴",
-	becaus: "∵",
-	because: "∵",
-	Because: "∵",
-	ratio: "∶",
-	Proportion: "∷",
-	minusd: "∸",
-	dotminus: "∸",
-	mDDot: "∺",
-	homtht: "∻",
-	sim: "∼",
-	bsimg: "∽",
-	backsim: "∽",
-	ac: "∾",
-	mstpos: "∾",
-	acd: "∿",
-	VerticalTilde: "≀",
-	wr: "≀",
-	wreath: "≀",
-	nsime: "≄",
-	nsimeq: "≄",
-	nsimeq: "≄",
-	ncong: "≇",
-	simne: "≆",
-	ncongdot: "⩭̸",
-	ngsim: "≵",
-	nsim: "≁",
-	napprox: "≉",
-	nap: "≉",
-	ngeq: "≱",
-	nge: "≱",
-	nleq: "≰",
-	nle: "≰",
-	ngtr: "≯",
-	ngt: "≯",
-	nless: "≮",
-	nlt: "≮",
-	nprec: "⊀",
-	npr: "⊀",
-	nsucc: "⊁",
-	nsc: "⊁"
-};
-/**
-* Arrows
-* @type {Record<string, string>}
-*/
-var ARROWS = {
-	larr: "←",
-	leftarrow: "←",
-	LeftArrow: "←",
-	uarr: "↑",
-	uparrow: "↑",
-	UpArrow: "↑",
-	rarr: "→",
-	rightarrow: "→",
-	RightArrow: "→",
-	darr: "↓",
-	downarrow: "↓",
-	DownArrow: "↓",
-	harr: "↔",
-	leftrightarrow: "↔",
-	LeftRightArrow: "↔",
-	varr: "↕",
-	updownarrow: "↕",
-	UpDownArrow: "↕",
-	nwarr: "↖",
-	nwarrow: "↖",
-	UpperLeftArrow: "↖",
-	nearr: "↗",
-	nearrow: "↗",
-	UpperRightArrow: "↗",
-	searr: "↘",
-	searrow: "↘",
-	LowerRightArrow: "↘",
-	swarr: "↙",
-	swarrow: "↙",
-	LowerLeftArrow: "↙",
-	lArr: "⇐",
-	Leftarrow: "⇐",
-	uArr: "⇑",
-	Uparrow: "⇑",
-	rArr: "⇒",
-	Rightarrow: "⇒",
-	dArr: "⇓",
-	Downarrow: "⇓",
-	hArr: "⇔",
-	Leftrightarrow: "⇔",
-	iff: "⇔",
-	vArr: "⇕",
-	Updownarrow: "⇕",
-	lAarr: "⇚",
-	Lleftarrow: "⇚",
-	rAarr: "⇛",
-	Rrightarrow: "⇛",
-	lrarr: "⇆",
-	leftrightarrows: "⇆",
-	rlarr: "⇄",
-	rightleftarrows: "⇄",
-	lrhar: "⇋",
-	leftrightharpoons: "⇋",
-	ReverseEquilibrium: "⇋",
-	rlhar: "⇌",
-	rightleftharpoons: "⇌",
-	Equilibrium: "⇌",
-	udarr: "⇅",
-	UpArrowDownArrow: "⇅",
-	duarr: "⇵",
-	DownArrowUpArrow: "⇵",
-	llarr: "⇇",
-	leftleftarrows: "⇇",
-	rrarr: "⇉",
-	rightrightarrows: "⇉",
-	ddarr: "⇊",
-	downdownarrows: "⇊",
-	har: "↽",
-	lhard: "↽",
-	leftharpoondown: "↽",
-	lharu: "↼",
-	leftharpoonup: "↼",
-	rhard: "⇁",
-	rightharpoondown: "⇁",
-	rharu: "⇀",
-	rightharpoonup: "⇀",
-	lsh: "↰",
-	Lsh: "↰",
-	rsh: "↱",
-	Rsh: "↱",
-	ldsh: "↲",
-	rdsh: "↳",
-	hookleftarrow: "↩",
-	hookrightarrow: "↪",
-	mapstoleft: "↤",
-	mapstoup: "↥",
-	map: "↦",
-	mapsto: "↦",
-	mapstodown: "↧",
-	crarr: "↵",
-	nwarrow: "↖",
-	nearrow: "↗",
-	searrow: "↘",
-	swarrow: "↙",
-	nleftarrow: "↚",
-	nleftrightarrow: "↮",
-	nrightarrow: "↛",
-	nrarr: "↛",
-	larrtl: "↢",
-	rarrtl: "↣",
-	leftarrowtail: "↢",
-	rightarrowtail: "↣",
-	twoheadleftarrow: "↞",
-	twoheadrightarrow: "↠",
-	Larr: "↞",
-	Rarr: "↠",
-	larrhk: "↩",
-	rarrhk: "↪",
-	larrlp: "↫",
-	looparrowleft: "↫",
-	rarrlp: "↬",
-	looparrowright: "↬",
-	harrw: "↭",
-	leftrightsquigarrow: "↭",
-	nrarrw: "↝̸",
-	rarrw: "↝",
-	rightsquigarrow: "↝",
-	larrbfs: "⤟",
-	rarrbfs: "⤠",
-	nvHarr: "⤄",
-	nvlArr: "⤂",
-	nvrArr: "⤃",
-	larrfs: "⤝",
-	rarrfs: "⤞",
-	Map: "⤅",
-	larrsim: "⥳",
-	rarrsim: "⥴",
-	harrcir: "⥈",
-	Uarrocir: "⥉",
-	lurdshar: "⥊",
-	ldrdhar: "⥧",
-	ldrushar: "⥋",
-	rdldhar: "⥩",
-	lrhard: "⥭",
-	rlhar: "⇌",
-	uharr: "↾",
-	uharl: "↿",
-	dharr: "⇂",
-	dharl: "⇃",
-	Uarr: "↟",
-	Darr: "↡",
-	zigrarr: "⇝",
-	nwArr: "⇖",
-	neArr: "⇗",
-	seArr: "⇘",
-	swArr: "⇙",
-	nharr: "↮",
-	nhArr: "⇎",
-	nlarr: "↚",
-	nlArr: "⇍",
-	nrarr: "↛",
-	nrArr: "⇏",
-	larrb: "⇤",
-	LeftArrowBar: "⇤",
-	rarrb: "⇥",
-	RightArrowBar: "⇥"
-};
-/**
-* Geometric Shapes
-* @type {Record<string, string>}
-*/
-var SHAPES = {
-	square: "□",
-	Square: "□",
-	squ: "□",
-	squf: "▪",
-	squarf: "▪",
-	blacksquar: "▪",
-	blacksquare: "▪",
-	FilledVerySmallSquare: "▪",
-	blk34: "▓",
-	blk12: "▒",
-	blk14: "░",
-	block: "█",
-	srect: "▭",
-	rect: "▭",
-	sdot: "⋅",
-	sdotb: "⊡",
-	dotsquare: "⊡",
-	triangle: "▵",
-	tri: "▵",
-	trine: "▵",
-	utri: "▵",
-	triangledown: "▿",
-	dtri: "▿",
-	tridown: "▿",
-	triangleleft: "◃",
-	ltri: "◃",
-	triangleright: "▹",
-	rtri: "▹",
-	blacktriangle: "▴",
-	utrif: "▴",
-	blacktriangledown: "▾",
-	dtrif: "▾",
-	blacktriangleleft: "◂",
-	ltrif: "◂",
-	blacktriangleright: "▸",
-	rtrif: "▸",
-	loz: "◊",
-	lozenge: "◊",
-	blacklozenge: "⧫",
-	lozf: "⧫",
-	bigcirc: "◯",
-	xcirc: "◯",
-	circ: "ˆ",
-	Circle: "○",
-	cir: "○",
-	o: "○",
-	bullet: "•",
-	bull: "•",
-	hellip: "…",
-	mldr: "…",
-	nldr: "‥",
-	boxh: "─",
-	HorizontalLine: "─",
-	boxv: "│",
-	boxdr: "┌",
-	boxdl: "┐",
-	boxur: "└",
-	boxul: "┘",
-	boxvr: "├",
-	boxvl: "┤",
-	boxhd: "┬",
-	boxhu: "┴",
-	boxvh: "┼",
-	boxH: "═",
-	boxV: "║",
-	boxdR: "╒",
-	boxDr: "╓",
-	boxDR: "╔",
-	boxDl: "╕",
-	boxdL: "╖",
-	boxDL: "╗",
-	boxuR: "╘",
-	boxUr: "╙",
-	boxUR: "╚",
-	boxUl: "╜",
-	boxuL: "╛",
-	boxUL: "╝",
-	boxvR: "╞",
-	boxVr: "╟",
-	boxVR: "╠",
-	boxVl: "╢",
-	boxvL: "╡",
-	boxVL: "╣",
-	boxHd: "╤",
-	boxhD: "╥",
-	boxHD: "╦",
-	boxHu: "╧",
-	boxhU: "╨",
-	boxHU: "╩",
-	boxvH: "╪",
-	boxVh: "╫",
-	boxVH: "╬"
-};
-/**
-* Punctuation & Diacritics
-* @type {Record<string, string>}
-*/
-var PUNCTUATION = {
-	excl: "!",
-	iexcl: "¡",
-	brvbar: "¦",
-	sect: "§",
-	uml: "¨",
-	copy: "©",
-	ordf: "ª",
-	laquo: "«",
-	not: "¬",
-	shy: "­",
-	reg: "®",
-	macr: "¯",
-	deg: "°",
-	plusmn: "±",
-	sup2: "²",
-	sup3: "³",
-	acute: "´",
-	micro: "µ",
-	para: "¶",
-	middot: "·",
-	cedil: "¸",
-	sup1: "¹",
-	ordm: "º",
-	raquo: "»",
-	frac14: "¼",
-	frac12: "½",
-	frac34: "¾",
-	iquest: "¿",
-	nbsp: "\xA0",
-	comma: ",",
-	period: ".",
-	colon: ":",
-	semi: ";",
-	vert: "|",
-	Verbar: "‖",
-	verbar: "|",
-	dblac: "˝",
-	circ: "ˆ",
-	caron: "ˇ",
-	breve: "˘",
-	dot: "˙",
-	ring: "˚",
-	ogon: "˛",
-	tilde: "˜",
-	DiacriticalGrave: "`",
-	DiacriticalAcute: "´",
-	DiacriticalTilde: "˜",
-	DiacriticalDot: "˙",
-	DiacriticalDoubleAcute: "˝",
-	grave: "`",
-	acute: "´"
-};
+//#region node_modules/.pnpm/@nodable+entities@3.0.0/node_modules/@nodable/entities/src/entities.js
 /**
 * Currency Symbols
 * @type {Record<string, string>}
@@ -33274,7 +33092,6 @@ var CURRENCY = {
 	yen: "¥",
 	euro: "€",
 	dollar: "$",
-	euro: "€",
 	fnof: "ƒ",
 	inr: "₹",
 	af: "؋",
@@ -33285,115 +33102,6 @@ var CURRENCY = {
 	yuan: "¥",
 	cedil: "¸"
 };
-/**
-* Fractions
-* @type {Record<string, string>}
-*/
-var FRACTIONS = {
-	frac12: "½",
-	half: "½",
-	frac13: "⅓",
-	frac14: "¼",
-	frac15: "⅕",
-	frac16: "⅙",
-	frac18: "⅛",
-	frac23: "⅔",
-	frac25: "⅖",
-	frac34: "¾",
-	frac35: "⅗",
-	frac38: "⅜",
-	frac45: "⅘",
-	frac56: "⅚",
-	frac58: "⅝",
-	frac78: "⅞",
-	frasl: "⁄"
-};
-/**
-* Miscellaneous Symbols
-* @type {Record<string, string>}
-*/
-var MISC_SYMBOLS = {
-	trade: "™",
-	TRADE: "™",
-	telrec: "⌕",
-	target: "⌖",
-	ulcorn: "⌜",
-	ulcorner: "⌜",
-	urcorn: "⌝",
-	urcorner: "⌝",
-	dlcorn: "⌞",
-	llcorner: "⌞",
-	drcorn: "⌟",
-	lrcorner: "⌟",
-	intercal: "⊺",
-	intcal: "⊺",
-	oplus: "⊕",
-	CirclePlus: "⊕",
-	ominus: "⊖",
-	CircleMinus: "⊖",
-	otimes: "⊗",
-	CircleTimes: "⊗",
-	osol: "⊘",
-	odot: "⊙",
-	CircleDot: "⊙",
-	oast: "⊛",
-	circledast: "⊛",
-	odash: "⊝",
-	circleddash: "⊝",
-	ocirc: "⊚",
-	circledcirc: "⊚",
-	boxplus: "⊞",
-	plusb: "⊞",
-	boxminus: "⊟",
-	minusb: "⊟",
-	boxtimes: "⊠",
-	timesb: "⊠",
-	boxdot: "⊡",
-	sdotb: "⊡",
-	veebar: "⊻",
-	vee: "∨",
-	barvee: "⊽",
-	and: "∧",
-	wedge: "∧",
-	Cap: "⋒",
-	Cup: "⋓",
-	Fork: "⋔",
-	pitchfork: "⋔",
-	epar: "⋕",
-	ltlarr: "⥶",
-	nvap: "≍⃒",
-	nvsim: "∼⃒",
-	nvge: "≥⃒",
-	nvle: "≤⃒",
-	nvlt: "<⃒",
-	nvgt: ">⃒",
-	nvltrie: "⊴⃒",
-	nvrtrie: "⊵⃒",
-	Vdash: "⊩",
-	dashv: "⊣",
-	vDash: "⊨",
-	Vdash: "⊩",
-	Vvdash: "⊪",
-	nvdash: "⊬",
-	nvDash: "⊭",
-	nVdash: "⊮",
-	nVDash: "⊯"
-};
-({
-	...BASIC_LATIN,
-	...LATIN_ACCENTS,
-	...LATIN_EXTENDED,
-	...GREEK,
-	...CYRILLIC,
-	...MATH,
-	...MATH_ADVANCED,
-	...ARROWS,
-	...SHAPES,
-	...PUNCTUATION,
-	...CURRENCY,
-	...FRACTIONS,
-	...MISC_SYMBOLS
-});
 var XML = {
 	amp: "&",
 	apos: "'",
@@ -33424,7 +33132,26 @@ var COMMON_HTML = {
 	frac34: "¾"
 };
 //#endregion
-//#region node_modules/.pnpm/@nodable+entities@2.1.0/node_modules/@nodable/entities/src/EntityDecoder.js
+//#region node_modules/.pnpm/@nodable+entities@3.0.0/node_modules/@nodable/entities/src/EntityDecoder.js
+/**
+* Action constants for `onExternalEntity` and `onInputEntity` hooks.
+*
+* Use these instead of raw strings to avoid typos:
+*
+* @example
+* import EntityDecoder, { ENTITY_ACTION } from './EntityDecoder.js';
+* const dec = new EntityDecoder({
+*   onInputEntity: (name, value) => ENTITY_ACTION.BLOCK,
+* });
+*/
+var ENTITY_ACTION = Object.freeze({
+	/** Resolve and expand the entity normally. */
+	ALLOW: "allow",
+	/** Silently skip this entity — it will not be registered. */
+	BLOCK: "block",
+	/** Throw an error, aborting entity registration entirely. */
+	THROW: "throw"
+});
 var SPECIAL_CHARS = /* @__PURE__ */ new Set("!?\\\\/[]$%{}^&*()<>|+");
 /**
 * Validate that an entity name contains no dangerous characters.
@@ -33437,6 +33164,7 @@ function validateEntityName$1(name) {
 	for (const ch of name) if (SPECIAL_CHARS.has(ch)) throw new Error(`[EntityReplacer] Invalid character '${ch}' in entity name: "${name}"`);
 	return name;
 }
+__name(validateEntityName$1, "validateEntityName");
 /**
 * Merge one or more entity maps into a flat name→string map.
 * Accepts either:
@@ -33474,11 +33202,11 @@ var LIMIT_TIER_ALL = "all";
 * @returns {Set<string>}
 */
 function parseLimitTiers(raw) {
-	if (!raw || raw === LIMIT_TIER_EXTERNAL) return new Set([LIMIT_TIER_EXTERNAL]);
-	if (raw === LIMIT_TIER_ALL) return new Set([LIMIT_TIER_ALL]);
-	if (raw === LIMIT_TIER_BASE) return new Set([LIMIT_TIER_BASE]);
+	if (!raw || raw === LIMIT_TIER_EXTERNAL) return /* @__PURE__ */ new Set([LIMIT_TIER_EXTERNAL]);
+	if (raw === LIMIT_TIER_ALL) return /* @__PURE__ */ new Set([LIMIT_TIER_ALL]);
+	if (raw === LIMIT_TIER_BASE) return /* @__PURE__ */ new Set([LIMIT_TIER_BASE]);
 	if (Array.isArray(raw)) return new Set(raw);
-	return new Set([LIMIT_TIER_EXTERNAL]);
+	return /* @__PURE__ */ new Set([LIMIT_TIER_EXTERNAL]);
 }
 var NCR_LEVEL = Object.freeze({
 	allow: 0,
@@ -33486,7 +33214,7 @@ var NCR_LEVEL = Object.freeze({
 	remove: 2,
 	throw: 3
 });
-var XML10_ALLOWED_C0 = new Set([
+var XML10_ALLOWED_C0 = /* @__PURE__ */ new Set([
 	9,
 	10,
 	13
@@ -33563,6 +33291,14 @@ var EntityDecoder = class {
 	*   the effective action is max(onNCR, rangeMinimum).
 	* @param {'remove'|'throw'} [options.ncr.nullNCR='remove']
 	*   Action for U+0000 (null). 'allow' and 'leave' are clamped to 'remove' since null is never safe.
+	* @param {((name: string, value: string) => 'allow'|'block'|'throw')|null} [options.onExternalEntity=null]
+	*   Hook called when an external entity is registered via `setExternalEntities()` or
+	*   `addExternalEntity()`. Return `ENTITY_ACTION.ALLOW` to accept the entity,
+	*   `ENTITY_ACTION.BLOCK` to silently skip it, or `ENTITY_ACTION.THROW` to abort with an error.
+	* @param {((name: string, value: string) => 'allow'|'block'|'throw')|null} [options.onInputEntity=null]
+	*   Hook called when an input entity is registered via `addInputEntities()`. Return
+	*   `ENTITY_ACTION.ALLOW` to accept, `ENTITY_ACTION.BLOCK` to silently skip, or
+	*   `ENTITY_ACTION.THROW` to abort with an error.
 	*/
 	constructor(options = {}) {
 		this._limit = options.limit || {};
@@ -33586,34 +33322,79 @@ var EntityDecoder = class {
 		this._ncrXmlVersion = ncrCfg.xmlVersion;
 		this._ncrOnLevel = ncrCfg.onLevel;
 		this._ncrNullLevel = ncrCfg.nullLevel;
+		/** @type {((name: string, value: string) => 'allow'|'block'|'throw')|null} */
+		this._onExternalEntity = typeof options.onExternalEntity === "function" ? options.onExternalEntity : null;
+		/** @type {((name: string, value: string) => 'allow'|'block'|'throw')|null} */
+		this._onInputEntity = typeof options.onInputEntity === "function" ? options.onInputEntity : null;
+	}
+	/**
+	* Invoke a registration hook for a single entity name/value pair.
+	* Returns true when the entity should be accepted, false when it should be
+	* silently skipped (BLOCK), and throws when the hook returns THROW.
+	*
+	* @param {((name: string, value: string) => 'allow'|'block'|'throw')|null} hook
+	* @param {string} name
+	* @param {string} value
+	* @param {string} context  — used in error messages ('external' | 'input')
+	* @returns {boolean}  true = accept, false = skip
+	*/
+	_applyRegistrationHook(hook, name, value, context) {
+		if (!hook) return true;
+		const action = hook(name, value);
+		if (action === ENTITY_ACTION.BLOCK) return false;
+		if (action === ENTITY_ACTION.THROW) throw new Error(`[EntityDecoder] Registration of ${context} entity "&${name};" was rejected by hook`);
+		return true;
 	}
 	/**
 	* Replace the full set of persistent external entities.
 	* All keys are validated — throws on invalid characters.
+	* If `onExternalEntity` is set, it is called once per entry; entries that
+	* return `ENTITY_ACTION.BLOCK` are silently omitted, `ENTITY_ACTION.THROW`
+	* aborts the whole call.
 	* @param {Record<string, string | { regex?: RegExp, val: string }>} map
 	*/
 	setExternalEntities(map) {
 		if (map) for (const key of Object.keys(map)) validateEntityName$1(key);
-		this._externalMap = mergeEntityMaps(map);
+		if (!this._onExternalEntity) {
+			this._externalMap = mergeEntityMaps(map);
+			return;
+		}
+		const flat = mergeEntityMaps(map);
+		const filtered = Object.create(null);
+		for (const [name, value] of Object.entries(flat)) if (this._applyRegistrationHook(this._onExternalEntity, name, value, "external")) filtered[name] = value;
+		this._externalMap = filtered;
 	}
 	/**
 	* Add a single persistent external entity.
+	* If `onExternalEntity` is set it is called before the entity is stored;
+	* `ENTITY_ACTION.BLOCK` silently skips storage, `ENTITY_ACTION.THROW` raises.
 	* @param {string} key
 	* @param {string} value
 	*/
 	addExternalEntity(key, value) {
 		validateEntityName$1(key);
-		if (typeof value === "string" && value.indexOf("&") === -1) this._externalMap[key] = value;
+		if (typeof value === "string" && value.indexOf("&") === -1) {
+			if (this._applyRegistrationHook(this._onExternalEntity, key, value, "external")) this._externalMap[key] = value;
+		}
 	}
 	/**
 	* Inject DOCTYPE entities for the current document.
 	* Also resets per-document expansion counters.
+	* If `onInputEntity` is set it is called once per entry; entries returning
+	* `ENTITY_ACTION.BLOCK` are silently omitted, `ENTITY_ACTION.THROW` aborts.
 	* @param {Record<string, string | { regx?: RegExp, regex?: RegExp, val: string }>} map
 	*/
 	addInputEntities(map) {
 		this._totalExpansions = 0;
 		this._expandedLength = 0;
-		this._inputMap = mergeEntityMaps(map);
+		if (!this._onInputEntity) {
+			this._inputMap = mergeEntityMaps(map);
+			return;
+		}
+		const flat = mergeEntityMaps(map);
+		const filtered = Object.create(null);
+		for (const [name, value] of Object.entries(flat)) if (this._applyRegistrationHook(this._onInputEntity, name, value, "input")) filtered[name] = value;
+		this._inputMap = filtered;
 	}
 	/**
 	* Wipe input/runtime entities and reset counters.
@@ -33642,6 +33423,7 @@ var EntityDecoder = class {
 	*/
 	decode(str) {
 		if (typeof str !== "string" || str.length === 0) return str;
+		if (str.indexOf("&") === -1) return str;
 		const original = str;
 		const chunks = [];
 		const len = str.length;
@@ -33816,7 +33598,7 @@ var EntityDecoder = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/xmlparser/OptionsBuilder.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/xmlparser/OptionsBuilder.js
 var defaultOnDangerousProperty = (name) => {
 	if (DANGEROUS_PROPERTY_NAMES.includes(name)) return "__" + name;
 	return name;
@@ -33836,7 +33618,8 @@ var defaultOptions$1 = {
 	numberParseOptions: {
 		hex: true,
 		leadingZeros: true,
-		eNotation: true
+		eNotation: true,
+		unicode: false
 	},
 	tagValueProcessor: function(tagName, val) {
 		return val;
@@ -33942,7 +33725,7 @@ var buildOptions = function(options) {
 	return built;
 };
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/xmlparser/xmlNode.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/xmlparser/xmlNode.js
 var METADATA_SYMBOL$1;
 if (typeof Symbol !== "function") METADATA_SYMBOL$1 = "@@xmlMetadata";
 else METADATA_SYMBOL$1 = Symbol("XML Node Metadata");
@@ -33963,7 +33746,14 @@ var XmlNode = class {
 			[":@"]: node[":@"]
 		});
 		else this.child.push({ [node.tagname]: node.child });
+		this.addStartIndex(startIndex);
+	}
+	addStartIndex(startIndex) {
 		if (startIndex !== void 0) this.child[this.child.length - 1][METADATA_SYMBOL$1] = { startIndex };
+	}
+	addEndIndex(endIndex) {
+		const lastChild = this.child[this.child.length - 1];
+		if (lastChild !== void 0 && lastChild[METADATA_SYMBOL$1] !== void 0 && lastChild[METADATA_SYMBOL$1].endIndex === void 0) lastChild[METADATA_SYMBOL$1].endIndex = endIndex;
 	}
 	/** symbol used for metadata */
 	static getMetaDataSymbol() {
@@ -33971,7 +33761,7 @@ var XmlNode = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/xml-naming@0.1.0/node_modules/xml-naming/src/index.js
+//#region node_modules/.pnpm/xml-naming@0.3.0/node_modules/xml-naming/src/index.js
 /**
 * xml-naming
 * Validates XML Name productions as defined in the XML 1.0 and 1.1 specifications.
@@ -33982,9 +33772,9 @@ var XmlNode = class {
 * XML NS spec:  https://www.w3.org/TR/xml-names/#NT-NCName
 */
 var nameStartChar10 = ":A-Za-z_À-ÖØ-öø-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�";
-var nameChar10 = ":A-Za-z_À-ÖØ-öø-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�\\-\\.\\d·̀-ͯ‿-⁀";
+var nameChar10 = nameStartChar10 + "\\-\\.\\d·̀-ͯ‿-⁀";
 var nameStartChar11 = ":A-Za-z_À-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�𐀀-󯿿";
-var nameChar11 = ":A-Za-z_À-˿Ͱ-ͽͿ-҆҈-῿‌-‍⁰-↏Ⰰ-⿯、-퟿豈-﷏ﷰ-�𐀀-󯿿\\-\\.\\d·̀-ͯ҇‿-⁀";
+var nameChar11 = nameStartChar11 + "\\-\\.\\d·̀-ͯ҇‿-⁀";
 var buildRegexes = (startChar, char, flags = "") => {
 	const ncNamePat = `[${startChar.replace(":", "")}][${char.replace(":", "")}]*`;
 	return {
@@ -33997,15 +33787,56 @@ var buildRegexes = (startChar, char, flags = "") => {
 };
 var regexes10 = buildRegexes(nameStartChar10, nameChar10);
 var regexes11 = buildRegexes(nameStartChar11, nameChar11, "u");
-var getRegexes = (xmlVersion = "1.0") => xmlVersion === "1.1" ? regexes11 : regexes10;
+var regexesAscii = buildRegexes(":A-Za-z_", ":A-Za-z_\\-\\.\\d");
+var getRegexes = (xmlVersion = "1.0", asciiOnly = false) => {
+	if (asciiOnly) return regexesAscii;
+	return xmlVersion === "1.1" ? regexes11 : regexes10;
+};
 /**
 * Returns true if the string is a valid QName (Qualified Name).
 * Allows exactly one colon as a prefix separator: prefix:localName.
 * Used for: element and attribute names in namespace-aware XML/SVG.
+*
+* @param {{ xmlVersion?: '1.0'|'1.1', asciiOnly?: boolean }} [opts]
+*   asciiOnly: skip unicode-aware matching, ASCII names only (default false).
 */
-var qName = (str, { xmlVersion = "1.0" } = {}) => getRegexes(xmlVersion).qName.test(str);
+var qName = (str, { xmlVersion = "1.0", asciiOnly = false } = {}) => getRegexes(xmlVersion, asciiOnly).qName.test(str);
+var PRODUCTIONS = [
+	"name",
+	"ncName",
+	"qName",
+	"nmToken",
+	"nmTokens"
+];
+/**
+* Returns a memoized boolean validator function for a single production,
+* with opts fixed at creation time.
+*
+* @param {'name'|'ncName'|'qName'|'nmToken'|'nmTokens'} production
+* @param {{ xmlVersion?: '1.0'|'1.1', asciiOnly?: boolean, maxCacheSize?: number }} [opts]
+*   maxCacheSize: max number of distinct strings to cache (default 2048).
+*   Once reached, new strings are validated but not cached; existing cached
+*   entries keep being served.
+* @returns {((str: string) => boolean) & { reset: () => void }}
+*/
+var createValidator = (production, { xmlVersion = "1.0", asciiOnly = false, maxCacheSize = 2048 } = {}) => {
+	if (!PRODUCTIONS.includes(production)) throw new TypeError(`Unknown production "${production}". Must be one of: ${PRODUCTIONS.join(", ")}`);
+	const regex = getRegexes(xmlVersion, asciiOnly)[production];
+	let cache = /* @__PURE__ */ new Map();
+	const validator = (str) => {
+		const cached = cache.get(str);
+		if (cached !== void 0) return cached;
+		const result = regex.test(str);
+		if (cache.size < maxCacheSize) cache.set(str, result);
+		return result;
+	};
+	validator.reset = () => {
+		cache = /* @__PURE__ */ new Map();
+	};
+	return validator;
+};
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/xmlparser/DocTypeReader.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/xmlparser/DocTypeReader.js
 var DocTypeReader = class {
 	constructor(options, xmlVersion) {
 		this.suppressValidationErr = !options;
@@ -34021,42 +33852,57 @@ var DocTypeReader = class {
 		if (xmlData[i + 3] === "O" && xmlData[i + 4] === "C" && xmlData[i + 5] === "T" && xmlData[i + 6] === "Y" && xmlData[i + 7] === "P" && xmlData[i + 8] === "E") {
 			i = i + 9;
 			let angleBracketsCount = 1;
-			let hasBody = false, comment = false;
+			let hasBody = false;
+			let comment = false;
+			let quoteChar = null;
 			let exp = "";
-			for (; i < xmlData.length; i++) if (xmlData[i] === "<" && !comment) {
-				if (hasBody && hasSeq(xmlData, "!ENTITY", i)) {
-					i += 7;
-					let entityName, val;
-					[entityName, val, i] = this.readEntityExp(xmlData, i + 1, this.suppressValidationErr);
-					if (val.indexOf("&") === -1) {
-						if (this.options.enabled !== false && this.options.maxEntityCount != null && entityCount >= this.options.maxEntityCount) throw new Error(`Entity count (${entityCount + 1}) exceeds maximum allowed (${this.options.maxEntityCount})`);
-						entities[entityName] = val;
-						entityCount++;
-					}
-				} else if (hasBody && hasSeq(xmlData, "!ELEMENT", i)) {
-					i += 8;
-					const { index } = this.readElementExp(xmlData, i + 1);
-					i = index;
-				} else if (hasBody && hasSeq(xmlData, "!ATTLIST", i)) i += 8;
-				else if (hasBody && hasSeq(xmlData, "!NOTATION", i)) {
-					i += 9;
-					const { index } = this.readNotationExp(xmlData, i + 1, this.suppressValidationErr);
-					i = index;
-				} else if (hasSeq(xmlData, "!--", i)) comment = true;
-				else throw new Error(`Invalid DOCTYPE`);
-				angleBracketsCount++;
-				exp = "";
-			} else if (xmlData[i] === ">") {
-				if (comment) {
-					if (xmlData[i - 1] === "-" && xmlData[i - 2] === "-") {
-						comment = false;
-						angleBracketsCount--;
-					}
-				} else angleBracketsCount--;
-				if (angleBracketsCount === 0) break;
-			} else if (xmlData[i] === "[") hasBody = true;
-			else exp += xmlData[i];
-			if (angleBracketsCount !== 0) throw new Error(`Unclosed DOCTYPE`);
+			for (; i < xmlData.length; i++) {
+				if (quoteChar !== null) {
+					if (xmlData[i] === quoteChar) quoteChar = null;
+					exp += xmlData[i];
+					continue;
+				}
+				if (!hasBody && !comment && (xmlData[i] === "\"" || xmlData[i] === "'")) {
+					quoteChar = xmlData[i];
+					exp += xmlData[i];
+					continue;
+				}
+				if (xmlData[i] === "<" && !comment) {
+					if (hasBody && hasSeq(xmlData, "!ENTITY", i)) {
+						i += 7;
+						let entityName;
+						let val;
+						[entityName, val, i] = this.readEntityExp(xmlData, i + 1, this.suppressValidationErr);
+						if (val.indexOf("&") === -1) {
+							if (this.options.enabled !== false && this.options.maxEntityCount != null && entityCount >= this.options.maxEntityCount) throw new Error(`Entity count (${entityCount + 1}) exceeds maximum allowed (${this.options.maxEntityCount})`);
+							entities[entityName] = val;
+							entityCount++;
+						}
+					} else if (hasBody && hasSeq(xmlData, "!ELEMENT", i)) {
+						i += 8;
+						const { index } = this.readElementExp(xmlData, i + 1);
+						i = index;
+					} else if (hasBody && hasSeq(xmlData, "!ATTLIST", i)) i += 8;
+					else if (hasBody && hasSeq(xmlData, "!NOTATION", i)) {
+						i += 9;
+						const { index } = this.readNotationExp(xmlData, i + 1, this.suppressValidationErr);
+						i = index;
+					} else if (hasSeq(xmlData, "!--", i)) comment = true;
+					else throw new Error(`Invalid DOCTYPE`);
+					angleBracketsCount++;
+					exp = "";
+				} else if (xmlData[i] === ">") {
+					if (comment) {
+						if (xmlData[i - 1] === "-" && xmlData[i - 2] === "-") {
+							comment = false;
+							angleBracketsCount--;
+						}
+					} else angleBracketsCount--;
+					if (angleBracketsCount === 0) break;
+				} else if (xmlData[i] === "[") hasBody = true;
+				else exp += xmlData[i];
+			}
+			if (quoteChar !== null || angleBracketsCount !== 0) throw new Error(`Unclosed DOCTYPE`);
 		} else throw new Error(`Invalid Tag instead of DOCTYPE`);
 		return {
 			entities,
@@ -34228,7 +34074,189 @@ function validateEntityName(name, xmlVersion) {
 	else throw new Error(`Invalid entity name ${name}`);
 }
 //#endregion
-//#region node_modules/.pnpm/strnum@2.3.0/node_modules/strnum/strnum.js
+//#region node_modules/.pnpm/anynum@1.0.1/node_modules/anynum/digitTable.js
+/**
+* Flat lookup table: maps Unicode code point → ASCII digit (0-9).
+* Only decimal digit characters (Unicode category Nd) are included.
+*
+* Strategy: Int32Array of size (maxCodePoint - minCodePoint + 1).
+* Value 0xFF means "not a digit". Value 0-9 is the ASCII digit value.
+* This gives O(1) lookup with no branching, no bisect, no loop.
+*
+* Memory: range is 0x0660 to 0x1FBF0 → ~129,936 entries × 1 byte = ~127 KB.
+* Acceptable for a one-time init; lookup is a single array index.
+*/
+var SCRIPT_ZEROS = [
+	48,
+	1632,
+	1776,
+	2406,
+	2534,
+	2662,
+	2790,
+	2918,
+	3046,
+	3174,
+	3302,
+	3430,
+	3558,
+	3664,
+	3792,
+	3872,
+	4160,
+	4240,
+	6112,
+	6160,
+	6470,
+	6608,
+	6784,
+	6800,
+	6992,
+	7088,
+	7232,
+	7248,
+	65296,
+	120782,
+	120792,
+	120802,
+	120812,
+	120822,
+	66720,
+	68912,
+	69734,
+	69872,
+	69942,
+	70096,
+	70384,
+	70736,
+	70864,
+	71248,
+	71360,
+	71472,
+	71904,
+	72016,
+	72688,
+	72784,
+	73040,
+	73120,
+	73552,
+	92768,
+	92864,
+	93008,
+	123200,
+	123632,
+	124144,
+	125264,
+	130032
+];
+var HIGH_MAP = /* @__PURE__ */ new Map();
+var LOW_MAX = 65535;
+var TABLE_OFFSET = 1632;
+var TABLE = (/* @__PURE__ */ new Uint8Array(63904)).fill(255);
+for (const zero of SCRIPT_ZEROS) for (let d = 0; d < 10; d++) {
+	const cp = zero + d;
+	if (cp <= LOW_MAX) TABLE[cp - TABLE_OFFSET] = d;
+	else HIGH_MAP.set(cp, d);
+}
+//#endregion
+//#region node_modules/.pnpm/anynum@1.0.1/node_modules/anynum/anynum.js
+var CHAR_0 = 48;
+var CHAR_9 = 57;
+var CHAR_MINUS = 45;
+var MINUS_SET = /* @__PURE__ */ new Set([
+	8722,
+	65293,
+	65123
+]);
+/**
+* Normalize all Unicode decimal digit characters in a string to ASCII (0-9),
+* and normalize Unicode minus variants to ASCII '-' (U+002D).
+*
+* Non-digit, non-minus characters are passed through unchanged.
+*
+* Performance design:
+* - Fast path: if the string has no convertible characters, return it unchanged
+*   (zero allocation).
+* - BMP digits (0x0660..0xFFFF excl. surrogates): flat Uint8Array lookup (O(1)).
+* - Supplementary plane digits (> 0xFFFF, encoded as surrogate pairs): Map lookup.
+* - Minus variants: checked inline with a small fixed Set.
+*
+* @param {string} str
+* @returns {string}
+*/
+function anynum(str) {
+	if (typeof str !== "string") return str;
+	const len = str.length;
+	if (len === 0) return str;
+	let firstHit = -1;
+	for (let i = 0; i < len; i++) {
+		const cc = str.charCodeAt(i);
+		if (cc >= CHAR_0 && cc <= CHAR_9 || cc === CHAR_MINUS) continue;
+		if (cc < 1632) {
+			if (MINUS_SET.has(cc)) {
+				firstHit = i;
+				break;
+			}
+			continue;
+		}
+		if (cc >= 55296 && cc <= 56319) {
+			if (i + 1 < len) {
+				const low = str.charCodeAt(i + 1);
+				if (low >= 56320 && low <= 57343) {
+					const cp = 65536 + (cc - 55296 << 10) + (low - 56320);
+					if (HIGH_MAP.has(cp)) {
+						firstHit = i;
+						break;
+					}
+				}
+			}
+			continue;
+		}
+		if (TABLE[cc - 1632] !== 255 || MINUS_SET.has(cc)) {
+			firstHit = i;
+			break;
+		}
+	}
+	if (firstHit === -1) return str;
+	const chars = [];
+	if (firstHit > 0) chars.push(str.slice(0, firstHit));
+	for (let i = firstHit; i < len; i++) {
+		const cc = str.charCodeAt(i);
+		if (cc >= CHAR_0 && cc <= CHAR_9 || cc === CHAR_MINUS) {
+			chars.push(str[i]);
+			continue;
+		}
+		if (cc < 1632) {
+			chars.push(MINUS_SET.has(cc) ? "-" : str[i]);
+			continue;
+		}
+		if (cc >= 55296 && cc <= 56319) {
+			if (i + 1 < len) {
+				const low = str.charCodeAt(i + 1);
+				if (low >= 56320 && low <= 57343) {
+					const cp = 65536 + (cc - 55296 << 10) + (low - 56320);
+					const d = HIGH_MAP.get(cp);
+					if (d !== void 0) {
+						chars.push(String.fromCharCode(d + 48));
+						i++;
+						continue;
+					}
+				}
+			}
+			chars.push(str[i]);
+			continue;
+		}
+		if (MINUS_SET.has(cc)) {
+			chars.push("-");
+			continue;
+		}
+		const d = TABLE[cc - TABLE_OFFSET];
+		chars.push(d !== 255 ? String.fromCharCode(d + 48) : str[i]);
+	}
+	return chars.join("");
+}
+//#endregion
+//#region node_modules/.pnpm/strnum@2.4.2/node_modules/strnum/strnum.js
 var hexRegex = /^[-+]?0x[a-fA-F0-9]+$/;
 var binRegex = /^0b[01]+$/;
 var octRegex = /^0o[0-7]+$/;
@@ -34240,7 +34268,8 @@ var consider = {
 	leadingZeros: true,
 	decimalPoint: ".",
 	eNotation: true,
-	infinity: "original"
+	infinity: "original",
+	unicode: false
 };
 function toNumber(str, options = {}) {
 	options = Object.assign({}, consider, options);
@@ -34249,7 +34278,11 @@ function toNumber(str, options = {}) {
 	if (trimmedStr.length === 0) return str;
 	else if (options.skipLike !== void 0 && options.skipLike.test(trimmedStr)) return str;
 	else if (trimmedStr === "0") return 0;
-	else if (options.hex && hexRegex.test(trimmedStr)) return parse_int(trimmedStr, 16);
+	if (options.unicode) {
+		trimmedStr = anynum(trimmedStr);
+		if (trimmedStr === "0") return 0;
+	}
+	if (options.hex && hexRegex.test(trimmedStr)) return parse_int(trimmedStr, 16);
 	else if (options.binary && binRegex.test(trimmedStr)) return parse_int(trimmedStr, 2);
 	else if (options.octal && octRegex.test(trimmedStr)) return parse_int(trimmedStr, 8);
 	else if (!isFinite(trimmedStr)) return handleInfinity(str, Number(trimmedStr), options);
@@ -34266,12 +34299,15 @@ function toNumber(str, options = {}) {
 				const num = Number(trimmedStr);
 				const parsedStr = String(num);
 				if (num === 0) return num;
-				if (parsedStr.search(/[eE]/) !== -1) if (options.eNotation) return num;
-				else return str;
-				else if (trimmedStr.indexOf(".") !== -1) if (parsedStr === "0") return num;
-				else if (parsedStr === numTrimmedByZeros) return num;
-				else if (parsedStr === `${sign}${numTrimmedByZeros}`) return num;
-				else return str;
+				if (parsedStr.search(/[eE]/) !== -1) {
+					if (options.eNotation) return num;
+					else return str;
+				} else if (trimmedStr.indexOf(".") !== -1) {
+					if (parsedStr === "0") return num;
+					else if (parsedStr === numTrimmedByZeros) return num;
+					else if (parsedStr === `${sign}${numTrimmedByZeros}`) return num;
+					else return str;
+				}
 				let n = leadingZeros ? numTrimmedByZeros : trimmedStr;
 				if (leadingZeros) return n === parsedStr || sign + n === parsedStr ? num : str;
 				else return n === parsedStr || n === sign + parsedStr ? num : str;
@@ -34290,11 +34326,12 @@ function resolveEnotation(str, trimmedStr, options) {
 		const eAdjacentToLeadingZeros = sign ? str[leadingZeros.length + 1] === eChar : str[leadingZeros.length] === eChar;
 		if (leadingZeros.length > 1 && eAdjacentToLeadingZeros) return str;
 		else if (leadingZeros.length === 1 && (notation[3].startsWith(`.${eChar}`) || notation[3][0] === eChar)) return Number(trimmedStr);
-		else if (leadingZeros.length > 0) if (options.leadingZeros && !eAdjacentToLeadingZeros) {
-			trimmedStr = (notation[1] || "") + notation[3];
-			return Number(trimmedStr);
-		} else return str;
-		else return Number(trimmedStr);
+		else if (leadingZeros.length > 0) {
+			if (options.leadingZeros && !eAdjacentToLeadingZeros) {
+				trimmedStr = (notation[1] || "") + notation[3];
+				return Number(trimmedStr);
+			} else return str;
+		} else return Number(trimmedStr);
 	} else return str;
 }
 /**
@@ -34304,7 +34341,9 @@ function resolveEnotation(str, trimmedStr, options) {
 */
 function trimZeros(numStr) {
 	if (numStr && numStr.indexOf(".") !== -1) {
-		numStr = numStr.replace(/0+$/, "");
+		let end = numStr.length;
+		while (end > 0 && numStr.charCodeAt(end - 1) === 48) end--;
+		numStr = numStr.slice(0, end);
 		if (numStr === ".") numStr = "0";
 		else if (numStr[0] === ".") numStr = "0" + numStr;
 		else if (numStr[numStr.length - 1] === ".") numStr = numStr.substring(0, numStr.length - 1);
@@ -34337,7 +34376,7 @@ function handleInfinity(str, num, options) {
 	}
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/ignoreAttributes.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/ignoreAttributes.js
 function getIgnoreAttributesFn$1(ignoreAttributes) {
 	if (typeof ignoreAttributes === "function") return ignoreAttributes;
 	if (Array.isArray(ignoreAttributes)) return (attrName) => {
@@ -34348,8 +34387,9 @@ function getIgnoreAttributesFn$1(ignoreAttributes) {
 	};
 	return () => false;
 }
+__name(getIgnoreAttributesFn$1, "getIgnoreAttributesFn");
 //#endregion
-//#region node_modules/.pnpm/path-expression-matcher@1.5.0/node_modules/path-expression-matcher/src/Expression.js
+//#region node_modules/.pnpm/path-expression-matcher@1.6.2/node_modules/path-expression-matcher/src/Expression.js
 /**
 * Expression - Parses and stores a tag pattern expression
 * 
@@ -34386,19 +34426,20 @@ var Expression = class {
 		const segments = [];
 		let i = 0;
 		let currentPart = "";
-		while (i < pattern.length) if (pattern[i] === this.separator) if (i + 1 < pattern.length && pattern[i + 1] === this.separator) {
-			if (currentPart.trim()) {
-				segments.push(this._parseSegment(currentPart.trim()));
+		while (i < pattern.length) if (pattern[i] === this.separator) {
+			if (i + 1 < pattern.length && pattern[i + 1] === this.separator) {
+				if (currentPart.trim()) {
+					segments.push(this._parseSegment(currentPart.trim()));
+					currentPart = "";
+				}
+				segments.push({ type: "deep-wildcard" });
+				i += 2;
+			} else {
+				if (currentPart.trim()) segments.push(this._parseSegment(currentPart.trim()));
 				currentPart = "";
+				i++;
 			}
-			segments.push({ type: "deep-wildcard" });
-			i += 2;
 		} else {
-			if (currentPart.trim()) segments.push(this._parseSegment(currentPart.trim()));
-			currentPart = "";
-			i++;
-		}
-		else {
 			currentPart += pattern[i];
 			i++;
 		}
@@ -34450,11 +34491,13 @@ var Expression = class {
 		if (!tag) throw new Error(`Invalid segment pattern: ${part}`);
 		segment.tag = tag;
 		if (namespace) segment.namespace = namespace;
-		if (bracketContent) if (bracketContent.includes("=")) {
-			const eqIndex = bracketContent.indexOf("=");
-			segment.attrName = bracketContent.substring(0, eqIndex).trim();
-			segment.attrValue = bracketContent.substring(eqIndex + 1).trim();
-		} else segment.attrName = bracketContent.trim();
+		if (bracketContent) {
+			if (bracketContent.includes("=")) {
+				const eqIndex = bracketContent.indexOf("=");
+				segment.attrName = bracketContent.substring(0, eqIndex).trim();
+				segment.attrValue = bracketContent.substring(eqIndex + 1).trim();
+			} else segment.attrName = bracketContent.trim();
+		}
 		if (positionMatch) {
 			const nthMatch = positionMatch.match(/^nth\((\d+)\)$/);
 			if (nthMatch) {
@@ -34501,7 +34544,7 @@ var Expression = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/path-expression-matcher@1.5.0/node_modules/path-expression-matcher/src/ExpressionSet.js
+//#region node_modules/.pnpm/path-expression-matcher@1.6.2/node_modules/path-expression-matcher/src/ExpressionSet.js
 /**
 * ExpressionSet - An indexed collection of Expressions for efficient bulk matching
 *
@@ -34535,6 +34578,8 @@ var ExpressionSet = class {
 		this._wildcardByDepth = /* @__PURE__ */ new Map();
 		/** @type {import('./Expression.js').default[]} expressions containing deep wildcard (..) */
 		this._deepWildcards = [];
+		/** @type {Map<string, import('./Expression.js').default[]>} terminalTag → deep wildcard expressions */
+		this._deepByTerminalTag = /* @__PURE__ */ new Map();
 		/** @type {Set<string>} pattern strings already added — used for deduplication */
 		this._patterns = /* @__PURE__ */ new Set();
 		/** @type {boolean} whether the set is sealed against further additions */
@@ -34557,7 +34602,12 @@ var ExpressionSet = class {
 		if (this._patterns.has(expression.pattern)) return this;
 		this._patterns.add(expression.pattern);
 		if (expression.hasDeepWildcard()) {
-			this._deepWildcards.push(expression);
+			const lastSeg = expression.segments[expression.segments.length - 1];
+			if (lastSeg && lastSeg.type !== "deep-wildcard" && lastSeg.tag !== "*") {
+				const tag = lastSeg.tag;
+				if (!this._deepByTerminalTag.has(tag)) this._deepByTerminalTag.set(tag, []);
+				this._deepByTerminalTag.get(tag).push(expression);
+			} else this._deepWildcards.push(expression);
 			return this;
 		}
 		const depth = expression.length;
@@ -34660,7 +34710,8 @@ var ExpressionSet = class {
 	*/
 	findMatch(matcher) {
 		const depth = matcher.getDepth();
-		const exactKey = `${depth}:${matcher.getCurrentTag()}`;
+		const tag = matcher.getCurrentTag();
+		const exactKey = `${depth}:${tag}`;
 		const exactBucket = this._byDepthAndTag.get(exactKey);
 		if (exactBucket) {
 			for (let i = 0; i < exactBucket.length; i++) if (matcher.matches(exactBucket[i])) return exactBucket[i];
@@ -34669,12 +34720,16 @@ var ExpressionSet = class {
 		if (wildcardBucket) {
 			for (let i = 0; i < wildcardBucket.length; i++) if (matcher.matches(wildcardBucket[i])) return wildcardBucket[i];
 		}
+		const deepBucket = this._deepByTerminalTag.get(tag);
+		if (deepBucket) {
+			for (let i = 0; i < deepBucket.length; i++) if (matcher.matches(deepBucket[i])) return deepBucket[i];
+		}
 		for (let i = 0; i < this._deepWildcards.length; i++) if (matcher.matches(this._deepWildcards[i])) return this._deepWildcards[i];
 		return null;
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/path-expression-matcher@1.5.0/node_modules/path-expression-matcher/src/Matcher.js
+//#region node_modules/.pnpm/path-expression-matcher@1.6.2/node_modules/path-expression-matcher/src/Matcher.js
 /**
 * MatcherView - A lightweight read-only view over a Matcher's internal state.
 *
@@ -34744,6 +34799,24 @@ var MatcherView = class {
 		if (path.length === 0) return false;
 		const current = path[path.length - 1];
 		return current.values !== void 0 && attrName in current.values;
+	}
+	/**
+	* Get the value of a "kept" attribute from the nearest ancestor (or
+	* current node) that declared it via `push(tag, attrs, ns, { keep: [...] })`.
+	* @param {string} attrName
+	* @returns {*}
+	*/
+	getAnyParentAttr(attrName) {
+		return this._matcher.getAnyParentAttr(attrName);
+	}
+	/**
+	* Check whether any ancestor (or the current node) kept the given
+	* attribute via `push(tag, attrs, ns, { keep: [...] })`.
+	* @param {string} attrName
+	* @returns {boolean}
+	*/
+	hasAnyParentAttr(attrName) {
+		return this._matcher.hasAnyParentAttr(attrName);
 	}
 	/**
 	* Get current node's sibling position (child index in parent).
@@ -34842,24 +34915,33 @@ var Matcher = class {
 		this.siblingStacks = [];
 		this._pathStringCache = null;
 		this._view = new MatcherView(this);
+		this._keptAttrs = [];
 	}
 	/**
 	* Push a new tag onto the path.
 	* @param {string} tagName
 	* @param {Object|null} [attrValues=null]
 	* @param {string|null} [namespace=null]
+	* @param {Object|null} [options=null]
+	* @param {string[]} [options.keep] - Names of attributes (from attrValues)
 	*/
-	push(tagName, attrValues = null, namespace = null) {
+	push(tagName, attrValues = null, namespace = null, options = null) {
 		this._pathStringCache = null;
 		if (this.path.length > 0) this.path[this.path.length - 1].values = void 0;
 		const currentLevel = this.path.length;
-		if (!this.siblingStacks[currentLevel]) this.siblingStacks[currentLevel] = /* @__PURE__ */ new Map();
-		const siblings = this.siblingStacks[currentLevel];
+		let level = this.siblingStacks[currentLevel];
+		if (!level) {
+			level = {
+				counts: /* @__PURE__ */ new Map(),
+				total: 0
+			};
+			this.siblingStacks[currentLevel] = level;
+		}
 		const siblingKey = namespace ? `${namespace}:${tagName}` : tagName;
-		const counter = siblings.get(siblingKey) || 0;
-		let position = 0;
-		for (const count of siblings.values()) position += count;
-		siblings.set(siblingKey, counter + 1);
+		const counter = level.counts.get(siblingKey) || 0;
+		const position = level.total;
+		level.counts.set(siblingKey, counter + 1);
+		level.total++;
 		const node = {
 			tag: tagName,
 			position,
@@ -34868,6 +34950,16 @@ var Matcher = class {
 		if (namespace !== null && namespace !== void 0) node.namespace = namespace;
 		if (attrValues !== null && attrValues !== void 0) node.values = attrValues;
 		this.path.push(node);
+		const depth = this.path.length;
+		const keep = options !== null ? options.keep : null;
+		if (keep !== null && keep !== void 0 && keep.length > 0 && attrValues) for (let i = 0; i < keep.length; i++) {
+			const name = keep[i];
+			if (attrValues[name] !== void 0) this._keptAttrs.push({
+				depth,
+				name,
+				value: attrValues[name]
+			});
+		}
 	}
 	/**
 	* Pop the last tag from the path.
@@ -34878,6 +34970,8 @@ var Matcher = class {
 		this._pathStringCache = null;
 		const node = this.path.pop();
 		if (this.siblingStacks.length > this.path.length + 1) this.siblingStacks.length = this.path.length + 1;
+		const poppedDepth = this.path.length + 1;
+		while (this._keptAttrs.length > 0 && this._keptAttrs[this._keptAttrs.length - 1].depth >= poppedDepth) this._keptAttrs.pop();
 		return node;
 	}
 	/**
@@ -34923,6 +35017,31 @@ var Matcher = class {
 		if (this.path.length === 0) return false;
 		const current = this.path[this.path.length - 1];
 		return current.values !== void 0 && attrName in current.values;
+	}
+	/**
+	* Get the value of a "kept" attribute from the nearest ancestor (or
+	* current node) that declared it via `push(tag, attrs, ns, { keep: [...] })`.
+	* Unlike getAttrValue(), this works regardless of how deep the path has
+	* gone since the attribute was pushed — but only for attribute names that
+	* were explicitly marked with `keep` at push time. Cost is proportional to
+	* the number of currently-kept attributes (typically 0-3), not path depth.
+	* @param {string} attrName
+	* @returns {*} the value, or undefined if no ancestor kept this attribute
+	*/
+	getAnyParentAttr(attrName) {
+		const kept = this._keptAttrs;
+		for (let i = kept.length - 1; i >= 0; i--) if (kept[i].name === attrName) return kept[i].value;
+	}
+	/**
+	* Check whether any ancestor (or the current node) kept the given
+	* attribute via `push(tag, attrs, ns, { keep: [...] })`.
+	* @param {string} attrName
+	* @returns {boolean}
+	*/
+	hasAnyParentAttr(attrName) {
+		const kept = this._keptAttrs;
+		for (let i = kept.length - 1; i >= 0; i--) if (kept[i].name === attrName) return true;
+		return false;
 	}
 	/**
 	* Get current node's sibling position (child index in parent).
@@ -34985,6 +35104,7 @@ var Matcher = class {
 		this._pathStringCache = null;
 		this.path = [];
 		this.siblingStacks = [];
+		this._keptAttrs = [];
 	}
 	/**
 	* Match current path against an Expression.
@@ -35073,7 +35193,11 @@ var Matcher = class {
 	snapshot() {
 		return {
 			path: this.path.map((node) => ({ ...node })),
-			siblingStacks: this.siblingStacks.map((map) => new Map(map))
+			siblingStacks: this.siblingStacks.map((level) => level ? {
+				counts: new Map(level.counts),
+				total: level.total
+			} : level),
+			keptAttrs: this._keptAttrs.map((entry) => ({ ...entry }))
 		};
 	}
 	/**
@@ -35083,7 +35207,11 @@ var Matcher = class {
 	restore(snapshot) {
 		this._pathStringCache = null;
 		this.path = snapshot.path.map((node) => ({ ...node }));
-		this.siblingStacks = snapshot.siblingStacks.map((map) => new Map(map));
+		this.siblingStacks = snapshot.siblingStacks.map((level) => level ? {
+			counts: new Map(level.counts),
+			total: level.total
+		} : level);
+		this._keptAttrs = (snapshot.keptAttrs || []).map((entry) => ({ ...entry }));
 	}
 	/**
 	* Return the read-only {@link MatcherView} for this matcher.
@@ -35106,7 +35234,835 @@ var Matcher = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/xmlparser/OrderedObjParser.js
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/html.js
+/**
+* HTML context patterns.
+*
+* Detects XSS vectors that are dangerous when a string ends up rendered as HTML.
+* All patterns use bounded quantifiers to ensure linear-time matching (ReDoS-safe).
+*
+* Each entry is { pattern: RegExp, id: string, description: string }
+* so callers can inspect which rule fired if they need to.
+*/
+var HTML_PATTERNS = [
+	{
+		id: "html-script-open",
+		description: "<script opening tag",
+		pattern: /<script[\s>/]/i
+	},
+	{
+		id: "html-script-close",
+		description: "<\/script closing tag",
+		pattern: /<\/script[\s>]/i
+	},
+	{
+		id: "html-javascript-protocol",
+		description: "javascript: URI scheme (with optional whitespace/encoding)",
+		pattern: /j[\t\n\r ]*a[\t\n\r ]*v[\t\n\r ]*a[\t\n\r ]*s[\t\n\r ]*c[\t\n\r ]*r[\t\n\r ]*i[\t\n\r ]*p[\t\n\r ]*t[\t\n\r ]*:/i
+	},
+	{
+		id: "html-vbscript-protocol",
+		description: "vbscript: URI scheme",
+		pattern: /vbscript[\t\n\r ]*:/i
+	},
+	{
+		id: "html-data-html",
+		description: "data:text/html URI — can execute scripts in browsers",
+		pattern: /data[\t\n\r ]*:[\t\n\r ]*text\/html/i
+	},
+	{
+		id: "html-data-xhtml",
+		description: "data:application/xhtml+xml URI",
+		pattern: /data[\t\n\r ]*:[\t\n\r ]*application\/xhtml/i
+	},
+	{
+		id: "html-data-svg",
+		description: "data:image/svg+xml URI — can execute scripts",
+		pattern: /data[\t\n\r ]*:[\t\n\r ]*image\/svg\+xml/i
+	},
+	{
+		id: "html-inline-event-handler",
+		description: "Inline event handler attributes: onclick=, onerror=, onload=, etc.",
+		pattern: /\bon\w{1,30}\s*=/i
+	},
+	{
+		id: "html-entity-obfuscated-script",
+		description: "HTML-entity-encoded <script (e.g. &#x3C;script or &lt;script)",
+		pattern: /(?:&#x0*3[Cc];?|&#0*60;?|&lt;)\s*script/i
+	},
+	{
+		id: "html-entity-obfuscated-javascript",
+		description: "HTML-entity-encoded javascript: (partial — catches common &#106; or &#x6a; for \"j\")",
+		pattern: /(?:&#x0*6[Aa];?|&#0*106;?)\s*(?:&#x0*61;?|a)[\s\S]{0,80}script\s*:/i
+	},
+	{
+		id: "html-style-expression",
+		description: "CSS expression() — IE-era code execution in style attributes",
+		pattern: /style[\s\S]{0,20}expression\s*\(/i
+	},
+	{
+		id: "html-object-embed",
+		description: "<object or <embed tags that can load active content",
+		pattern: /<(?:object|embed)[\s>/]/i
+	},
+	{
+		id: "html-base-tag",
+		description: "<base href= — can hijack all relative URLs on a page",
+		pattern: /<base[\s>]/i
+	},
+	{
+		id: "html-meta-refresh",
+		description: "<meta http-equiv=\"refresh\" — can redirect users",
+		pattern: /<meta[\s\S]{0,40}http-equiv[\s\S]{0,20}refresh/i
+	},
+	{
+		id: "html-srcdoc",
+		description: "srcdoc= attribute on iframes — embeds HTML that can run scripts",
+		pattern: /srcdoc\s*=/i
+	},
+	{
+		id: "html-iframe",
+		description: "<iframe tag",
+		pattern: /<iframe[\s>/]/i
+	},
+	{
+		id: "html-form",
+		description: "<form tag — can be used for phishing / credential harvesting injection",
+		pattern: /<form[\s>/]/i
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/xml.js
+/**
+* XML context patterns.
+*
+* Detects injection vectors that are specifically dangerous when a string
+* is inserted into an XML document (not HTML rendering context).
+*
+* Key distinction from HTML: these patterns target parser-level attacks —
+* things that can confuse or subvert an XML parser, trigger external entity
+* resolution, or inject DTD content. HTML rendering concerns (XSS) belong
+* in the HTML context.
+*/
+var XML_PATTERNS = [
+	{
+		id: "xml-cdata-injection",
+		description: "CDATA section injection: <![CDATA[ breaks out of text node context",
+		pattern: /<!\[CDATA\[/i
+	},
+	{
+		id: "xml-cdata-close",
+		description: "CDATA close sequence: ]]> can terminate an enclosing CDATA section",
+		pattern: /\]\]>/
+	},
+	{
+		id: "xml-processing-instruction",
+		description: "XML processing instruction: <?xml-stylesheet or <?php etc.",
+		pattern: /<\?(?:xml[\- ]|php|asp)/i
+	},
+	{
+		id: "xml-doctype-injection",
+		description: "DOCTYPE declaration embedded in content — can define entities",
+		pattern: /<!DOCTYPE(?:[\s[]|$)/i
+	},
+	{
+		id: "xml-entity-system",
+		description: "SYSTEM keyword — used in external entity declarations (XXE)",
+		pattern: /\bSYSTEM\s+["']/i
+	},
+	{
+		id: "xml-entity-public",
+		description: "PUBLIC keyword — used in external entity declarations (XXE)",
+		pattern: /\bPUBLIC\s+["']/i
+	},
+	{
+		id: "xml-entity-declaration",
+		description: "<!ENTITY declaration — defines entities, potential XXE or entity expansion",
+		pattern: /<!ENTITY[\s%]/i
+	},
+	{
+		id: "xml-billion-laughs",
+		description: "Entity reference chaining / billion laughs: repeated &eX; style references",
+		pattern: /(?:&\w{1,20};){3,}/
+	},
+	{
+		id: "xml-namespace-confusion",
+		description: "xmlns: attribute injection — can redefine namespaces to confuse parsers",
+		pattern: /\bxmlns(?::\w{1,40})?\s*=/i
+	},
+	{
+		id: "xml-comment-injection",
+		description: "<!-- comment injection — can hide content from some parsers",
+		pattern: /<!--/
+	},
+	{
+		id: "xml-comment-close",
+		description: "--> closes an enclosing XML comment",
+		pattern: /-->/
+	},
+	{
+		id: "xml-pi-close",
+		description: "?> closes an enclosing processing instruction",
+		pattern: /\?>/
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/svg.js
+/**
+* SVG context patterns.
+*
+* SVG is XML-based but renders in browsers, giving it a unique attack surface
+* that combines XML parser behaviour with browser rendering and JavaScript execution.
+*
+* Many of these vectors bypass HTML sanitizers that don't understand SVG semantics
+* (DOMPurify has documented bypass vulnerabilities specifically in SVG/XML context).
+*/
+var SVG_PATTERNS = [
+	{
+		id: "svg-script-element",
+		description: "<script element inside SVG executes JavaScript",
+		pattern: /<script[\s>/]/i
+	},
+	{
+		id: "svg-xlink-href-javascript",
+		description: "xlink:href with javascript: — classic SVG XSS via <a> or <use>",
+		pattern: /xlink\s*:\s*href\s*=\s*["']?\s*javascript\s*:/i
+	},
+	{
+		id: "svg-href-javascript",
+		description: "href= with javascript: in SVG context (<a>, <animate>, etc.)",
+		pattern: /href\s*=\s*["']?\s*javascript\s*:/i
+	},
+	{
+		id: "svg-foreignobject",
+		description: "<foreignObject embeds HTML inside SVG — can execute scripts",
+		pattern: /<foreignObject[\s>/]/i
+	},
+	{
+		id: "svg-use-external",
+		description: "<use xlink:href or href pointing to external resource (non-fragment URL)",
+		pattern: /<use[\s\S]{0,60}(?:xlink\s*:\s*)?href\s*=\s*(?:["'][^#]|[^"'#\s>])/i
+	},
+	{
+		id: "svg-animate-href",
+		description: "<animate attributeName=\"href\" — can dynamically change href to javascript:",
+		pattern: /<animate[\s\S]{0,80}attributeName\s*=\s*["'][\s]*href["']/i
+	},
+	{
+		id: "svg-animate-xlinkhref",
+		description: "<animate attributeName=\"xlink:href\"",
+		pattern: /<animate[\s\S]{0,80}attributeName\s*=\s*["'][\s]*xlink\s*:\s*href["']/i
+	},
+	{
+		id: "svg-set-javascript",
+		description: "<set to=\"javascript:...\" — sets an attribute to a javascript: URI",
+		pattern: /<set[\s\S]{0,80}to\s*=\s*["']?\s*javascript\s*:/i
+	},
+	{
+		id: "svg-event-handler",
+		description: "SVG-specific event handler attributes: onload=, onerror=, onactivate=, etc.",
+		pattern: /\bon(?:load|error|activate|begin|end|repeat|focus|blur|click|mouse\w{1,20}|key\w{1,20})\s*=/i
+	},
+	{
+		id: "svg-handler-generic",
+		description: "Generic on* handler catch-all for SVG attributes",
+		pattern: /\bon\w{1,30}\s*=/i
+	},
+	{
+		id: "svg-filter-feimage",
+		description: "<feImage href= — filter primitive that can load external resources",
+		pattern: /<feImage[\s\S]{0,80}(?:xlink\s*:\s*)?href\s*=/i
+	},
+	{
+		id: "svg-image-external",
+		description: "<image xlink:href with http/https or javascript protocol",
+		pattern: /<image[\s\S]{0,80}(?:xlink\s*:\s*)?href\s*=\s*["']?\s*(?:https?|javascript)\s*:/i
+	},
+	{
+		id: "svg-style-javascript",
+		description: "style= attribute containing javascript: (e.g. background:url(javascript:...))",
+		pattern: /style\s*=[\s\S]{0,60}javascript\s*:/i
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/sql.js
+/**
+* SQL context patterns — high-precision rules only.
+*
+* These rules have very low false-positive risk and are safe to apply to
+* general user text (names, descriptions, search queries, etc.).
+* All patterns are ReDoS-safe — unlike the `sql-injection` npm package
+* which has an active CVE on its own detection regexes.
+*
+* For exhaustive coverage including noisier heuristics (comment sequences,
+* hex literals, stacked queries with semicolons), use 'SQL-STRICT' instead.
+* Apply 'SQL-STRICT' only to strings that are specifically SQL fragments,
+* not to general free-text fields.
+*/
+var SQL_PATTERNS = [
+	{
+		id: "sql-block-comment-open",
+		description: "SQL block comment open: /* ... */ — unusual in legitimate user text",
+		pattern: /\/\*/
+	},
+	{
+		id: "sql-union-select",
+		description: "UNION SELECT — most common SQL injection aggregation attack",
+		pattern: /\bUNION\s{1,20}(?:ALL\s{1,20})?SELECT\b/i
+	},
+	{
+		id: "sql-drop-table",
+		description: "DROP TABLE — destructive DDL injection",
+		pattern: /\bDROP\s{1,20}TABLE\b/i
+	},
+	{
+		id: "sql-drop-database",
+		description: "DROP DATABASE — destructive DDL injection",
+		pattern: /\bDROP\s{1,20}DATABASE\b/i
+	},
+	{
+		id: "sql-insert-into",
+		description: "INSERT INTO — data injection",
+		pattern: /\bINSERT\s{1,20}INTO\b/i
+	},
+	{
+		id: "sql-delete-from",
+		description: "DELETE FROM — data deletion injection",
+		pattern: /\bDELETE\s{1,20}FROM\b/i
+	},
+	{
+		id: "sql-update-set",
+		description: "UPDATE ... SET — data modification injection",
+		pattern: /\bUPDATE\b[\s\S]{1,60}\bSET\b/i
+	},
+	{
+		id: "sql-exec-xp",
+		description: "EXEC xp_ — MSSQL extended stored procedure execution",
+		pattern: /\bEXEC(?:UTE)?\s{1,20}xp_/i
+	},
+	{
+		id: "sql-tautology-string",
+		description: "Classic string tautology: ' OR '1'='1 or \" OR \"1\"=\"1\"",
+		pattern: /'\s{0,10}OR\s{0,10}'[^']{0,20}'\s*=\s*'[^']{0,20}/i
+	},
+	{
+		id: "sql-tautology-numeric",
+		description: "Numeric tautology: OR 1=1",
+		pattern: /\bOR\s{1,10}1\s*=\s*1\b/i
+	},
+	{
+		id: "sql-always-true-zero",
+		description: "Numeric tautology: OR 0=0",
+		pattern: /\bOR\s{1,10}0\s*=\s*0\b/i
+	},
+	{
+		id: "sql-sleep-benchmark",
+		description: "Time-based blind injection: SLEEP() or BENCHMARK()",
+		pattern: /\b(?:SLEEP|BENCHMARK)\s*\(/i
+	},
+	{
+		id: "sql-waitfor-delay",
+		description: "MSSQL time-based blind injection: WAITFOR DELAY",
+		pattern: /\bWAITFOR\s{1,20}DELAY\b/i
+	},
+	{
+		id: "sql-char-function",
+		description: "CHAR() function — used to obfuscate injected strings",
+		pattern: /\bCHAR\s*\(\s*\d{1,3}/i
+	},
+	{
+		id: "sql-information-schema",
+		description: "INFORMATION_SCHEMA — reconnaissance query for table/column enumeration",
+		pattern: /\bINFORMATION_SCHEMA\b/i
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/shell.js
+/**
+* SHELL context patterns.
+*
+* Detects shell injection vectors and path traversal patterns.
+* Designed for use when a string will be passed to a shell command,
+* used as a file path, or interpolated into OS-level operations.
+*/
+var SHELL_PATTERNS = [
+	{
+		id: "shell-path-traversal-unix",
+		description: "Unix path traversal: ../  — climbing the directory tree",
+		pattern: /\.\.\//
+	},
+	{
+		id: "shell-path-traversal-windows",
+		description: "Windows path traversal: ..\\ — climbing the directory tree",
+		pattern: /\.\.\\/
+	},
+	{
+		id: "shell-path-traversal-encoded",
+		description: "URL-encoded path traversal: %2e%2e or %2f variants",
+		pattern: /%2e%2e|%2f\.\.|\.\.%2f/i
+	},
+	{
+		id: "shell-null-byte",
+		description: "Null byte injection: \\x00 or %00 — truncates strings in C-backed functions",
+		pattern: /\x00|%00/
+	},
+	{
+		id: "shell-semicolon",
+		description: "Semicolon command separator: cmd1; cmd2",
+		pattern: /;/
+	},
+	{
+		id: "shell-pipe",
+		description: "Pipe operator: cmd1 | cmd2",
+		pattern: /\|/
+	},
+	{
+		id: "shell-and-operator",
+		description: "AND operator: cmd1 && cmd2",
+		pattern: /&&/
+	},
+	{
+		id: "shell-or-operator",
+		description: "OR operator: cmd1 || cmd2",
+		pattern: /\|\|/
+	},
+	{
+		id: "shell-backtick",
+		description: "Backtick command substitution: `cmd`",
+		pattern: /`/
+	},
+	{
+		id: "shell-dollar-paren",
+		description: "Dollar-paren command substitution: $(cmd)",
+		pattern: /\$\(/
+	},
+	{
+		id: "shell-dollar-brace",
+		description: "Dollar-brace variable expansion: ${var} — can be abused for injection",
+		pattern: /\$\{/
+	},
+	{
+		id: "shell-redirect-out",
+		description: "Output redirection: cmd > file or cmd >> file",
+		pattern: />{1,2}/
+	},
+	{
+		id: "shell-redirect-in",
+		description: "Input redirection: cmd < file",
+		pattern: /</
+	},
+	{
+		id: "shell-newline-injection",
+		description: "Newline injection: \\n or \\r — can inject new shell commands",
+		pattern: /[\n\r]/
+	},
+	{
+		id: "shell-glob-star",
+		description: "Glob expansion: * or ? — can expand to unintended files",
+		pattern: /[/\\][*?]/
+	},
+	{
+		id: "shell-absolute-root",
+		description: "Absolute root path injection: string starting with / or \\ (Windows UNC)",
+		pattern: /^(?:\/|\\\\)/
+	},
+	{
+		id: "shell-windows-drive",
+		description: "Windows drive letter path injection: C:\\ or D:/",
+		pattern: /^[a-zA-Z]:[/\\]/
+	},
+	{
+		id: "shell-curl-wget",
+		description: "curl/wget with URL or flags — can exfiltrate data or download payloads",
+		pattern: /\b(?:curl|wget)\s+(?:https?:\/\/|ftp:\/\/|-)/i
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/redos.js
+/**
+* REDOS context patterns.
+*
+* Detects strings that, if used as regular expressions, could cause
+* catastrophic backtracking (ReDoS — Regular Expression Denial of Service).
+*
+* These patterns detect the structural forms that lead to exponential or
+* polynomial backtracking in NFA-based regex engines (V8, PCRE, Java, etc.).
+*
+* Use this context when user-supplied strings will be compiled into RegExp objects.
+*/
+var REDOS_PATTERNS = [
+	{
+		id: "redos-nested-quantifier-plus",
+		description: "Nested + quantifier inside a group with outer quantifier: (a+)+, (.+b)*, etc.",
+		pattern: /\([^)]*\+[^)]*\)[+*]/
+	},
+	{
+		id: "redos-nested-quantifier-star",
+		description: "Nested * quantifier: (a*)* or (a*)+ — catastrophic backtracking",
+		pattern: /\([^)]*\*[^)]*\)[*+]/
+	},
+	{
+		id: "redos-nested-groups",
+		description: "Doubly nested quantified groups: ((a+)+) — guaranteed catastrophic",
+		pattern: /\(\([^)]{0,40}\)[+*]\)[+*]/
+	},
+	{
+		id: "redos-alternation-overlap",
+		description: "Overlapping alternation under quantifier: (a|a)+ — ambiguous NFA paths",
+		pattern: /\(([^|()]{1,20})\|(?:\1)(?:\|[^|()]{1,20}){0,5}\)[+*?]{1,2}/
+	},
+	{
+		id: "redos-star-plus-concat",
+		description: "(x*x)+ pattern — triggers super-linear backtracking",
+		pattern: /\([^)]{0,10}\*[^)]{0,10}\)[+*]/
+	},
+	{
+		id: "redos-dot-star-greedy",
+		description: "(.*){n,} or (.+){n,} — repeated greedy dot quantifiers",
+		pattern: /\(\.[*+]\)\{?\d/
+	},
+	{
+		id: "redos-large-repetition",
+		description: "Very large fixed or range repetition count {1000,} or {1000,n} — denial of service via backtracking",
+		pattern: /\{\d{4,}(?:,\d*)?\}/
+	},
+	{
+		id: "redos-catastrophic-alternation",
+		description: "Long alternation with many similar branches — polynomial backtracking risk",
+		pattern: /\([^)]{0,200}(?:\|[^|)]{0,50}){9,}\)/
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/nosql.js
+var sep = "[\"'\\s]*:";
+var NOSQL_PATTERNS = [
+	{
+		id: "nosql-where-operator",
+		description: "$where — executes arbitrary JavaScript server-side in MongoDB",
+		pattern: new RegExp(`\\$where${sep}`, "i")
+	},
+	{
+		id: "nosql-ne-operator",
+		description: "$ne — \"not equal\" operator used to bypass equality checks",
+		pattern: new RegExp(`\\$ne${sep}`, "i")
+	},
+	{
+		id: "nosql-gt-operator",
+		description: "$gt — \"greater than\" used to bypass password/value checks",
+		pattern: new RegExp(`\\$gte?${sep}`, "i")
+	},
+	{
+		id: "nosql-lt-operator",
+		description: "$lt / $lte — \"less than\" bypass variants",
+		pattern: new RegExp(`\\$lte?${sep}`, "i")
+	},
+	{
+		id: "nosql-regex-operator",
+		description: "$regex — can be used to extract data character by character (blind injection)",
+		pattern: new RegExp(`\\$regex${sep}`, "i")
+	},
+	{
+		id: "nosql-or-operator",
+		description: "$or — logical OR; used to create always-true conditions",
+		pattern: new RegExp(`\\$or${sep}\\s*\\[`, "i")
+	},
+	{
+		id: "nosql-and-operator",
+		description: "$and — logical AND operator injection",
+		pattern: new RegExp(`\\$and${sep}\\s*\\[`, "i")
+	},
+	{
+		id: "nosql-nor-operator",
+		description: "$nor — logical NOR operator injection",
+		pattern: new RegExp(`\\$nor${sep}\\s*\\[`, "i")
+	},
+	{
+		id: "nosql-exists-operator",
+		description: "$exists — can enumerate fields to determine schema",
+		pattern: new RegExp(`\\$exists${sep}`, "i")
+	},
+	{
+		id: "nosql-in-operator",
+		description: "$in — matches any value in a list; can enumerate values",
+		pattern: new RegExp(`\\$in${sep}\\s*\\[`, "i")
+	},
+	{
+		id: "nosql-expr-operator",
+		description: "$expr — allows aggregation expressions in queries (MongoDB 3.6+)",
+		pattern: new RegExp(`\\$expr${sep}`, "i")
+	},
+	{
+		id: "nosql-function-operator",
+		description: "$function — executes arbitrary JavaScript in MongoDB 4.4+",
+		pattern: new RegExp(`\\$function${sep}`, "i")
+	},
+	{
+		id: "nosql-accumulator-operator",
+		description: "$accumulator — custom aggregation with arbitrary JS execution",
+		pattern: new RegExp(`\\$accumulator${sep}`, "i")
+	},
+	{
+		id: "nosql-proto-pollution",
+		description: "__proto__ — prototype pollution via object key injection",
+		pattern: /__proto__/
+	},
+	{
+		id: "nosql-constructor-prototype",
+		description: "constructor.prototype — alternative prototype pollution vector (dot notation or JSON key)",
+		pattern: /constructor[\s"':.,{\[]*prototype/i
+	},
+	{
+		id: "nosql-proto-bracket",
+		description: "[\"__proto__\"] — bracket-notation prototype pollution",
+		pattern: /\[["']__proto__["']\]/
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/log.js
+/**
+* LOG context patterns.
+*
+* Detects injection vectors that are dangerous when a string is written
+* to a log file, passed to a logging framework, or interpolated into
+* a log message that will be parsed or displayed.
+*
+* Attack categories:
+*   1. CRLF injection — injects fake log lines by embedding newlines
+*   2. Log4Shell (CVE-2021-44228) — ${jndi:...} triggers JNDI lookup in Log4j
+*   3. SSTI in log templates — {{...}}, #{...} trigger template evaluation
+*      if the log message is passed through a template engine
+*   4. Null byte injection — truncates log entries in some implementations
+*   5. ANSI escape injection — manipulates terminal output when logs are
+*      tailed in a terminal (colour codes, cursor movement, etc.)
+*
+* Note: Newline characters (\n, \r) will produce false positives for
+* multi-line legitimate values. Use this context only for single-line
+* log field values (usernames, IDs, request parameters, etc.).
+*/
+var LOG_PATTERNS = [
+	{
+		id: "log-crlf-injection",
+		description: "CRLF injection: literal \\r or \\n embeds fake log lines",
+		pattern: /[\r\n]/
+	},
+	{
+		id: "log-url-encoded-crlf",
+		description: "URL-encoded CRLF: %0d, %0a, %0D, %0A — decoded by some log parsers",
+		pattern: /%0[dDaA]/
+	},
+	{
+		id: "log-unicode-newline",
+		description: "Unicode newline variants: U+2028 (line separator), U+2029 (paragraph separator)",
+		pattern: /[\u2028\u2029]/
+	},
+	{
+		id: "log-log4shell-jndi",
+		description: "Log4Shell: ${jndi:...} triggers remote code execution in Apache Log4j",
+		pattern: /\$\{jndi\s*:/i
+	},
+	{
+		id: "log-log4shell-obfuscated",
+		description: "Obfuscated Log4Shell: ${::-j}... lookup-bypass prefix used to evade WAF detection",
+		pattern: /\$\{::-/
+	},
+	{
+		id: "log-log4j-lookup",
+		description: "Log4j lookup syntax: ${env:...}, ${sys:...}, ${ctx:...} — data exfiltration",
+		pattern: /\$\{(?:env|sys|ctx|main|map|sd|web|docker|k8s|spring)\s*:/i
+	},
+	{
+		id: "log-ssti-double-brace",
+		description: "SSTI double-brace: {{expression}} — Jinja2, Twig, Handlebars, etc.",
+		pattern: /\{\{[\s\S]{0,80}\}\}/
+	},
+	{
+		id: "log-ssti-hash-brace",
+		description: "SSTI hash-brace: #{expression} — Thymeleaf, Velocity, Ruby ERB",
+		pattern: /#\{[\s\S]{0,80}\}/
+	},
+	{
+		id: "log-ssti-dollar-brace",
+		description: "SSTI/EL injection: ${expression with operators or method calls} — JSP EL, Freemarker, SpEL",
+		pattern: /\$\{[^}]*(?:\.|\(|\*|\+|\bclass\b|\bruntime\b|\bprocess\b|\bexec\b)[^}]{0,80}\}/i
+	},
+	{
+		id: "log-ssti-percent-tag",
+		description: "SSTI ERB/ASP tag: <%= expression %> — Ruby ERB, ASP",
+		pattern: /<%=[\s\S]{0,80}%>/
+	},
+	{
+		id: "log-null-byte",
+		description: "Null byte: \\x00 or %00 — can truncate log entries in C-backed loggers",
+		pattern: /\x00|%00/
+	},
+	{
+		id: "log-ansi-escape",
+		description: "ANSI escape sequence: ESC[ — can manipulate terminal output when logs are tailed",
+		pattern: /\x1b\[/
+	}
+];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/contexts/sql-strict.js
+/**
+* SQL-STRICT context patterns.
+*
+* Extends the base 'SQL' context with three additional rules that are
+* effective at detecting real injections but carry a higher false-positive
+* risk on general free-text input.
+*
+* Use 'SQL-STRICT' when:
+*   - The string is specifically a SQL fragment or database identifier
+*   - You control the input domain (e.g. a dedicated SQL search field)
+*   - You can tolerate occasional false positives in exchange for broader coverage
+*
+* Use 'SQL' (not STRICT) when:
+*   - The field is general user text (names, descriptions, comments)
+*   - False positives would block legitimate content (e.g. "see note -- above")
+*
+* Rules moved here from 'SQL' due to false-positive risk:
+*
+*   sql-line-comment   — "--" fires on "see note -- above", "value--", CSS var(--primary)
+*   sql-stacked-query  — "; SELECT" fires on legitimate prose with semicolons + SQL words
+*   sql-hex-encoding   — "0xDEAD" fires on hex values in technical docs and log output
+*/
+var SQL_STRICT_EXTRA = [
+	{
+		id: "sql-line-comment",
+		description: "SQL line comment: -- followed by whitespace or end of string",
+		pattern: /--(?:\s|$)/
+	},
+	{
+		id: "sql-stacked-query",
+		description: "Stacked queries: semicolon immediately followed by a SQL keyword",
+		pattern: /;\s{0,10}(?:SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC)\b/i
+	},
+	{
+		id: "sql-hex-encoding",
+		description: "Hex-encoded string injection: 0x41414141 style (MySQL)",
+		pattern: /\b0x[0-9a-f]{4,}/i
+	}
+];
+var SQL_STRICT_PATTERNS = [...SQL_PATTERNS, ...SQL_STRICT_EXTRA];
+//#endregion
+//#region node_modules/.pnpm/is-unsafe@2.0.2/node_modules/is-unsafe/src/index.js
+HTML_PATTERNS.label = "HTML";
+XML_PATTERNS.label = "XML";
+SVG_PATTERNS.label = "SVG";
+SQL_PATTERNS.label = "SQL";
+SQL_STRICT_PATTERNS.label = "SQL-STRICT";
+SHELL_PATTERNS.label = "SHELL";
+REDOS_PATTERNS.label = "REDOS";
+NOSQL_PATTERNS.label = "NOSQL";
+LOG_PATTERNS.label = "LOG";
+Object.freeze({
+	HTML: HTML_PATTERNS,
+	XML: XML_PATTERNS,
+	SVG: SVG_PATTERNS,
+	SQL: SQL_PATTERNS,
+	"SQL-STRICT": SQL_STRICT_PATTERNS,
+	SHELL: SHELL_PATTERNS,
+	REDOS: REDOS_PATTERNS,
+	NOSQL: NOSQL_PATTERNS,
+	LOG: LOG_PATTERNS
+});
+/**
+* @typedef {{ id: string, description: string, pattern: RegExp }} Rule
+*/
+/**
+* @typedef {Rule[]} PatternList
+*/
+/**
+* @typedef {Object} MatchResult
+* @property {string} context     - Label identifying which context matched ('HTML', 'CUSTOM', etc.)
+* @property {string} id          - Rule identifier
+* @property {string} description - Human-readable description of what was matched
+* @property {RegExp} pattern     - The pattern that matched
+*/
+/**
+* @param {unknown} value
+*/
+function assertString(value) {
+	if (typeof value !== "string") throw new TypeError(`is-unsafe: first argument must be a string, got ${typeof value}`);
+}
+/**
+* @param {unknown} context
+*/
+function assertContext(context) {
+	if (context instanceof RegExp) return;
+	if (Array.isArray(context)) {
+		if (context.length === 0) throw new TypeError("is-unsafe: context must not be an empty array");
+		if (Array.isArray(context[0])) {
+			for (const list of context) if (!Array.isArray(list) || list.length === 0) throw new TypeError("is-unsafe: each context in the array must be a non-empty pattern array (PatternList)");
+		}
+		return;
+	}
+	throw new TypeError(`is-unsafe: second argument must be a PatternList (e.g. HTML), an array of PatternLists (e.g. [HTML, XML]), or a RegExp. Got: ${typeof context}`);
+}
+/**
+* Normalise any valid context arg into an array of PatternLists.
+*
+* @param {Rule[]|Rule[][]|RegExp} context
+* @returns {{ lists: Rule[][]|null, regex: RegExp|null }}
+*/
+function normalise(context) {
+	if (context instanceof RegExp) return {
+		lists: null,
+		regex: context
+	};
+	if (Array.isArray(context[0])) return {
+		lists: context,
+		regex: null
+	};
+	return {
+		lists: [context],
+		regex: null
+	};
+}
+/**
+* Test value against a single PatternList. Returns the first MatchResult or null.
+*
+* @param {string} value
+* @param {Rule[]} list
+* @returns {MatchResult|null}
+*/
+function matchList(value, list) {
+	const label = list.label ?? "CUSTOM";
+	for (const rule of list) if (rule.pattern.test(value)) return {
+		context: label,
+		id: rule.id,
+		description: rule.description,
+		pattern: rule.pattern
+	};
+	return null;
+}
+/**
+* Returns `true` if `value` is unsafe in the given context(s), `false` otherwise.
+*
+* @param {string} value - The string to test
+* @param {PatternList | PatternList[] | RegExp} context
+*   - A PatternList imported from is-unsafe (e.g. `HTML`, `XML`)
+*   - An array of PatternLists — returns true if unsafe in **any** of them
+*   - A custom RegExp — returns true if the pattern matches
+* @returns {boolean}
+*
+* @example
+* import { isUnsafe, HTML, SQL } from 'is-unsafe';
+*
+* isUnsafe('<script>alert(1)<\/script>', HTML)       // true
+* isUnsafe('hello world', HTML)                     // false
+* isUnsafe('value', [HTML, SQL])                    // false
+* isUnsafe('value', /my-pattern/i)                  // false
+*/
+function isUnsafe(value, context) {
+	assertString(value);
+	assertContext(context);
+	const { lists, regex } = normalise(context);
+	if (regex) return regex.test(value);
+	for (const list of lists) if (matchList(value, list) !== null) return true;
+	return false;
+}
+//#endregion
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/xmlparser/OrderedObjParser.js
 /**
 * Extract raw attributes (without prefix) from prefixed attribute map
 * @param {object} prefixedAttrs - Attributes with prefix from buildAttributesMap
@@ -35154,6 +36110,7 @@ var OrderedObjParser = class {
 		this.ignoreAttributesFn = getIgnoreAttributesFn$1(this.options.ignoreAttributes);
 		this.entityExpansionCount = 0;
 		this.currentExpandedLength = 0;
+		this.doctypefound = false;
 		let namedEntities = { ...XML };
 		if (this.options.entityDecoder) this.entityDecoder = this.options.entityDecoder;
 		else {
@@ -35172,7 +36129,8 @@ var OrderedObjParser = class {
 					maxTotalExpansions: this.options.processEntities.maxTotalExpansions,
 					maxExpandedLength: this.options.processEntities.maxExpandedLength,
 					applyLimitsTo: this.options.processEntities.appliesTo
-				}
+				},
+				onInputEntity: (name, value) => isUnsafe(value, [HTML_PATTERNS, XML_PATTERNS]) ? ENTITY_ACTION.BLOCK : ENTITY_ACTION.ALLOW
 			});
 		}
 		this.matcher = new Matcher();
@@ -35287,6 +36245,7 @@ var parseXml = function(xmlData) {
 	this.entityDecoder.reset();
 	this.entityExpansionCount = 0;
 	this.currentExpandedLength = 0;
+	this.doctypefound = false;
 	const options = this.options;
 	const docTypeReader = new DocTypeReader(options.processEntities);
 	const xmlLen = xmlData.length;
@@ -35309,7 +36268,8 @@ var parseXml = function(xmlData) {
 			}
 			this.matcher.pop();
 			this.isCurrentNodeStopNode = false;
-			currentNode = this.tagsNodeStack.pop();
+			currentNode = this.tagsNodeStack.pop() || xmlObj;
+			if (options.captureMetaData && currentNode) currentNode.addEndIndex(closeIndex + 1);
 			textData = "";
 			i = closeIndex;
 		} else if (c1 === 63) {
@@ -35327,6 +36287,7 @@ var parseXml = function(xmlData) {
 				childNode.add(options.textNodeName, "");
 				if (tagData.tagName !== tagData.tagExp && tagData.attrExpPresent && options.ignoreAttributes !== true) childNode[":@"] = attsMap;
 				this.addChild(currentNode, childNode, this.readonlyMatcher, i);
+				if (options.captureMetaData) currentNode.addEndIndex(tagData.closeIndex + 2);
 			}
 			i = tagData.closeIndex + 1;
 		} else if (c1 === 33 && xmlData.charCodeAt(i + 2) === 45 && xmlData.charCodeAt(i + 3) === 45) {
@@ -35338,6 +36299,8 @@ var parseXml = function(xmlData) {
 			}
 			i = endIndex;
 		} else if (c1 === 33 && xmlData.charCodeAt(i + 2) === 68) {
+			if (this.doctypefound) throw new Error("Multiple DOCTYPE declarations found.");
+			this.doctypefound = true;
 			const result = docTypeReader.readDocType(xmlData, i);
 			this.entityDecoder.addInputEntities(result.entities);
 			i = result.i;
@@ -35406,18 +36369,21 @@ var parseXml = function(xmlData) {
 				this.matcher.pop();
 				this.isCurrentNodeStopNode = false;
 				this.addChild(currentNode, childNode, this.readonlyMatcher, startIndex);
+				if (options.captureMetaData) currentNode.addEndIndex(i + 1);
 			} else {
 				if (isSelfClosing) {
 					({tagName, tagExp} = transformTagName(options.transformTagName, tagName, tagExp, options));
 					const childNode = new XmlNode(tagName);
 					if (prefixedAttrs) childNode[":@"] = prefixedAttrs;
 					this.addChild(currentNode, childNode, this.readonlyMatcher, startIndex);
+					if (options.captureMetaData) currentNode.addEndIndex(closeIndex + 1);
 					this.matcher.pop();
 					this.isCurrentNodeStopNode = false;
 				} else if (options.unpairedTagsSet.has(tagName)) {
 					const childNode = new XmlNode(tagName);
 					if (prefixedAttrs) childNode[":@"] = prefixedAttrs;
 					this.addChild(currentNode, childNode, this.readonlyMatcher, startIndex);
+					if (options.captureMetaData) currentNode.addEndIndex(result.closeIndex + 1);
 					this.matcher.pop();
 					this.isCurrentNodeStopNode = false;
 					i = result.closeIndex;
@@ -35464,6 +36430,7 @@ function replaceEntitiesValue$1(val, tagName, jPath) {
 	}
 	return this.entityDecoder.decode(val);
 }
+__name(replaceEntitiesValue$1, "replaceEntitiesValue");
 function saveTextToParentTag(textData, parentNode, matcher, isLeafNode) {
 	if (textData) {
 		if (isLeafNode === void 0) isLeafNode = parentNode.child.length === 0;
@@ -35499,22 +36466,23 @@ function tagExpWithClosingIndex(xmlData, i, closingChar = ">") {
 		if (attrBoundary) {
 			if (code === attrBoundary) attrBoundary = 0;
 		} else if (code === 34 || code === 39) attrBoundary = code;
-		else if (code === closeCode0) if (closeCode1 !== -1) {
-			if (xmlData.charCodeAt(index + 1) === closeCode1) {
+		else if (code === closeCode0) {
+			if (closeCode1 !== -1) {
+				if (xmlData.charCodeAt(index + 1) === closeCode1) {
+					result += xmlData.substring(segmentStart, index);
+					return {
+						data: result,
+						index
+					};
+				}
+			} else {
 				result += xmlData.substring(segmentStart, index);
 				return {
 					data: result,
 					index
 				};
 			}
-		} else {
-			result += xmlData.substring(segmentStart, index);
-			return {
-				data: result,
-				index
-			};
-		}
-		else if (code === 9 && !attrBoundary) {
+		} else if (code === 9 && !attrBoundary) {
 			result += xmlData.substring(segmentStart, index) + " ";
 			segmentStart = index + 1;
 		}
@@ -35619,7 +36587,7 @@ function sanitizeName(name, options) {
 	return name;
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/xmlparser/node2json.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/xmlparser/node2json.js
 var METADATA_SYMBOL = XmlNode.getMetaDataSymbol();
 /**
 * Helper function to strip attribute prefix from attribute map
@@ -35663,17 +36631,20 @@ function compress(arr, options, matcher, readonlyMatcher) {
 			const rawAttrs = stripAttributePrefix(tagObj[":@"] || {}, options.attributeNamePrefix);
 			matcher.push(property, rawAttrs);
 		}
-		if (property === options.textNodeName) if (text === void 0) text = tagObj[property];
-		else text += "" + tagObj[property];
-		else if (property === void 0) continue;
+		if (property === options.textNodeName) {
+			if (text === void 0) text = tagObj[property];
+			else text += "" + tagObj[property];
+		} else if (property === void 0) continue;
 		else if (tagObj[property]) {
 			let val = compress(tagObj[property], options, matcher, readonlyMatcher);
 			const isLeaf = isLeafTag(val, options);
 			if (Object.keys(val).length === 0 && options.alwaysCreateTextNode) val[options.textNodeName] = "";
 			if (tagObj[":@"]) assignAttributes(val, tagObj[":@"], readonlyMatcher, options);
 			else if (Object.keys(val).length === 1 && val[options.textNodeName] !== void 0 && !options.alwaysCreateTextNode) val = val[options.textNodeName];
-			else if (Object.keys(val).length === 0) if (options.alwaysCreateTextNode) val[options.textNodeName] = "";
-			else val = "";
+			else if (Object.keys(val).length === 0) {
+				if (options.alwaysCreateTextNode) val[options.textNodeName] = "";
+				else val = "";
+			}
 			if (tagObj[METADATA_SYMBOL] !== void 0 && typeof val === "object" && val !== null) val[METADATA_SYMBOL] = tagObj[METADATA_SYMBOL];
 			if (compressedObj[property] !== void 0 && Object.prototype.hasOwnProperty.call(compressedObj, property)) {
 				if (!Array.isArray(compressedObj[property])) compressedObj[property] = [compressedObj[property]];
@@ -35698,6 +36669,7 @@ function propName$1(obj) {
 		if (key !== ":@") return key;
 	}
 }
+__name(propName$1, "propName");
 function assignAttributes(obj, attrMap, readonlyMatcher, options) {
 	if (attrMap) {
 		const keys = Object.keys(attrMap);
@@ -35719,7 +36691,7 @@ function isLeafTag(obj, options) {
 	return false;
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/xmlparser/XMLParser.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/xmlparser/XMLParser.js
 var XMLParser = class {
 	constructor(options) {
 		this.externalEntities = {};
@@ -35769,18 +36741,21 @@ var XMLParser = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/fast-xml-builder@1.2.0/node_modules/fast-xml-builder/src/util.js
+//#region node_modules/.pnpm/fast-xml-builder@1.3.1/node_modules/fast-xml-builder/src/util.js
+function valToStr(val) {
+	return typeof val === "number" && Object.is(val, -0) ? "-0" : String(val);
+}
 function safeComment(val) {
-	return String(val).replace(/--/g, "- -").replace(/--/g, "- -").replace(/-$/, "- ");
+	return valToStr(val).replace(/--/g, "- -").replace(/--/g, "- -").replace(/-$/, "- ");
 }
 function safeCdata(val) {
-	return String(val).replace(/\]\]>/g, "]]]]><![CDATA[>");
+	return valToStr(val).replace(/\]\]>/g, "]]]]><![CDATA[>");
 }
 function escapeAttribute(val) {
-	return String(val).replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+	return valToStr(val).replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-builder@1.2.0/node_modules/fast-xml-builder/src/orderedJs2Xml.js
+//#region node_modules/.pnpm/fast-xml-builder@1.3.1/node_modules/fast-xml-builder/src/orderedJs2Xml.js
 var EOL$2 = "\n";
 /**
 * Detect XML version from the first element of the ordered array input.
@@ -35812,16 +36787,17 @@ function detectXmlVersionFromArray(jArray, options) {
 * @param {boolean} isAttribute - true when resolving an attribute name
 * @param {object}  options
 * @param {Matcher} matcher     - current matcher state (readonly from callback perspective)
-* @param {string}  xmlVersion  - '1.0' or '1.1', forwarded to xml-naming
+* @param {function} qNameValidator - function to validate tag names
 */
-function resolveTagName$1(name, isAttribute, options, matcher, xmlVersion) {
+function resolveTagName$1(name, isAttribute, options, matcher, qNameValidator) {
 	if (!options.sanitizeName) return name;
-	if (qName(name, { xmlVersion })) return name;
+	if (qNameValidator(name)) return name;
 	return options.sanitizeName(name, {
 		isAttribute,
 		matcher: matcher.readOnly()
 	});
 }
+__name(resolveTagName$1, "resolveTagName");
 /**
 * @param {array} jArray
 * @param {any} options
@@ -35836,17 +36812,17 @@ function toXml(jArray, options) {
 		if (typeof node === "string") stopNodeExpressions.push(new Expression(node));
 		else if (node instanceof Expression) stopNodeExpressions.push(node);
 	}
-	const xmlVersion = detectXmlVersionFromArray(jArray, options);
+	const qNameValidator = createValidator("qName", { xmlVersion: detectXmlVersionFromArray(jArray, options) });
 	const matcher = new Matcher();
-	return arrToStr(jArray, options, indentation, matcher, stopNodeExpressions, xmlVersion);
+	return arrToStr(jArray, options, indentation, matcher, stopNodeExpressions, qNameValidator);
 }
-function arrToStr(arr, options, indentation, matcher, stopNodeExpressions, xmlVersion) {
+function arrToStr(arr, options, indentation, matcher, stopNodeExpressions, qNameValidator) {
 	let xmlStr = "";
 	let isPreviousElementTag = false;
 	if (options.maxNestedTags && matcher.getDepth() > options.maxNestedTags) throw new Error("Maximum nested tags exceeded");
 	if (!Array.isArray(arr)) {
 		if (arr !== void 0 && arr !== null) {
-			let text = arr.toString();
+			let text = valToStr(arr);
 			text = replaceEntitiesValue(text, options);
 			return text;
 		}
@@ -35856,7 +36832,7 @@ function arrToStr(arr, options, indentation, matcher, stopNodeExpressions, xmlVe
 		const tagObj = arr[i];
 		const rawTagName = propName(tagObj);
 		if (rawTagName === void 0) continue;
-		const tagName = rawTagName === options.textNodeName || rawTagName === options.cdataPropName || rawTagName === options.commentPropName || rawTagName[0] === "?" ? rawTagName : resolveTagName$1(rawTagName, false, options, matcher, xmlVersion);
+		const tagName = rawTagName === options.textNodeName || rawTagName === options.cdataPropName || rawTagName === options.commentPropName || rawTagName[0] === "?" ? rawTagName : resolveTagName$1(rawTagName, false, options, matcher, qNameValidator);
 		const attrValues = extractAttributeValues(tagObj[":@"], options);
 		matcher.push(tagName, attrValues);
 		const isStopNode = checkStopNode(matcher, stopNodeExpressions);
@@ -35866,6 +36842,7 @@ function arrToStr(arr, options, indentation, matcher, stopNodeExpressions, xmlVe
 				tagText = options.tagValueProcessor(tagName, tagText);
 				tagText = replaceEntitiesValue(tagText, options);
 			}
+			tagText = valToStr(tagText);
 			if (isPreviousElementTag) xmlStr += indentation;
 			xmlStr += tagText;
 			isPreviousElementTag = false;
@@ -35887,7 +36864,7 @@ function arrToStr(arr, options, indentation, matcher, stopNodeExpressions, xmlVe
 			matcher.pop();
 			continue;
 		} else if (tagName[0] === "?") {
-			const attStr = attr_to_str(tagObj[":@"], options, isStopNode, matcher, xmlVersion);
+			const attStr = attr_to_str(tagObj[":@"], options, isStopNode, matcher, qNameValidator);
 			xmlStr += (tagName === "?xml" ? "" : indentation) + `<${tagName}${attStr}?>`;
 			isPreviousElementTag = true;
 			matcher.pop();
@@ -35895,13 +36872,14 @@ function arrToStr(arr, options, indentation, matcher, stopNodeExpressions, xmlVe
 		}
 		let newIdentation = indentation;
 		if (newIdentation !== "") newIdentation += options.indentBy;
-		const tagStart = indentation + `<${tagName}${attr_to_str(tagObj[":@"], options, isStopNode, matcher, xmlVersion)}`;
+		const tagStart = indentation + `<${tagName}${attr_to_str(tagObj[":@"], options, isStopNode, matcher, qNameValidator)}`;
 		let tagValue;
 		if (isStopNode) tagValue = getRawContent(tagObj[rawTagName], options);
-		else tagValue = arrToStr(tagObj[rawTagName], options, newIdentation, matcher, stopNodeExpressions, xmlVersion);
-		if (options.unpairedTags.indexOf(tagName) !== -1) if (options.suppressUnpairedNode) xmlStr += tagStart + ">";
-		else xmlStr += tagStart + "/>";
-		else if ((!tagValue || tagValue.length === 0) && options.suppressEmptyNode) xmlStr += tagStart + "/>";
+		else tagValue = arrToStr(tagObj[rawTagName], options, newIdentation, matcher, stopNodeExpressions, qNameValidator);
+		if (options.unpairedTags.indexOf(tagName) !== -1) {
+			if (options.suppressUnpairedNode) xmlStr += tagStart + ">";
+			else xmlStr += tagStart + "/>";
+		} else if ((!tagValue || tagValue.length === 0) && options.suppressEmptyNode) xmlStr += tagStart + "/>";
 		else if (tagValue && tagValue.endsWith(">")) xmlStr += tagStart + `>${tagValue}${indentation}</${tagName}>`;
 		else {
 			xmlStr += tagStart + ">";
@@ -35936,14 +36914,14 @@ function extractAttributeValues(attrMap, options) {
 */
 function getRawContent(arr, options) {
 	if (!Array.isArray(arr)) {
-		if (arr !== void 0 && arr !== null) return arr.toString();
+		if (arr !== void 0 && arr !== null) return valToStr(arr);
 		return "";
 	}
 	let content = "";
 	for (let i = 0; i < arr.length; i++) {
 		const item = arr[i];
 		const tagName = propName(item);
-		if (tagName === options.textNodeName) content += item[tagName];
+		if (tagName === options.textNodeName) content += valToStr(item[tagName]);
 		else if (tagName === options.cdataPropName) content += item[tagName][0][options.textNodeName];
 		else if (tagName === options.commentPropName) content += item[tagName][0][options.textNodeName];
 		else if (tagName && tagName[0] === "?") continue;
@@ -35981,12 +36959,12 @@ function propName(obj) {
 * Build attribute string, resolving attribute names through sanitizeName when configured.
 * Accepts matcher so the callback has path context.
 */
-function attr_to_str(attrMap, options, isStopNode, matcher, xmlVersion) {
+function attr_to_str(attrMap, options, isStopNode, matcher, qNameValidator) {
 	let attrStr = "";
 	if (attrMap && !options.ignoreAttributes) for (let attr in attrMap) {
 		if (!Object.prototype.hasOwnProperty.call(attrMap, attr)) continue;
 		const cleanAttrName = attr.substr(options.attributeNamePrefix.length);
-		const resolvedAttrName = isStopNode ? cleanAttrName : resolveTagName$1(cleanAttrName, true, options, matcher, xmlVersion);
+		const resolvedAttrName = isStopNode ? cleanAttrName : resolveTagName$1(cleanAttrName, true, options, matcher, qNameValidator);
 		let attrVal;
 		if (isStopNode) attrVal = attrMap[attr];
 		else {
@@ -36011,7 +36989,7 @@ function replaceEntitiesValue(textValue, options) {
 	return textValue;
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-builder@1.2.0/node_modules/fast-xml-builder/src/ignoreAttributes.js
+//#region node_modules/.pnpm/fast-xml-builder@1.3.1/node_modules/fast-xml-builder/src/ignoreAttributes.js
 function getIgnoreAttributesFn(ignoreAttributes) {
 	if (typeof ignoreAttributes === "function") return ignoreAttributes;
 	if (Array.isArray(ignoreAttributes)) return (attrName) => {
@@ -36023,7 +37001,7 @@ function getIgnoreAttributesFn(ignoreAttributes) {
 	return () => false;
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-builder@1.2.0/node_modules/fast-xml-builder/src/fxb.js
+//#region node_modules/.pnpm/fast-xml-builder@1.3.1/node_modules/fast-xml-builder/src/fxb.js
 var defaultOptions = {
 	attributeNamePrefix: "@_",
 	attributesGroupName: false,
@@ -36133,11 +37111,11 @@ function detectXmlVersionFromObj(jObj, options) {
 * @param {boolean} isAttribute - true when resolving an attribute name
 * @param {object}  options
 * @param {Matcher} matcher     - current matcher state (readonly from callback perspective)
-* @param {string}  xmlVersion  - '1.0' or '1.1', forwarded to xml-naming
+* @param {function} qNameValidator - function to validate tag names
 */
-function resolveTagName(name, isAttribute, options, matcher, xmlVersion) {
+function resolveTagName(name, isAttribute, options, matcher, qNameValidator) {
 	if (!options.sanitizeName) return name;
-	if (qName(name, { xmlVersion })) return name;
+	if (qNameValidator(name)) return name;
 	return options.sanitizeName(name, {
 		isAttribute,
 		matcher: matcher.readOnly()
@@ -36148,11 +37126,11 @@ Builder.prototype.build = function(jObj) {
 	else {
 		if (Array.isArray(jObj) && this.options.arrayNodeName && this.options.arrayNodeName.length > 1) jObj = { [this.options.arrayNodeName]: jObj };
 		const matcher = new Matcher();
-		const xmlVersion = detectXmlVersionFromObj(jObj, this.options);
-		return this.j2x(jObj, 0, matcher, xmlVersion).val;
+		const qNameValidator = createValidator("qName", { xmlVersion: detectXmlVersionFromObj(jObj, this.options) });
+		return this.j2x(jObj, 0, matcher, qNameValidator).val;
 	}
 };
-Builder.prototype.j2x = function(jObj, level, matcher, xmlVersion) {
+Builder.prototype.j2x = function(jObj, level, matcher, qNameValidator) {
 	let attrStr = "";
 	let val = "";
 	if (this.options.maxNestedTags && matcher.getDepth() >= this.options.maxNestedTags) throw new Error("Maximum nested tags exceeded");
@@ -36160,31 +37138,34 @@ Builder.prototype.j2x = function(jObj, level, matcher, xmlVersion) {
 	const isCurrentStopNode = this.checkStopNode(matcher);
 	for (let key in jObj) {
 		if (!Object.prototype.hasOwnProperty.call(jObj, key)) continue;
-		const resolvedKey = key === this.options.textNodeName || key === this.options.cdataPropName || key === this.options.commentPropName || this.options.attributesGroupName && key === this.options.attributesGroupName || this.isAttribute(key) || key[0] === "?" ? key : resolveTagName(key, false, this.options, matcher, xmlVersion);
+		const resolvedKey = key === this.options.textNodeName || key === this.options.cdataPropName || key === this.options.commentPropName || this.options.attributesGroupName && key === this.options.attributesGroupName || this.isAttribute(key) || key[0] === "?" ? key : resolveTagName(key, false, this.options, matcher, qNameValidator);
 		if (typeof jObj[key] === "undefined") {
 			if (this.isAttribute(key)) val += "";
-		} else if (jObj[key] === null) if (this.isAttribute(key)) val += "";
-		else if (resolvedKey === this.options.cdataPropName || resolvedKey === this.options.commentPropName) val += "";
-		else if (resolvedKey[0] === "?") val += this.indentate(level) + "<" + resolvedKey + "?" + this.tagEndChar;
-		else val += this.indentate(level) + "<" + resolvedKey + "/" + this.tagEndChar;
-		else if (jObj[key] instanceof Date) val += this.buildTextValNode(jObj[key], resolvedKey, "", level, matcher);
+		} else if (jObj[key] === null) {
+			if (this.isAttribute(key)) val += "";
+			else if (resolvedKey === this.options.cdataPropName || resolvedKey === this.options.commentPropName) val += "";
+			else if (resolvedKey[0] === "?") val += this.indentate(level) + "<" + resolvedKey + "?" + this.tagEndChar;
+			else val += this.indentate(level) + "<" + resolvedKey + "/" + this.tagEndChar;
+		} else if (jObj[key] instanceof Date) val += this.buildTextValNode(jObj[key], resolvedKey, "", level, matcher);
 		else if (typeof jObj[key] !== "object") {
 			const attr = this.isAttribute(key);
 			if (attr && !this.ignoreAttributesFn(attr, jPath)) {
-				const resolvedAttr = resolveTagName(attr, true, this.options, matcher, xmlVersion);
-				attrStr += this.buildAttrPairStr(resolvedAttr, "" + jObj[key], isCurrentStopNode);
-			} else if (!attr) if (key === this.options.textNodeName) {
-				let newval = this.options.tagValueProcessor(key, "" + jObj[key]);
-				val += this.replaceEntitiesValue(newval);
-			} else {
-				matcher.push(resolvedKey);
-				const isStopNode = this.checkStopNode(matcher);
-				matcher.pop();
-				if (isStopNode) {
-					const textValue = "" + jObj[key];
-					if (textValue === "") val += this.indentate(level) + "<" + resolvedKey + this.closeTag(resolvedKey) + this.tagEndChar;
-					else val += this.indentate(level) + "<" + resolvedKey + ">" + textValue + "</" + resolvedKey + this.tagEndChar;
-				} else val += this.buildTextValNode(jObj[key], resolvedKey, "", level, matcher);
+				const resolvedAttr = resolveTagName(attr, true, this.options, matcher, qNameValidator);
+				attrStr += this.buildAttrPairStr(resolvedAttr, valToStr(jObj[key]), isCurrentStopNode);
+			} else if (!attr) {
+				if (key === this.options.textNodeName) {
+					let newval = this.options.tagValueProcessor(key, valToStr(jObj[key]));
+					val += this.replaceEntitiesValue(newval);
+				} else {
+					matcher.push(resolvedKey);
+					const isStopNode = this.checkStopNode(matcher);
+					matcher.pop();
+					if (isStopNode) {
+						const textValue = valToStr(jObj[key]);
+						if (textValue === "") val += this.indentate(level) + "<" + resolvedKey + this.closeTag(resolvedKey) + this.tagEndChar;
+						else val += this.indentate(level) + "<" + resolvedKey + ">" + textValue + "</" + resolvedKey + this.tagEndChar;
+					} else val += this.buildTextValNode(jObj[key], resolvedKey, "", level, matcher);
+				}
 			}
 		} else if (Array.isArray(jObj[key])) {
 			const arrLen = jObj[key].length;
@@ -36192,25 +37173,28 @@ Builder.prototype.j2x = function(jObj, level, matcher, xmlVersion) {
 			let listTagAttr = "";
 			for (let j = 0; j < arrLen; j++) {
 				const item = jObj[key][j];
-				if (typeof item === "undefined") {} else if (item === null) if (resolvedKey[0] === "?") val += this.indentate(level) + "<" + resolvedKey + "?" + this.tagEndChar;
-				else val += this.indentate(level) + "<" + resolvedKey + "/" + this.tagEndChar;
-				else if (typeof item === "object") if (this.options.oneListGroup) {
-					matcher.push(resolvedKey);
-					const result = this.j2x(item, level + 1, matcher, xmlVersion);
-					matcher.pop();
-					listTagVal += result.val;
-					if (this.options.attributesGroupName && item.hasOwnProperty(this.options.attributesGroupName)) listTagAttr += result.attrStr;
-				} else listTagVal += this.processTextOrObjNode(item, resolvedKey, level, matcher, xmlVersion);
-				else if (this.options.oneListGroup) {
+				if (typeof item === "undefined") {} else if (item === null) {
+					if (resolvedKey[0] === "?") val += this.indentate(level) + "<" + resolvedKey + "?" + this.tagEndChar;
+					else val += this.indentate(level) + "<" + resolvedKey + "/" + this.tagEndChar;
+				} else if (typeof item === "object") {
+					if (this.options.oneListGroup) {
+						matcher.push(resolvedKey);
+						const result = this.j2x(item, level + 1, matcher, qNameValidator);
+						matcher.pop();
+						listTagVal += result.val;
+						if (this.options.attributesGroupName && item.hasOwnProperty(this.options.attributesGroupName)) listTagAttr += result.attrStr;
+					} else listTagVal += this.processTextOrObjNode(item, resolvedKey, level, matcher, qNameValidator);
+				} else if (this.options.oneListGroup) {
 					let textValue = this.options.tagValueProcessor(resolvedKey, item);
 					textValue = this.replaceEntitiesValue(textValue);
+					textValue = valToStr(textValue);
 					listTagVal += textValue;
 				} else {
 					matcher.push(resolvedKey);
 					const isStopNode = this.checkStopNode(matcher);
 					matcher.pop();
 					if (isStopNode) {
-						const textValue = "" + item;
+						const textValue = valToStr(item);
 						if (textValue === "") listTagVal += this.indentate(level) + "<" + resolvedKey + this.closeTag(resolvedKey) + this.tagEndChar;
 						else listTagVal += this.indentate(level) + "<" + resolvedKey + ">" + textValue + "</" + resolvedKey + this.tagEndChar;
 					} else listTagVal += this.buildTextValNode(item, resolvedKey, "", level, matcher);
@@ -36222,10 +37206,10 @@ Builder.prototype.j2x = function(jObj, level, matcher, xmlVersion) {
 			const Ks = Object.keys(jObj[key]);
 			const L = Ks.length;
 			for (let j = 0; j < L; j++) {
-				const resolvedAttr = resolveTagName(Ks[j], true, this.options, matcher, xmlVersion);
-				attrStr += this.buildAttrPairStr(resolvedAttr, "" + jObj[key][Ks[j]], isCurrentStopNode);
+				const resolvedAttr = resolveTagName(Ks[j], true, this.options, matcher, qNameValidator);
+				attrStr += this.buildAttrPairStr(resolvedAttr, valToStr(jObj[key][Ks[j]]), isCurrentStopNode);
 			}
-		} else val += this.processTextOrObjNode(jObj[key], resolvedKey, level, matcher, xmlVersion);
+		} else val += this.processTextOrObjNode(jObj[key], resolvedKey, level, matcher, qNameValidator);
 	}
 	return {
 		attrStr,
@@ -36234,13 +37218,13 @@ Builder.prototype.j2x = function(jObj, level, matcher, xmlVersion) {
 };
 Builder.prototype.buildAttrPairStr = function(attrName, val, isStopNode) {
 	if (!isStopNode) {
-		val = this.options.attributeValueProcessor(attrName, "" + val);
+		val = this.options.attributeValueProcessor(attrName, valToStr(val));
 		val = this.replaceEntitiesValue(val);
 	}
 	if (this.options.suppressBooleanAttributes && val === "true") return " " + attrName;
 	else return " " + attrName + "=\"" + escapeAttribute(val) + "\"";
 };
-function processTextOrObjNode(object, key, level, matcher, xmlVersion) {
+function processTextOrObjNode(object, key, level, matcher, qNameValidator) {
 	const attrValues = this.extractAttributes(object);
 	matcher.push(key, attrValues);
 	if (this.checkStopNode(matcher)) {
@@ -36249,7 +37233,7 @@ function processTextOrObjNode(object, key, level, matcher, xmlVersion) {
 		matcher.pop();
 		return this.buildObjectNode(rawContent, key, attrStr, level);
 	}
-	const result = this.j2x(object, level + 1, matcher, xmlVersion);
+	const result = this.j2x(object, level + 1, matcher, qNameValidator);
 	matcher.pop();
 	if (key[0] === "?") return this.buildTextValNode("", key, result.attrStr, level, matcher);
 	else if (object[this.options.textNodeName] !== void 0 && Object.keys(object).length === 1) return this.buildTextValNode(object[this.options.textNodeName], key, result.attrStr, level, matcher);
@@ -36315,7 +37299,7 @@ Builder.prototype.buildAttributesForStopNode = function(obj) {
 			const cleanKey = attrKey.startsWith(this.options.attributeNamePrefix) ? attrKey.substring(this.options.attributeNamePrefix.length) : attrKey;
 			const val = attrGroup[attrKey];
 			if (val === true && this.options.suppressBooleanAttributes) attrStr += " " + cleanKey;
-			else attrStr += " " + cleanKey + "=\"" + val + "\"";
+			else attrStr += " " + cleanKey + "=\"" + escapeAttribute(val) + "\"";
 		}
 	} else for (let key in obj) {
 		if (!Object.prototype.hasOwnProperty.call(obj, key)) continue;
@@ -36323,15 +37307,16 @@ Builder.prototype.buildAttributesForStopNode = function(obj) {
 		if (attr) {
 			const val = obj[key];
 			if (val === true && this.options.suppressBooleanAttributes) attrStr += " " + attr;
-			else attrStr += " " + attr + "=\"" + val + "\"";
+			else attrStr += " " + attr + "=\"" + escapeAttribute(val) + "\"";
 		}
 	}
 	return attrStr;
 };
 Builder.prototype.buildObjectNode = function(val, key, attrStr, level) {
-	if (val === "") if (key[0] === "?") return this.indentate(level) + "<" + key + attrStr + "?" + this.tagEndChar;
-	else return this.indentate(level) + "<" + key + attrStr + this.closeTag(key) + this.tagEndChar;
-	else if (key[0] === "?") return this.indentate(level) + "<" + key + attrStr + "?" + this.tagEndChar;
+	if (val === "") {
+		if (key[0] === "?") return this.indentate(level) + "<" + key + attrStr + "?" + this.tagEndChar;
+		else return this.indentate(level) + "<" + key + attrStr + this.closeTag(key) + this.tagEndChar;
+	} else if (key[0] === "?") return this.indentate(level) + "<" + key + attrStr + "?" + this.tagEndChar;
 	else {
 		let tagEndExp = "</" + key + this.tagEndChar;
 		let piClosingChar = "";
@@ -36340,7 +37325,7 @@ Builder.prototype.buildObjectNode = function(val, key, attrStr, level) {
 			tagEndExp = "";
 		}
 		if ((attrStr || attrStr === "") && val.indexOf("<") === -1) return this.indentate(level) + "<" + key + attrStr + piClosingChar + ">" + val + tagEndExp;
-		else if (this.options.commentPropName !== false && key === this.options.commentPropName && piClosingChar.length === 0) return this.indentate(level) + `<!--${val}-->` + this.newLine;
+		else if (this.options.commentPropName !== false && key === this.options.commentPropName && piClosingChar.length === 0) return this.indentate(level) + `<!--${safeComment(val)}-->` + this.newLine;
 		else return this.indentate(level) + "<" + key + attrStr + piClosingChar + this.tagEndChar + val + this.indentate(level) + tagEndExp;
 	}
 };
@@ -36368,6 +37353,7 @@ Builder.prototype.buildTextValNode = function(val, key, attrStr, level, matcher)
 	else {
 		let textValue = this.options.tagValueProcessor(key, val);
 		textValue = this.replaceEntitiesValue(textValue);
+		textValue = valToStr(textValue);
 		if (textValue === "") return this.indentate(level) + "<" + key + attrStr + this.closeTag(key) + this.tagEndChar;
 		else return this.indentate(level) + "<" + key + attrStr + ">" + textValue + "</" + key + this.tagEndChar;
 	}
@@ -36387,13 +37373,13 @@ function isAttribute(name) {
 	else return false;
 }
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/xmlbuilder/json2xml.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/xmlbuilder/json2xml.js
 var json2xml_default = Builder;
 //#endregion
-//#region node_modules/.pnpm/fast-xml-parser@5.8.0/node_modules/fast-xml-parser/src/fxp.js
+//#region node_modules/.pnpm/fast-xml-parser@5.11.1/node_modules/fast-xml-parser/src/fxp.js
 var XMLValidator = { validate };
 //#endregion
-//#region node_modules/.pnpm/@azure+core-xml@1.5.1/node_modules/@azure/core-xml/dist/esm/xml.js
+//#region node_modules/.pnpm/@azure+core-xml@1.6.0/node_modules/@azure/core-xml/dist/esm/xml.js
 function getCommonOptions(options) {
 	return {
 		attributesGroupName: "$",
@@ -36448,20 +37434,23 @@ async function parseXML(str, opts = {}) {
 	if (validation !== true) throw validation;
 	const parsedXml = new XMLParser(getParserOptions(opts)).parse(str);
 	if (parsedXml["?xml"]) delete parsedXml["?xml"];
-	if (!opts.includeRoot) for (const key of Object.keys(parsedXml)) {
-		const value = parsedXml[key];
-		return typeof value === "object" ? { ...value } : value;
+	if (!opts.includeRoot) {
+		const key = Object.keys(parsedXml)[0];
+		if (key !== void 0) {
+			const value = parsedXml[key];
+			return typeof value === "object" ? { ...value } : value;
+		}
 	}
 	return parsedXml;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/log.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/log.js
 /**
 * The `@azure/logger` configuration for this package.
 */
 var logger$1 = createClientLogger("storage-blob");
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/BuffersStream.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/BuffersStream.js
 /**
 * This class generates a readable stream from the data in an array of buffers.
 */
@@ -36535,7 +37524,7 @@ var BuffersStream = class extends Readable {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/PooledBuffer.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/PooledBuffer.js
 /**
 * maxBufferLength is max size of each buffer in the pooled buffers.
 */
@@ -36590,7 +37579,11 @@ var PooledBuffer = class {
 	*/
 	fill(buffers, totalLength) {
 		this._size = Math.min(this.capacity, totalLength);
-		let i = 0, j = 0, targetOffset = 0, sourceOffset = 0, totalCopiedNum = 0;
+		let i = 0;
+		let j = 0;
+		let targetOffset = 0;
+		let sourceOffset = 0;
+		let totalCopiedNum = 0;
 		while (totalCopiedNum < this._size) {
 			const source = buffers[i];
 			const target = this.buffers[j];
@@ -36619,7 +37612,7 @@ var PooledBuffer = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/BufferScheduler.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/BufferScheduler.js
 /**
 * This class accepts a Node.js Readable stream as input, and keeps reading data
 * from the stream into the internal buffer structure, until it reaches maxBuffers.
@@ -36765,11 +37758,13 @@ var BufferScheduler = class {
 					this.triggerOutgoingHandlers();
 					return;
 				}
-				if (this.isStreamEnd && this.executingOutgoingHandlers === 0) if (this.unresolvedLength > 0 && this.unresolvedLength < this.bufferSize) {
-					const buffer = this.shiftBufferFromUnresolvedDataArray();
-					this.outgoingHandler(() => buffer.getReadableStream(), buffer.size, this.offset).then(resolve).catch(reject);
-				} else if (this.unresolvedLength >= this.bufferSize) return;
-				else resolve();
+				if (this.isStreamEnd && this.executingOutgoingHandlers === 0) {
+					if (this.unresolvedLength > 0 && this.unresolvedLength < this.bufferSize) {
+						const buffer = this.shiftBufferFromUnresolvedDataArray();
+						this.outgoingHandler(() => buffer.getReadableStream(), buffer.size, this.offset).then(resolve).catch(reject);
+					} else if (this.unresolvedLength >= this.bufferSize) return;
+					else resolve();
+				}
 			});
 		});
 	}
@@ -36859,14 +37854,2361 @@ var BufferScheduler = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/cache.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/crc64.js
+var NativeCRC64 = (() => {
+	typeof document !== "undefined" && document.currentScript && document.currentScript.src;
+	return (function(NativeCRC64) {
+		NativeCRC64 = NativeCRC64 || {};
+		var Module = typeof NativeCRC64 != "undefined" ? NativeCRC64 : {};
+		var readyPromiseResolve;
+		var readyPromiseReject;
+		Module["ready"] = new Promise(function(resolve, reject) {
+			readyPromiseResolve = resolve;
+			readyPromiseReject = reject;
+		});
+		[
+			"_malloc",
+			"_free",
+			"_emscripten_bind_VoidPtr___destroy___0",
+			"_emscripten_bind_Crc64Hash_Crc64Hash_0",
+			"_emscripten_bind_Crc64Hash_OnAppend_2",
+			"_emscripten_bind_Crc64Hash_OnFinal_3",
+			"_emscripten_bind_Crc64Hash___destroy___0",
+			"_fflush",
+			"onRuntimeInitialized"
+		].forEach((prop) => {
+			if (!Object.getOwnPropertyDescriptor(Module["ready"], prop)) Object.defineProperty(Module["ready"], prop, {
+				get: () => abort("You are getting " + prop + " on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js"),
+				set: () => abort("You are setting " + prop + " on the Promise object, instead of the instance. Use .then() to get called back with the instance, see the MODULARIZE docs in src/settings.js")
+			});
+		});
+		var moduleOverrides = Object.assign({}, Module);
+		var arguments_ = [];
+		var ENVIRONMENT_IS_WEB = typeof window == "object";
+		var ENVIRONMENT_IS_WORKER = typeof importScripts == "function";
+		var ENVIRONMENT_IS_NODE = typeof process == "object" && typeof process.versions == "object" && typeof process.versions.node == "string";
+		var ENVIRONMENT_IS_SHELL = !ENVIRONMENT_IS_WEB && !ENVIRONMENT_IS_NODE && !ENVIRONMENT_IS_WORKER;
+		if (Module["ENVIRONMENT"]) throw new Error("Module.ENVIRONMENT has been deprecated. To force the environment, use the ENVIRONMENT compile-time option (for example, -sENVIRONMENT=web or -sENVIRONMENT=node)");
+		var scriptDirectory = "";
+		function locateFile(path) {
+			if (Module["locateFile"]) return Module["locateFile"](path, scriptDirectory);
+			return scriptDirectory + path;
+		}
+		if (ENVIRONMENT_IS_NODE) {
+			if (typeof process == "undefined" || !process.release || process.release.name !== "node") throw new Error("not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)");
+			if (process["argv"].length > 1) process["argv"][1].replace(/\\/g, "/");
+			arguments_ = process["argv"].slice(2);
+			process["on"]("uncaughtException", function(ex) {
+				if (!(ex instanceof ExitStatus)) throw ex;
+			});
+			process["on"]("unhandledRejection", function(reason) {
+				throw reason;
+			});
+			Module["inspect"] = function() {
+				return "[Emscripten Module object]";
+			};
+		} else if (ENVIRONMENT_IS_SHELL) {
+			if (typeof process == "object" && typeof __require === "function" || typeof window == "object" || typeof importScripts == "function") throw new Error("not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)");
+			if (typeof scriptArgs != "undefined") arguments_ = scriptArgs;
+			else if (typeof arguments != "undefined") arguments_ = arguments;
+			if (typeof quit == "function") {}
+			if (typeof print != "undefined") {
+				if (typeof console == "undefined") console = {};
+				console.log = print;
+				console.warn = console.error = typeof printErr != "undefined" ? printErr : print;
+			}
+		} else if (ENVIRONMENT_IS_WEB || ENVIRONMENT_IS_WORKER) {
+			if (!(typeof window == "object" || typeof importScripts == "function")) throw new Error("not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)");
+		} else throw new Error("environment detection error");
+		var out = Module["print"] || console.log.bind(console);
+		var err = Module["printErr"] || console.warn.bind(console);
+		Object.assign(Module, moduleOverrides);
+		moduleOverrides = null;
+		checkIncomingModuleAPI();
+		if (Module["arguments"]) arguments_ = Module["arguments"];
+		legacyModuleProp("arguments", "arguments_");
+		if (Module["thisProgram"]) Module["thisProgram"];
+		legacyModuleProp("thisProgram", "thisProgram");
+		if (Module["quit"]) Module["quit"];
+		legacyModuleProp("quit", "quit_");
+		assert(typeof Module["memoryInitializerPrefixURL"] == "undefined", "Module.memoryInitializerPrefixURL option was removed, use Module.locateFile instead");
+		assert(typeof Module["pthreadMainPrefixURL"] == "undefined", "Module.pthreadMainPrefixURL option was removed, use Module.locateFile instead");
+		assert(typeof Module["cdInitializerPrefixURL"] == "undefined", "Module.cdInitializerPrefixURL option was removed, use Module.locateFile instead");
+		assert(typeof Module["filePackagePrefixURL"] == "undefined", "Module.filePackagePrefixURL option was removed, use Module.locateFile instead");
+		assert(typeof Module["read"] == "undefined", "Module.read option was removed (modify read_ in JS)");
+		assert(typeof Module["readAsync"] == "undefined", "Module.readAsync option was removed (modify readAsync in JS)");
+		assert(typeof Module["readBinary"] == "undefined", "Module.readBinary option was removed (modify readBinary in JS)");
+		assert(typeof Module["setWindowTitle"] == "undefined", "Module.setWindowTitle option was removed (modify setWindowTitle in JS)");
+		assert(typeof Module["TOTAL_MEMORY"] == "undefined", "Module.TOTAL_MEMORY has been renamed Module.INITIAL_MEMORY");
+		legacyModuleProp("read", "read_");
+		legacyModuleProp("readAsync", "readAsync");
+		legacyModuleProp("readBinary", "readBinary");
+		legacyModuleProp("setWindowTitle", "setWindowTitle");
+		assert(!ENVIRONMENT_IS_SHELL, "shell environment detected but not enabled at build time.  Add 'shell' to `-sENVIRONMENT` to enable.");
+		function legacyModuleProp(prop, newName) {
+			if (!Object.getOwnPropertyDescriptor(Module, prop)) Object.defineProperty(Module, prop, {
+				configurable: true,
+				get: function() {
+					abort("Module." + prop + " has been replaced with plain " + newName + " (the initial value can be provided on Module, but after startup the value is only looked for on a local variable of that name)");
+				}
+			});
+		}
+		function ignoredModuleProp(prop) {
+			if (Object.getOwnPropertyDescriptor(Module, prop)) abort("`Module." + prop + "` was supplied but `" + prop + "` not included in INCOMING_MODULE_JS_API");
+		}
+		function isExportedByForceFilesystem(name) {
+			return name === "FS_createPath" || name === "FS_createDataFile" || name === "FS_createPreloadedFile" || name === "FS_unlink" || name === "addRunDependency" || name === "FS_createLazyFile" || name === "FS_createDevice" || name === "removeRunDependency";
+		}
+		function missingLibrarySymbol(sym) {
+			if (typeof globalThis !== "undefined" && !Object.getOwnPropertyDescriptor(globalThis, sym)) Object.defineProperty(globalThis, sym, {
+				configurable: true,
+				get: function() {
+					var msg = "`" + sym + "` is a library symbol and not included by default; add it to your library.js __deps or to DEFAULT_LIBRARY_FUNCS_TO_INCLUDE on the command line";
+					var librarySymbol = sym;
+					if (!librarySymbol.startsWith("_")) librarySymbol = "$" + sym;
+					msg += " (e.g. -sDEFAULT_LIBRARY_FUNCS_TO_INCLUDE=" + librarySymbol + ")";
+					if (isExportedByForceFilesystem(sym)) msg += ". Alternatively, forcing filesystem support (-sFORCE_FILESYSTEM) can export this for you";
+					warnOnce(msg);
+				}
+			});
+		}
+		function unexportedRuntimeSymbol(sym) {
+			if (!Object.getOwnPropertyDescriptor(Module, sym)) Object.defineProperty(Module, sym, {
+				configurable: true,
+				get: function() {
+					var msg = "'" + sym + "' was not exported. add it to EXPORTED_RUNTIME_METHODS (see the FAQ)";
+					if (isExportedByForceFilesystem(sym)) msg += ". Alternatively, forcing filesystem support (-sFORCE_FILESYSTEM) can export this for you";
+					abort(msg);
+				}
+			});
+		}
+		if (Module["wasmBinary"]) Module["wasmBinary"];
+		legacyModuleProp("wasmBinary", "wasmBinary");
+		Module["noExitRuntime"];
+		legacyModuleProp("noExitRuntime", "noExitRuntime");
+		if (typeof WebAssembly != "object") abort("no native wasm support detected");
+		var wasmMemory;
+		var ABORT = false;
+		/** @type {function(*, string=)} */
+		function assert(condition, text) {
+			if (!condition) abort("Assertion failed" + (text ? ": " + text : ""));
+		}
+		var UTF8Decoder = typeof TextDecoder != "undefined" ? new TextDecoder("utf8") : void 0;
+		/**
+		* Given a pointer 'idx' to a null-terminated UTF8-encoded string in the given
+		* array that contains uint8 values, returns a copy of that string as a
+		* Javascript String object.
+		* heapOrArray is either a regular array, or a JavaScript typed array view.
+		* @param {number} idx
+		* @param {number=} maxBytesToRead
+		* @return {string}
+		*/
+		function UTF8ArrayToString(heapOrArray, idx, maxBytesToRead) {
+			var endIdx = idx + maxBytesToRead;
+			var endPtr = idx;
+			while (heapOrArray[endPtr] && !(endPtr >= endIdx)) ++endPtr;
+			if (endPtr - idx > 16 && heapOrArray.buffer && UTF8Decoder) return UTF8Decoder.decode(heapOrArray.subarray(idx, endPtr));
+			var str = "";
+			while (idx < endPtr) {
+				var u0 = heapOrArray[idx++];
+				if (!(u0 & 128)) {
+					str += String.fromCharCode(u0);
+					continue;
+				}
+				var u1 = heapOrArray[idx++] & 63;
+				if ((u0 & 224) == 192) {
+					str += String.fromCharCode((u0 & 31) << 6 | u1);
+					continue;
+				}
+				var u2 = heapOrArray[idx++] & 63;
+				if ((u0 & 240) == 224) u0 = (u0 & 15) << 12 | u1 << 6 | u2;
+				else {
+					if ((u0 & 248) != 240) warnOnce("Invalid UTF-8 leading byte " + ptrToString(u0) + " encountered when deserializing a UTF-8 string in wasm memory to a JS string!");
+					u0 = (u0 & 7) << 18 | u1 << 12 | u2 << 6 | heapOrArray[idx++] & 63;
+				}
+				if (u0 < 65536) str += String.fromCharCode(u0);
+				else {
+					var ch = u0 - 65536;
+					str += String.fromCharCode(55296 | ch >> 10, 56320 | ch & 1023);
+				}
+			}
+			return str;
+		}
+		/**
+		* Given a pointer 'ptr' to a null-terminated UTF8-encoded string in the
+		* emscripten HEAP, returns a copy of that string as a Javascript String object.
+		*
+		* @param {number} ptr
+		* @param {number=} maxBytesToRead - An optional length that specifies the
+		*   maximum number of bytes to read. You can omit this parameter to scan the
+		*   string until the first \0 byte. If maxBytesToRead is passed, and the string
+		*   at [ptr, ptr+maxBytesToReadr[ contains a null byte in the middle, then the
+		*   string will cut short at that byte index (i.e. maxBytesToRead will not
+		*   produce a string of exact length [ptr, ptr+maxBytesToRead[) N.B. mixing
+		*   frequent uses of UTF8ToString() with and without maxBytesToRead may throw
+		*   JS JIT optimizations off, so it is worth to consider consistently using one
+		* @return {string}
+		*/
+		function UTF8ToString(ptr, maxBytesToRead) {
+			return ptr ? UTF8ArrayToString(HEAPU8, ptr, maxBytesToRead) : "";
+		}
+		var buffer;
+		var HEAPU8;
+		var HEAP32;
+		var HEAPU32;
+		function updateGlobalBufferAndViews(buf) {
+			buffer = buf;
+			Module["HEAP8"] = new Int8Array(buf);
+			Module["HEAP16"] = new Int16Array(buf);
+			Module["HEAP32"] = HEAP32 = new Int32Array(buf);
+			Module["HEAPU8"] = HEAPU8 = new Uint8Array(buf);
+			Module["HEAPU16"] = new Uint16Array(buf);
+			Module["HEAPU32"] = HEAPU32 = new Uint32Array(buf);
+			Module["HEAPF32"] = new Float32Array(buf);
+			Module["HEAPF64"] = new Float64Array(buf);
+		}
+		var STACK_SIZE = 5242880;
+		if (Module["STACK_SIZE"]) assert(STACK_SIZE === Module["STACK_SIZE"], "the stack size can no longer be determined at runtime");
+		var INITIAL_MEMORY = Module["INITIAL_MEMORY"] || 16777216;
+		legacyModuleProp("INITIAL_MEMORY", "INITIAL_MEMORY");
+		assert(INITIAL_MEMORY >= STACK_SIZE, "INITIAL_MEMORY should be larger than STACK_SIZE, was " + INITIAL_MEMORY + "! (STACK_SIZE=" + STACK_SIZE + ")");
+		assert(typeof Int32Array != "undefined" && typeof Float64Array !== "undefined" && Int32Array.prototype.subarray != void 0 && Int32Array.prototype.set != void 0, "JS engine does not provide full typed array support");
+		assert(!Module["wasmMemory"], "Use of `wasmMemory` detected.  Use -sIMPORTED_MEMORY to define wasmMemory externally");
+		assert(INITIAL_MEMORY == 16777216, "Detected runtime INITIAL_MEMORY setting.  Use -sIMPORTED_MEMORY to define wasmMemory dynamically");
+		var wasmTable;
+		function writeStackCookie() {
+			var max = _emscripten_stack_get_end();
+			assert((max & 3) == 0);
+			if (max == 0) max += 4;
+			HEAPU32[max >> 2] = 34821223;
+			HEAPU32[max + 4 >> 2] = 2310721022;
+			HEAPU32[0] = 1668509029;
+		}
+		function checkStackCookie() {
+			if (ABORT) return;
+			var max = _emscripten_stack_get_end();
+			if (max == 0) max += 4;
+			var cookie1 = HEAPU32[max >> 2];
+			var cookie2 = HEAPU32[max + 4 >> 2];
+			if (cookie1 != 34821223 || cookie2 != 2310721022) abort("Stack overflow! Stack cookie has been overwritten at " + ptrToString(max) + ", expected hex dwords 0x89BACDFE and 0x2135467, but received " + ptrToString(cookie2) + " " + ptrToString(cookie1));
+			if (HEAPU32[0] !== 1668509029) abort("Runtime error: The application has corrupted its heap memory area (address zero)!");
+		}
+		(function() {
+			var h16 = /* @__PURE__ */ new Int16Array(1);
+			var h8 = new Int8Array(h16.buffer);
+			h16[0] = 25459;
+			if (h8[0] !== 115 || h8[1] !== 99) throw "Runtime error: expected the system to be little-endian! (Run with -sSUPPORT_BIG_ENDIAN to bypass)";
+		})();
+		var __ATPRERUN__ = [];
+		var __ATINIT__ = [];
+		var __ATPOSTRUN__ = [];
+		var runtimeInitialized = false;
+		function preRun() {
+			if (Module["preRun"]) {
+				if (typeof Module["preRun"] == "function") Module["preRun"] = [Module["preRun"]];
+				while (Module["preRun"].length) addOnPreRun(Module["preRun"].shift());
+			}
+			callRuntimeCallbacks(__ATPRERUN__);
+		}
+		function initRuntime() {
+			assert(!runtimeInitialized);
+			runtimeInitialized = true;
+			checkStackCookie();
+			callRuntimeCallbacks(__ATINIT__);
+		}
+		function postRun() {
+			checkStackCookie();
+			if (Module["postRun"]) {
+				if (typeof Module["postRun"] == "function") Module["postRun"] = [Module["postRun"]];
+				while (Module["postRun"].length) addOnPostRun(Module["postRun"].shift());
+			}
+			callRuntimeCallbacks(__ATPOSTRUN__);
+		}
+		function addOnPreRun(cb) {
+			__ATPRERUN__.unshift(cb);
+		}
+		function addOnInit(cb) {
+			__ATINIT__.unshift(cb);
+		}
+		function addOnPostRun(cb) {
+			__ATPOSTRUN__.unshift(cb);
+		}
+		assert(Math.imul, "This browser does not support Math.imul(), build with LEGACY_VM_SUPPORT or POLYFILL_OLD_MATH_FUNCTIONS to add in a polyfill");
+		assert(Math.fround, "This browser does not support Math.fround(), build with LEGACY_VM_SUPPORT or POLYFILL_OLD_MATH_FUNCTIONS to add in a polyfill");
+		assert(Math.clz32, "This browser does not support Math.clz32(), build with LEGACY_VM_SUPPORT or POLYFILL_OLD_MATH_FUNCTIONS to add in a polyfill");
+		assert(Math.trunc, "This browser does not support Math.trunc(), build with LEGACY_VM_SUPPORT or POLYFILL_OLD_MATH_FUNCTIONS to add in a polyfill");
+		var runDependencies = 0;
+		var runDependencyWatcher = null;
+		var dependenciesFulfilled = null;
+		var runDependencyTracking = {};
+		function addRunDependency(id) {
+			runDependencies++;
+			if (Module["monitorRunDependencies"]) Module["monitorRunDependencies"](runDependencies);
+			if (id) {
+				assert(!runDependencyTracking[id]);
+				runDependencyTracking[id] = 1;
+				if (runDependencyWatcher === null && typeof setInterval != "undefined") runDependencyWatcher = setInterval(function() {
+					if (ABORT) {
+						clearInterval(runDependencyWatcher);
+						runDependencyWatcher = null;
+						return;
+					}
+					var shown = false;
+					for (var dep in runDependencyTracking) {
+						if (!shown) {
+							shown = true;
+							err("still waiting on run dependencies:");
+						}
+						err("dependency: " + dep);
+					}
+					if (shown) err("(end of list)");
+				}, 1e4);
+			} else err("warning: run dependency added without ID");
+		}
+		function removeRunDependency(id) {
+			runDependencies--;
+			if (Module["monitorRunDependencies"]) Module["monitorRunDependencies"](runDependencies);
+			if (id) {
+				assert(runDependencyTracking[id]);
+				delete runDependencyTracking[id];
+			} else err("warning: run dependency removed without ID");
+			if (runDependencies == 0) {
+				if (runDependencyWatcher !== null) {
+					clearInterval(runDependencyWatcher);
+					runDependencyWatcher = null;
+				}
+				if (dependenciesFulfilled) {
+					var callback = dependenciesFulfilled;
+					dependenciesFulfilled = null;
+					callback();
+				}
+			}
+		}
+		/** @param {string|number=} what */
+		function abort(what) {
+			if (Module["onAbort"]) Module["onAbort"](what);
+			what = "Aborted(" + what + ")";
+			err(what);
+			ABORT = true;
+			/** @suppress {checkTypes} */
+			var e = new WebAssembly.RuntimeError(what);
+			readyPromiseReject(e);
+			throw e;
+		}
+		var FS = {
+			error: function() {
+				abort("Filesystem support (FS) was not included. The problem is that you are using files from JS, but files were not used from C/C++, so filesystem support was not auto-included. You can force-include filesystem support with -sFORCE_FILESYSTEM");
+			},
+			init: function() {
+				FS.error();
+			},
+			createDataFile: function() {
+				FS.error();
+			},
+			createPreloadedFile: function() {
+				FS.error();
+			},
+			createLazyFile: function() {
+				FS.error();
+			},
+			open: function() {
+				FS.error();
+			},
+			mkdev: function() {
+				FS.error();
+			},
+			registerDevice: function() {
+				FS.error();
+			},
+			analyzePath: function() {
+				FS.error();
+			},
+			loadFilesFromDB: function() {
+				FS.error();
+			},
+			ErrnoError: function ErrnoError() {
+				FS.error();
+			}
+		};
+		Module["FS_createDataFile"] = FS.createDataFile;
+		Module["FS_createPreloadedFile"] = FS.createPreloadedFile;
+		var dataURIPrefix = "data:application/octet-stream;base64,";
+		function isDataURI(filename) {
+			return filename.startsWith(dataURIPrefix);
+		}
+		function isFileURI(filename) {
+			return filename.startsWith("file://");
+		}
+		/** @param {boolean=} fixedasm */
+		function createExportWrapper(name, fixedasm) {
+			return function() {
+				var displayName = name;
+				var asm = fixedasm;
+				if (!fixedasm) asm = Module["asm"];
+				assert(runtimeInitialized, "native function `" + displayName + "` called before runtime initialization");
+				if (!asm[name]) assert(asm[name], "exported native function `" + displayName + "` not found");
+				return asm[name].apply(null, arguments);
+			};
+		}
+		var wasmBinaryFile = "crc64.wasm";
+		if (!isDataURI(wasmBinaryFile)) wasmBinaryFile = locateFile(wasmBinaryFile);
+		var binaryInString = [
+			"AGFzbQEAAAABzYCAgAAMYAF/AX9gAAF/YAF/AGAAAGADf35/AX5gA39/fwBgBH9/f38AYAN/f38Bf2AFf39",
+			"/f38Bf2AEf39/fwF/YAR/f35/AX5gBH9+f38BfwKPgYCAAAUDZW52BWFib3J0AAMDZW52FmVtc2NyaXB0ZW",
+			"5fcmVzaXplX2hlYXAAABZ3YXNpX3NuYXBzaG90X3ByZXZpZXcxCGZkX2Nsb3NlAAAWd2FzaV9zbmFwc2hvd",
+			"F9wcmV2aWV3MQhmZF93cml0ZQAJFndhc2lfc25hcHNob3RfcHJldmlldzEHZmRfc2VlawAIA62AgIAALAMF",
+			"BgIBAAUGAgEBAAACAAIAAAAHBAQCAgEDAAIAAQIBAQIAAQMBAQEACggLBIWAgIAAAXABBAQFh4CAgAABAYA",
+			"CgIACBsiAgIAACn8BQYCAwAILfwFBAAt/AUEAC38BQQALfwBBnJHBAgt/AEGwkcECC38AQZyRwQILfwBBsJ",
+			"HBAgt/AEGwkcECC38AQZKSwQILB/qEgIAAGwZtZW1vcnkCABFfX3dhc21fY2FsbF9jdG9ycwAFJWVtc2Nya",
+			"XB0ZW5fYmluZF9Wb2lkUHRyX19fZGVzdHJveV9fXzAACCVlbXNjcmlwdGVuX2JpbmRfQ3JjNjRIYXNoX0Ny",
+			"YzY0SGFzaF8wAAkkZW1zY3JpcHRlbl9iaW5kX0NyYzY0SGFzaF9PbkFwcGVuZF8yAAsjZW1zY3JpcHRlbl9",
+			"iaW5kX0NyYzY0SGFzaF9PbkZpbmFsXzMADCdlbXNjcmlwdGVuX2JpbmRfQ3JjNjRIYXNoX19fZGVzdHJveV",
+			"9fXzAADRtfX2VtX2xpYl9kZXBzX3dlYmlkbF9iaW5kZXIDBCFfX2VtX2pzX19hcnJheV9ib3VuZHNfY2hlY",
+			"2tfZXJyb3IDBRlfX2luZGlyZWN0X2Z1bmN0aW9uX3RhYmxlAQAQX19lcnJub19sb2NhdGlvbgAPBmZmbHVz",
+			"aAAtBm1hbGxvYwARBGZyZWUAEhVlbXNjcmlwdGVuX3N0YWNrX2luaXQAKRllbXNjcmlwdGVuX3N0YWNrX2d",
+			"ldF9mcmVlACoZZW1zY3JpcHRlbl9zdGFja19nZXRfYmFzZQArGGVtc2NyaXB0ZW5fc3RhY2tfZ2V0X2VuZA",
+			"AsCXN0YWNrU2F2ZQAlDHN0YWNrUmVzdG9yZQAmCnN0YWNrQWxsb2MAJxxlbXNjcmlwdGVuX3N0YWNrX2dld",
+			"F9jdXJyZW50ACgTX19zdGFydF9lbV9saWJfZGVwcwMGEl9fc3RvcF9lbV9saWJfZGVwcwMHDV9fc3RhcnRf",
+			"ZW1fanMDCAxfX3N0b3BfZW1fanMDCQxkeW5DYWxsX2ppamkALwmJgICAAAEAQQELAxYYGgqtkYGAACwEABA",
+			"pC81IAvcCf6EFfiMAIQNBgAEhBCADIARrIQUgBSAANgJ8IAUgATYCeCAFIAI2AnQgBSgCfCEGIAUoAnghBy",
+			"AFIAc2AnAgBSgCdCEIIAghCSAJrCH6AiAGKQMIIfsCIPsCIPoCfCH8AiAGIPwCNwMIIAYpAwAh/QJCfyH+A",
+			"iD9AiD+AoUh/wIgBSD/AjcDaEIAIYADIAUggAM3A2AgBSgCdCEKIAUoAnQhC0EgIQwgCyAMbyENIAogDWsh",
+			"DiAFIA42AlwgBSgCXCEPQcAAIRAgDyERIBAhEiARIBJPIRNBASEUIBMgFHEhFQJAIBVFDQAgBSgCcCEWIAU",
+			"gFjYCWEIAIYEDIAUggQM3A1BCACGCAyAFIIIDNwNIQgAhgwMgBSCDAzcDQEIAIYQDIAUghAM3AzggBSkDYC",
+			"GFAyAFKAJcIRcgFyEYIBitIYYDIIUDIIYDfCGHA0IgIYgDIIcDIIgDfSGJAyAFIIkDNwMwIAUoAlwhGSAFK",
+			"AJ0IRogGiAZayEbIAUgGzYCdCAFKQNoIYoDIAUgigM3A1ACQANAIAUpA2AhiwMgBSkDMCGMAyCLAyGNAyCM",
+			"AyGOAyCNAyCOA1QhHEEBIR0gHCAdcSEeIB5FDQEgBSgCWCEfIB8pAwAhjwMgBSkDUCGQAyCPAyCQA4UhkQM",
+			"gBSCRAzcDKCAFKAJYISAgICkDCCGSAyAFKQNIIZMDIJIDIJMDhSGUAyAFIJQDNwMgIAUoAlghISAhKQMQIZ",
+			"UDIAUpA0AhlgMglQMglgOFIZcDIAUglwM3AxggBSgCWCEiICIpAxghmAMgBSkDOCGZAyCYAyCZA4UhmgMgB",
+			"SCaAzcDECAFKQMoIZsDQv8BIZwDIJsDIJwDgyGdA0KADiGeAyCdAyCeA3whnwMgnwOnISNBgIDAAiEkQQMh",
+			"JSAjICV0ISYgJCAmaiEnICcpAwAhoAMgBSCgAzcDUCAFKQMoIaEDQgghogMgoQMgogOIIaMDIAUgowM3Ayg",
+			"gBSkDICGkA0L/ASGlAyCkAyClA4MhpgNCgA4hpwMgpgMgpwN8IagDIKgDpyEoQYCAwAIhKUEDISogKCAqdC",
+			"ErICkgK2ohLCAsKQMAIakDIAUgqQM3A0ggBSkDICGqA0IIIasDIKoDIKsDiCGsAyAFIKwDNwMgIAUpAxghr",
+			"QNC/wEhrgMgrQMgrgODIa8DQoAOIbADIK8DILADfCGxAyCxA6chLUGAgMACIS5BAyEvIC0gL3QhMCAuIDBq",
+			"ITEgMSkDACGyAyAFILIDNwNAIAUpAxghswNCCCG0AyCzAyC0A4ghtQMgBSC1AzcDGCAFKQMQIbYDQv8BIbc",
+			"DILYDILcDgyG4A0KADiG5AyC4AyC5A3whugMgugOnITJBgIDAAiEzQQMhNCAyIDR0ITUgMyA1aiE2IDYpAw",
+			"AhuwMgBSC7AzcDOCAFKQMQIbwDQgghvQMgvAMgvQOIIb4DIAUgvgM3AxAgBSkDKCG/A0L/ASHAAyC/AyDAA",
+			"4MhwQNCgAwhwgMgwQMgwgN8IcMDIMMDpyE3QYCAwAIhOEEDITkgNyA5dCE6IDggOmohOyA7KQMAIcQDIAUp",
+			"A1AhxQMgxQMgxAOFIcYDIAUgxgM3A1AgBSkDKCHHA0IIIcgDIMcDIMgDiCHJAyAFIMkDNwMoIAUpAyAhygN",
+			"C/wEhywMgygMgywODIcwDQoAMIc0DIMwDIM0DfCHOAyDOA6chPEGAgMACIT1BAyE+IDwgPnQhPyA9ID9qIU",
+			"AgQCkDACHPAyAFKQNIIdADINADIM8DhSHRAyAFINEDNwNIIAUpAyAh0gNCCCHTAyDSAyDTA4gh1AMgBSDUA",
+			"zcDICAFKQMYIdUDQv8BIdYDINUDINYDgyHXA0KADCHYAyDXAyDYA3wh2QMg2QOnIUFBgIDAAiFCQQMhQyBB",
+			"IEN0IUQgQiBEaiFFIEUpAwAh2gMgBSkDQCHbAyDbAyDaA4Uh3AMgBSDcAzcDQCAFKQMYId0DQggh3gMg3QM",
+			"g3gOIId8DIAUg3wM3AxggBSkDECHgA0L/ASHhAyDgAyDhA4Mh4gNCgAwh4wMg4gMg4wN8IeQDIOQDpyFGQY",
+			"CAwAIhR0EDIUggRiBIdCFJIEcgSWohSiBKKQMAIeUDIAUpAzgh5gMg5gMg5QOFIecDIAUg5wM3AzggBSkDE",
+			"CHoA0IIIekDIOgDIOkDiCHqAyAFIOoDNwMQIAUpAygh6wNC/wEh7AMg6wMg7AODIe0DQoAKIe4DIO0DIO4D",
+			"fCHvAyDvA6chS0GAgMACIUxBAyFNIEsgTXQhTiBMIE5qIU8gTykDACHwAyAFKQNQIfEDIPEDIPADhSHyAyA",
+			"FIPIDNwNQIAUpAygh8wNCCCH0AyDzAyD0A4gh9QMgBSD1AzcDKCAFKQMgIfYDQv8BIfcDIPYDIPcDgyH4A0",
+			"KACiH5AyD4AyD5A3wh+gMg+gOnIVBBgIDAAiFRQQMhUiBQIFJ0IVMgUSBTaiFUIFQpAwAh+wMgBSkDSCH8A",
+			"yD8AyD7A4Uh/QMgBSD9AzcDSCAFKQMgIf4DQggh/wMg/gMg/wOIIYAEIAUggAQ3AyAgBSkDGCGBBEL/ASGC",
+			"BCCBBCCCBIMhgwRCgAohhAQggwQghAR8IYUEIIUEpyFVQYCAwAIhVkEDIVcgVSBXdCFYIFYgWGohWSBZKQM",
+			"AIYYEIAUpA0AhhwQghwQghgSFIYgEIAUgiAQ3A0AgBSkDGCGJBEIIIYoEIIkEIIoEiCGLBCAFIIsENwMYIA",
+			"UpAxAhjARC/wEhjQQgjAQgjQSDIY4EQoAKIY8EII4EII8EfCGQBCCQBKchWkGAgMACIVtBAyFcIFogXHQhX",
+			"SBbIF1qIV4gXikDACGRBCAFKQM4IZIEIJIEIJEEhSGTBCAFIJMENwM4IAUpAxAhlARCCCGVBCCUBCCVBIgh",
+			"lgQgBSCWBDcDECAFKQMoIZcEQv8BIZgEIJcEIJgEgyGZBEKACCGaBCCZBCCaBHwhmwQgmwSnIV9BgIDAAiF",
+			"gQQMhYSBfIGF0IWIgYCBiaiFjIGMpAwAhnAQgBSkDUCGdBCCdBCCcBIUhngQgBSCeBDcDUCAFKQMoIZ8EQg",
+			"ghoAQgnwQgoASIIaEEIAUgoQQ3AyggBSkDICGiBEL/ASGjBCCiBCCjBIMhpARCgAghpQQgpAQgpQR8IaYEI",
+			"KYEpyFkQYCAwAIhZUEDIWYgZCBmdCFnIGUgZ2ohaCBoKQMAIacEIAUpA0ghqAQgqAQgpwSFIakEIAUgqQQ3",
+			"A0ggBSkDICGqBEIIIasEIKoEIKsEiCGsBCAFIKwENwMgIAUpAxghrQRC/wEhrgQgrQQgrgSDIa8EQoAIIbA",
+			"EIK8EILAEfCGxBCCxBKchaUGAgMACIWpBAyFrIGkga3QhbCBqIGxqIW0gbSkDACGyBCAFKQNAIbMEILMEIL",
+			"IEhSG0BCAFILQENwNAIAUpAxghtQRCCCG2BCC1BCC2BIghtwQgBSC3BDcDGCAFKQMQIbgEQv8BIbkEILgEI",
+			"LkEgyG6BEKACCG7BCC6BCC7BHwhvAQgvASnIW5BgIDAAiFvQQMhcCBuIHB0IXEgbyBxaiFyIHIpAwAhvQQg",
+			"BSkDOCG+BCC+BCC9BIUhvwQgBSC/BDcDOCAFKQMQIcAEQgghwQQgwAQgwQSIIcIEIAUgwgQ3AxAgBSkDKCH",
+			"DBEL/ASHEBCDDBCDEBIMhxQRCgAYhxgQgxQQgxgR8IccEIMcEpyFzQYCAwAIhdEEDIXUgcyB1dCF2IHQgdm",
+			"ohdyB3KQMAIcgEIAUpA1AhyQQgyQQgyASFIcoEIAUgygQ3A1AgBSkDKCHLBEIIIcwEIMsEIMwEiCHNBCAFI",
+			"M0ENwMoIAUpAyAhzgRC/wEhzwQgzgQgzwSDIdAEQoAGIdEEINAEINEEfCHSBCDSBKcheEGAgMACIXlBAyF6",
+			"IHggenQheyB5IHtqIXwgfCkDACHTBCAFKQNIIdQEINQEINMEhSHVBCAFINUENwNIIAUpAyAh1gRCCCHXBCD",
+			"WBCDXBIgh2AQgBSDYBDcDICAFKQMYIdkEQv8BIdoEINkEINoEgyHbBEKABiHcBCDbBCDcBHwh3QQg3QSnIX",
+			"1BgIDAAiF+QQMhfyB9IH90IYABIH4ggAFqIYEBIIEBKQMAId4EIAUpA0Ah3wQg3wQg3gSFIeAEIAUg4AQ3A",
+			"0AgBSkDGCHhBEIIIeIEIOEEIOIEiCHjBCAFIOMENwMYIAUpAxAh5ARC/wEh5QQg5AQg5QSDIeYEQoAGIecE",
+			"IOYEIOcEfCHoBCDoBKchggFBgIDAAiGDAUEDIYQBIIIBIIQBdCGFASCDASCFAWohhgEghgEpAwAh6QQgBSk",
+			"DOCHqBCDqBCDpBIUh6wQgBSDrBDcDOCAFKQMQIewEQggh7QQg7AQg7QSIIe4EIAUg7gQ3AxAgBSkDKCHvBE",
+			"L/ASHwBCDvBCDwBIMh8QRCgAQh8gQg8QQg8gR8IfMEIPMEpyGHAUGAgMACIYgBQQMhiQEghwEgiQF0IYoBI",
+			"IgBIIoBaiGLASCLASkDACH0BCAFKQNQIfUEIPUEIPQEhSH2BCAFIPYENwNQIAUpAygh9wRCCCH4BCD3BCD4",
+			"BIgh+QQgBSD5BDcDKCAFKQMgIfoEQv8BIfsEIPoEIPsEgyH8BEKABCH9BCD8BCD9BHwh/gQg/gSnIYwBQYC",
+			"AwAIhjQFBAyGOASCMASCOAXQhjwEgjQEgjwFqIZABIJABKQMAIf8EIAUpA0ghgAUggAUg/wSFIYEFIAUggQ",
+			"U3A0ggBSkDICGCBUIIIYMFIIIFIIMFiCGEBSAFIIQFNwMgIAUpAxghhQVC/wEhhgUghQUghgWDIYcFQoAEI",
+			"YgFIIcFIIgFfCGJBSCJBachkQFBgIDAAiGSAUEDIZMBIJEBIJMBdCGUASCSASCUAWohlQEglQEpAwAhigUg",
+			"BSkDQCGLBSCLBSCKBYUhjAUgBSCMBTcDQCAFKQMYIY0FQgghjgUgjQUgjgWIIY8FIAUgjwU3AxggBSkDECG",
+			"QBUL/ASGRBSCQBSCRBYMhkgVCgAQhkwUgkgUgkwV8IZQFIJQFpyGWAUGAgMACIZcBQQMhmAEglgEgmAF0IZ",
+			"kBIJcBIJkBaiGaASCaASkDACGVBSAFKQM4IZYFIJYFIJUFhSGXBSAFIJcFNwM4IAUpAxAhmAVCCCGZBSCYB",
+			"SCZBYghmgUgBSCaBTcDECAFKQMoIZsFQv8BIZwFIJsFIJwFgyGdBUKAAiGeBSCdBSCeBXwhnwUgnwWnIZsB",
+			"QYCAwAIhnAFBAyGdASCbASCdAXQhngEgnAEgngFqIZ8BIJ8BKQMAIaAFIAUpA1AhoQUgoQUgoAWFIaIFIAU",
+			"gogU3A1AgBSkDKCGjBUIIIaQFIKMFIKQFiCGlBSAFIKUFNwMoIAUpAyAhpgVC/wEhpwUgpgUgpwWDIagFQo",
+			"ACIakFIKgFIKkFfCGqBSCqBachoAFBgIDAAiGhAUEDIaIBIKABIKIBdCGjASChASCjAWohpAEgpAEpAwAhq",
+			"wUgBSkDSCGsBSCsBSCrBYUhrQUgBSCtBTcDSCAFKQMgIa4FQgghrwUgrgUgrwWIIbAFIAUgsAU3AyAgBSkD",
+			"GCGxBUL/ASGyBSCxBSCyBYMhswVCgAIhtAUgswUgtAV8IbUFILUFpyGlAUGAgMACIaYBQQMhpwEgpQEgpwF",
+			"0IagBIKYBIKgBaiGpASCpASkDACG2BSAFKQNAIbcFILcFILYFhSG4BSAFILgFNwNAIAUpAxghuQVCCCG6BS",
+			"C5BSC6BYghuwUgBSC7BTcDGCAFKQMQIbwFQv8BIb0FILwFIL0FgyG+BUKAAiG/BSC+BSC/BXwhwAUgwAWnI",
+			"aoBQYCAwAIhqwFBAyGsASCqASCsAXQhrQEgqwEgrQFqIa4BIK4BKQMAIcEFIAUpAzghwgUgwgUgwQWFIcMF",
+			"IAUgwwU3AzggBSkDECHEBUIIIcUFIMQFIMUFiCHGBSAFIMYFNwMQIAUpAyghxwVC/wEhyAUgxwUgyAWDIck",
+			"FQgAhygUgyQUgygV8IcsFIMsFpyGvAUGAgMACIbABQQMhsQEgrwEgsQF0IbIBILABILIBaiGzASCzASkDAC",
+			"HMBSAFKQNQIc0FIM0FIMwFhSHOBSAFIM4FNwNQIAUpAyAhzwVC/wEh0AUgzwUg0AWDIdEFQgAh0gUg0QUg0",
+			"gV8IdMFINMFpyG0AUGAgMACIbUBQQMhtgEgtAEgtgF0IbcBILUBILcBaiG4ASC4ASkDACHUBSAFKQNIIdUF",
+			"INUFINQFhSHWBSAFINYFNwNIIAUpAxgh1wVC/wEh2AUg1wUg2AWDIdkFQgAh2gUg2QUg2gV8IdsFINsFpyG",
+			"5AUGAgMACIboBQQMhuwEguQEguwF0IbwBILoBILwBaiG9ASC9ASkDACHcBSAFKQNAId0FIN0FINwFhSHeBS",
+			"AFIN4FNwNAIAUpAxAh3wVC/wEh4AUg3wUg4AWDIeEFQgAh4gUg4QUg4gV8IeMFIOMFpyG+AUGAgMACIb8BQ",
+			"QMhwAEgvgEgwAF0IcEBIL8BIMEBaiHCASDCASkDACHkBSAFKQM4IeUFIOUFIOQFhSHmBSAFIOYFNwM4IAUp",
+			"A2Ah5wVCICHoBSDnBSDoBXwh6QUgBSDpBTcDYCAFKAJYIcMBQSAhxAEgwwEgxAFqIcUBIAUgxQE2AlgMAAs",
+			"AC0IAIeoFIAUg6gU3A2ggBSgCWCHGASDGASkDACHrBSAFKQNQIewFIOsFIOwFhSHtBSAFKQNoIe4FIO4FIO",
+			"0FhSHvBSAFIO8FNwNoIAUpA2gh8AVCCCHxBSDwBSDxBYgh8gUgBSkDaCHzBUL/ASH0BSDzBSD0BYMh9QUg9",
+			"QWnIccBQYCAwQIhyAFBAyHJASDHASDJAXQhygEgyAEgygFqIcsBIMsBKQMAIfYFIPIFIPYFhSH3BSAFIPcF",
+			"NwNoIAUpA2gh+AVCCCH5BSD4BSD5BYgh+gUgBSkDaCH7BUL/ASH8BSD7BSD8BYMh/QUg/QWnIcwBQYCAwQI",
+			"hzQFBAyHOASDMASDOAXQhzwEgzQEgzwFqIdABINABKQMAIf4FIPoFIP4FhSH/BSAFIP8FNwNoIAUpA2ghgA",
+			"ZCCCGBBiCABiCBBoghggYgBSkDaCGDBkL/ASGEBiCDBiCEBoMhhQYghQanIdEBQYCAwQIh0gFBAyHTASDRA",
+			"SDTAXQh1AEg0gEg1AFqIdUBINUBKQMAIYYGIIIGIIYGhSGHBiAFIIcGNwNoIAUpA2ghiAZCCCGJBiCIBiCJ",
+			"BoghigYgBSkDaCGLBkL/ASGMBiCLBiCMBoMhjQYgjQanIdYBQYCAwQIh1wFBAyHYASDWASDYAXQh2QEg1wE",
+			"g2QFqIdoBINoBKQMAIY4GIIoGII4GhSGPBiAFII8GNwNoIAUpA2ghkAZCCCGRBiCQBiCRBoghkgYgBSkDaC",
+			"GTBkL/ASGUBiCTBiCUBoMhlQYglQanIdsBQYCAwQIh3AFBAyHdASDbASDdAXQh3gEg3AEg3gFqId8BIN8BK",
+			"QMAIZYGIJIGIJYGhSGXBiAFIJcGNwNoIAUpA2ghmAZCCCGZBiCYBiCZBoghmgYgBSkDaCGbBkL/ASGcBiCb",
+			"BiCcBoMhnQYgnQanIeABQYCAwQIh4QFBAyHiASDgASDiAXQh4wEg4QEg4wFqIeQBIOQBKQMAIZ4GIJoGIJ4",
+			"GhSGfBiAFIJ8GNwNoIAUpA2ghoAZCCCGhBiCgBiChBoghogYgBSkDaCGjBkL/ASGkBiCjBiCkBoMhpQYgpQ",
+			"anIeUBQYCAwQIh5gFBAyHnASDlASDnAXQh6AEg5gEg6AFqIekBIOkBKQMAIaYGIKIGIKYGhSGnBiAFIKcGN",
+			"wNoIAUpA2ghqAZCCCGpBiCoBiCpBoghqgYgBSkDaCGrBkL/ASGsBiCrBiCsBoMhrQYgrQanIeoBQYCAwQIh",
+			"6wFBAyHsASDqASDsAXQh7QEg6wEg7QFqIe4BIO4BKQMAIa4GIKoGIK4GhSGvBiAFIK8GNwNoIAUoAlgh7wE",
+			"g7wEpAwghsAYgBSkDSCGxBiCwBiCxBoUhsgYgBSkDaCGzBiCzBiCyBoUhtAYgBSC0BjcDaCAFKQNoIbUGQg",
+			"ghtgYgtQYgtgaIIbcGIAUpA2ghuAZC/wEhuQYguAYguQaDIboGILoGpyHwAUGAgMECIfEBQQMh8gEg8AEg8",
+			"gF0IfMBIPEBIPMBaiH0ASD0ASkDACG7BiC3BiC7BoUhvAYgBSC8BjcDaCAFKQNoIb0GQgghvgYgvQYgvgaI",
+			"Ib8GIAUpA2ghwAZC/wEhwQYgwAYgwQaDIcIGIMIGpyH1AUGAgMECIfYBQQMh9wEg9QEg9wF0IfgBIPYBIPg",
+			"BaiH5ASD5ASkDACHDBiC/BiDDBoUhxAYgBSDEBjcDaCAFKQNoIcUGQgghxgYgxQYgxgaIIccGIAUpA2ghyA",
+			"ZC/wEhyQYgyAYgyQaDIcoGIMoGpyH6AUGAgMECIfsBQQMh/AEg+gEg/AF0If0BIPsBIP0BaiH+ASD+ASkDA",
+			"CHLBiDHBiDLBoUhzAYgBSDMBjcDaCAFKQNoIc0GQgghzgYgzQYgzgaIIc8GIAUpA2gh0AZC/wEh0QYg0AYg",
+			"0QaDIdIGINIGpyH/AUGAgMECIYACQQMhgQIg/wEggQJ0IYICIIACIIICaiGDAiCDAikDACHTBiDPBiDTBoU",
+			"h1AYgBSDUBjcDaCAFKQNoIdUGQggh1gYg1QYg1gaIIdcGIAUpA2gh2AZC/wEh2QYg2AYg2QaDIdoGINoGpy",
+			"GEAkGAgMECIYUCQQMhhgIghAIghgJ0IYcCIIUCIIcCaiGIAiCIAikDACHbBiDXBiDbBoUh3AYgBSDcBjcDa",
+			"CAFKQNoId0GQggh3gYg3QYg3gaIId8GIAUpA2gh4AZC/wEh4QYg4AYg4QaDIeIGIOIGpyGJAkGAgMECIYoC",
+			"QQMhiwIgiQIgiwJ0IYwCIIoCIIwCaiGNAiCNAikDACHjBiDfBiDjBoUh5AYgBSDkBjcDaCAFKQNoIeUGQgg",
+			"h5gYg5QYg5gaIIecGIAUpA2gh6AZC/wEh6QYg6AYg6QaDIeoGIOoGpyGOAkGAgMECIY8CQQMhkAIgjgIgkA",
+			"J0IZECII8CIJECaiGSAiCSAikDACHrBiDnBiDrBoUh7AYgBSDsBjcDaCAFKQNoIe0GQggh7gYg7QYg7gaII",
+			"e8GIAUpA2gh8AZC/wEh8QYg8AYg8QaDIfIGIPIGpyGTAkGAgMECIZQCQQMhlQIgkwIglQJ0IZYCIJQCIJYC",
+			"aiGXAiCXAikDACHzBiDvBiDzBoUh9AYgBSD0BjcDaCAFKAJYIZgCIJgCKQMQIfUGIAUpA0Ah9gYg9QYg9ga",
+			"FIfcGIAUpA2gh+AYg+AYg9waFIfkGIAUg+QY3A2ggBSkDaCH6BkIIIfsGIPoGIPsGiCH8BiAFKQNoIf0GQv",
+			"8BIf4GIP0GIP4GgyH/BiD/BqchmQJBgIDBAiGaAkEDIZsCIJkCIJsCdCGcAiCaAiCcAmohnQIgnQIpAwAhg",
+			"Acg/AYggAeFIYEHIAUggQc3A2ggBSkDaCGCB0IIIYMHIIIHIIMHiCGEByAFKQNoIYUHQv8BIYYHIIUHIIYH",
+			"gyGHByCHB6chngJBgIDBAiGfAkEDIaACIJ4CIKACdCGhAiCfAiChAmohogIgogIpAwAhiAcghAcgiAeFIYk",
+			"HIAUgiQc3A2ggBSkDaCGKB0IIIYsHIIoHIIsHiCGMByAFKQNoIY0HQv8BIY4HII0HII4HgyGPByCPB6chow",
+			"JBgIDBAiGkAkEDIaUCIKMCIKUCdCGmAiCkAiCmAmohpwIgpwIpAwAhkAcgjAcgkAeFIZEHIAUgkQc3A2ggB",
+			"SkDaCGSB0IIIZMHIJIHIJMHiCGUByAFKQNoIZUHQv8BIZYHIJUHIJYHgyGXByCXB6chqAJBgIDBAiGpAkED",
+			"IaoCIKgCIKoCdCGrAiCpAiCrAmohrAIgrAIpAwAhmAcglAcgmAeFIZkHIAUgmQc3A2ggBSkDaCGaB0IIIZs",
+			"HIJoHIJsHiCGcByAFKQNoIZ0HQv8BIZ4HIJ0HIJ4HgyGfByCfB6chrQJBgIDBAiGuAkEDIa8CIK0CIK8CdC",
+			"GwAiCuAiCwAmohsQIgsQIpAwAhoAcgnAcgoAeFIaEHIAUgoQc3A2ggBSkDaCGiB0IIIaMHIKIHIKMHiCGkB",
+			"yAFKQNoIaUHQv8BIaYHIKUHIKYHgyGnByCnB6chsgJBgIDBAiGzAkEDIbQCILICILQCdCG1AiCzAiC1Amoh",
+			"tgIgtgIpAwAhqAcgpAcgqAeFIakHIAUgqQc3A2ggBSkDaCGqB0IIIasHIKoHIKsHiCGsByAFKQNoIa0HQv8",
+			"BIa4HIK0HIK4HgyGvByCvB6chtwJBgIDBAiG4AkEDIbkCILcCILkCdCG6AiC4AiC6AmohuwIguwIpAwAhsA",
+			"cgrAcgsAeFIbEHIAUgsQc3A2ggBSkDaCGyB0IIIbMHILIHILMHiCG0ByAFKQNoIbUHQv8BIbYHILUHILYHg",
+			"yG3ByC3B6chvAJBgIDBAiG9AkEDIb4CILwCIL4CdCG/AiC9AiC/AmohwAIgwAIpAwAhuAcgtAcguAeFIbkH",
+			"IAUguQc3A2ggBSgCWCHBAiDBAikDGCG6ByAFKQM4IbsHILoHILsHhSG8ByAFKQNoIb0HIL0HILwHhSG+ByA",
+			"FIL4HNwNoIAUpA2ghvwdCCCHAByC/ByDAB4ghwQcgBSkDaCHCB0L/ASHDByDCByDDB4MhxAcgxAenIcICQY",
+			"CAwQIhwwJBAyHEAiDCAiDEAnQhxQIgwwIgxQJqIcYCIMYCKQMAIcUHIMEHIMUHhSHGByAFIMYHNwNoIAUpA",
+			"2ghxwdCCCHIByDHByDIB4ghyQcgBSkDaCHKB0L/ASHLByDKByDLB4MhzAcgzAenIccCQYCAwQIhyAJBAyHJ",
+			"AiDHAiDJAnQhygIgyAIgygJqIcsCIMsCKQMAIc0HIMkHIM0HhSHOByAFIM4HNwNoIAUpA2ghzwdCCCHQByD",
+			"PByDQB4gh0QcgBSkDaCHSB0L/ASHTByDSByDTB4Mh1Acg1AenIcwCQYCAwQIhzQJBAyHOAiDMAiDOAnQhzw",
+			"IgzQIgzwJqIdACINACKQMAIdUHINEHINUHhSHWByAFINYHNwNoIAUpA2gh1wdCCCHYByDXByDYB4gh2QcgB",
+			"SkDaCHaB0L/ASHbByDaByDbB4Mh3Acg3AenIdECQYCAwQIh0gJBAyHTAiDRAiDTAnQh1AIg0gIg1AJqIdUC",
+			"INUCKQMAId0HINkHIN0HhSHeByAFIN4HNwNoIAUpA2gh3wdCCCHgByDfByDgB4gh4QcgBSkDaCHiB0L/ASH",
+			"jByDiByDjB4Mh5Acg5AenIdYCQYCAwQIh1wJBAyHYAiDWAiDYAnQh2QIg1wIg2QJqIdoCINoCKQMAIeUHIO",
+			"EHIOUHhSHmByAFIOYHNwNoIAUpA2gh5wdCCCHoByDnByDoB4gh6QcgBSkDaCHqB0L/ASHrByDqByDrB4Mh7",
+			"Acg7AenIdsCQYCAwQIh3AJBAyHdAiDbAiDdAnQh3gIg3AIg3gJqId8CIN8CKQMAIe0HIOkHIO0HhSHuByAF",
+			"IO4HNwNoIAUpA2gh7wdCCCHwByDvByDwB4gh8QcgBSkDaCHyB0L/ASHzByDyByDzB4Mh9Acg9AenIeACQYC",
+			"AwQIh4QJBAyHiAiDgAiDiAnQh4wIg4QIg4wJqIeQCIOQCKQMAIfUHIPEHIPUHhSH2ByAFIPYHNwNoIAUpA2",
+			"gh9wdCCCH4ByD3ByD4B4gh+QcgBSkDaCH6B0L/ASH7ByD6ByD7B4Mh/Acg/AenIeUCQYCAwQIh5gJBAyHnA",
+			"iDlAiDnAnQh6AIg5gIg6AJqIekCIOkCKQMAIf0HIPkHIP0HhSH+ByAFIP4HNwNoIAUpA2Ah/wdCICGACCD/",
+			"ByCACHwhgQggBSCBCDcDYAtCACGCCCAFIIIINwMIAkADQCAFKQMIIYMIIAUoAnQh6gIg6gIh6wIg6wKsIYQ",
+			"IIIMIIYUIIIQIIYYIIIUIIIYIVCHsAkEBIe0CIOwCIO0CcSHuAiDuAkUNASAFKQNoIYcIQgghiAgghwggiA",
+			"iIIYkIIAUpA2ghigggBSgCcCHvAiAFKQNgIYsIIIsIpyHwAiDvAiDwAmoh8QIg8QItAAAh8gJB/wEh8wIg8",
+			"gIg8wJxIfQCIPQCrSGMCCCKCCCMCIUhjQhC/wEhjgggjQggjgiDIY8III8IpyH1AkGAgMECIfYCQQMh9wIg",
+			"9QIg9wJ0IfgCIPYCIPgCaiH5AiD5AikDACGQCCCJCCCQCIUhkQggBSCRCDcDaCAFKQMIIZIIQgEhkwggkgg",
+			"gkwh8IZQIIAUglAg3AwggBSkDYCGVCEIBIZYIIJUIIJYIfCGXCCAFIJcINwNgDAALAAsgBSkDaCGYCEJ/IZ",
+			"kIIJgIIJkIhSGaCCAGIJoINwMADwudAgIcfwV+IwAhBEEgIQUgBCAFayEGIAYkACAGIAA2AhwgBiABNgIYI",
+			"AYgAjYCFCAGIAM2AhAgBigCHCEHIAYoAhghCCAGKAIUIQkgByAIIAkQBiAGKAIQIQogBiAKNgIMQQAhCyAG",
+			"IAs2AggCQANAIAYoAgghDEEIIQ0gDCEOIA0hDyAOIA9JIRBBASERIBAgEXEhEiASRQ0BIAcpAwAhICAGKAI",
+			"IIRNBAyEUIBMgFHQhFSAVIRYgFq0hISAgICGIISJC/wEhIyAiICODISQgJKchFyAGKAIMIRggBigCCCEZIB",
+			"ggGWohGiAaIBc6AAAgBigCCCEbQQEhHCAbIBxqIR0gBiAdNgIIDAALAAtBICEeIAYgHmohHyAfJAAPC14BD",
+			"H8jACEBQRAhAiABIAJrIQMgAyQAIAMgADYCDCADKAIMIQRBACEFIAQhBiAFIQcgBiAHRiEIQQEhCSAIIAlx",
+			"IQoCQCAKDQAgBBAUC0EQIQsgAyALaiEMIAwkAA8LNQIEfwF+QRAhACAAEBMhAUIAIQQgASAENwMAQQghAiA",
+			"BIAJqIQMgAyAENwMAIAEQChogAQ8LPAIEfwJ+IwAhAUEQIQIgASACayEDIAMgADYCDCADKAIMIQRCACEFIA",
+			"QgBTcDAEIAIQYgBCAGNwMIIAQPC1kBCH8jACEDQRAhBCADIARrIQUgBSQAIAUgADYCDCAFIAE2AgggBSACN",
+			"gIEIAUoAgwhBiAFKAIIIQcgBSgCBCEIIAYgByAIEAZBECEJIAUgCWohCiAKJAAPC2kBCX8jACEEQRAhBSAE",
+			"IAVrIQYgBiQAIAYgADYCDCAGIAE2AgggBiACNgIEIAYgAzYCACAGKAIMIQcgBigCCCEIIAYoAgQhCSAGKAI",
+			"AIQogByAIIAkgChAHQRAhCyAGIAtqIQwgDCQADwteAQx/IwAhAUEQIQIgASACayEDIAMkACADIAA2AgwgAy",
+			"gCDCEEQQAhBSAEIQYgBSEHIAYgB0YhCEEBIQkgCCAJcSEKAkAgCg0AIAQQFAtBECELIAMgC2ohDCAMJAAPC",
+			"wcAPwBBEHQLBwBBlJLBAgtUAQJ/QQAoAoCQwQIiASAAQQdqQXhxIgJqIQACQAJAIAJFDQAgACABTQ0BCwJA",
+			"IAAQDk0NACAAEAFFDQELQQAgADYCgJDBAiABDwsQD0EwNgIAQX8LviwBC38jAEEQayIBJAACQAJAAkACQAJ",
+			"AAkACQAJAAkACQAJAAkACQAJAAkAgAEH0AUsNAAJAQQAoApiSwQIiAkEQIABBC2pBeHEgAEELSRsiA0EDdi",
+			"IEdiIAQQNxRQ0AAkACQCAAQX9zQQFxIARqIgVBA3QiBEHAksECaiIAIARByJLBAmooAgAiBCgCCCIDRw0AQ",
+			"QAgAkF+IAV3cTYCmJLBAgwBCyADIAA2AgwgACADNgIICyAEQQhqIQAgBCAFQQN0IgVBA3I2AgQgBCAFaiIE",
+			"IAQoAgRBAXI2AgQMDwsgA0EAKAKgksECIgZNDQECQCAARQ0AAkACQCAAIAR0QQIgBHQiAEEAIABrcnEiAEE",
+			"AIABrcWgiBEEDdCIAQcCSwQJqIgUgAEHIksECaigCACIAKAIIIgdHDQBBACACQX4gBHdxIgI2ApiSwQIMAQ",
+			"sgByAFNgIMIAUgBzYCCAsgACADQQNyNgIEIAAgA2oiByAEQQN0IgQgA2siBUEBcjYCBCAAIARqIAU2AgACQ",
+			"CAGRQ0AIAZBeHFBwJLBAmohA0EAKAKsksECIQQCQAJAIAJBASAGQQN2dCIIcQ0AQQAgAiAIcjYCmJLBAiAD",
+			"IQgMAQsgAygCCCEICyADIAQ2AgggCCAENgIMIAQgAzYCDCAEIAg2AggLIABBCGohAEEAIAc2AqySwQJBACA",
+			"FNgKgksECDA8LQQAoApySwQIiCUUNASAJQQAgCWtxaEECdEHIlMECaigCACIHKAIEQXhxIANrIQQgByEFAk",
+			"ADQAJAIAUoAhAiAA0AIAVBFGooAgAiAEUNAgsgACgCBEF4cSADayIFIAQgBSAESSIFGyEEIAAgByAFGyEHI",
+			"AAhBQwACwALIAcoAhghCgJAIAcoAgwiCCAHRg0AIAcoAggiAEEAKAKoksECSRogACAINgIMIAggADYCCAwO",
+			"CwJAIAdBFGoiBSgCACIADQAgBygCECIARQ0DIAdBEGohBQsDQCAFIQsgACIIQRRqIgUoAgAiAA0AIAhBEGo",
+			"hBSAIKAIQIgANAAsgC0EANgIADA0LQX8hAyAAQb9/Sw0AIABBC2oiAEF4cSEDQQAoApySwQIiBkUNAEEAIQ",
+			"sCQCADQYACSQ0AQR8hCyADQf///wdLDQAgA0EmIABBCHZnIgBrdkEBcSAAQQF0a0E+aiELC0EAIANrIQQCQ",
+			"AJAAkACQCALQQJ0QciUwQJqKAIAIgUNAEEAIQBBACEIDAELQQAhACADQQBBGSALQQF2ayALQR9GG3QhB0EA",
+			"IQgDQAJAIAUoAgRBeHEgA2siAiAETw0AIAIhBCAFIQggAg0AQQAhBCAFIQggBSEADAMLIAAgBUEUaigCACI",
+			"CIAIgBSAHQR12QQRxakEQaigCACIFRhsgACACGyEAIAdBAXQhByAFDQALCwJAIAAgCHINAEEAIQhBAiALdC",
+			"IAQQAgAGtyIAZxIgBFDQMgAEEAIABrcWhBAnRByJTBAmooAgAhAAsgAEUNAQsDQCAAKAIEQXhxIANrIgIgB",
+			"EkhBwJAIAAoAhAiBQ0AIABBFGooAgAhBQsgAiAEIAcbIQQgACAIIAcbIQggBSEAIAUNAAsLIAhFDQAgBEEA",
+			"KAKgksECIANrTw0AIAgoAhghCwJAIAgoAgwiByAIRg0AIAgoAggiAEEAKAKoksECSRogACAHNgIMIAcgADY",
+			"CCAwMCwJAIAhBFGoiBSgCACIADQAgCCgCECIARQ0DIAhBEGohBQsDQCAFIQIgACIHQRRqIgUoAgAiAA0AIA",
+			"dBEGohBSAHKAIQIgANAAsgAkEANgIADAsLAkBBACgCoJLBAiIAIANJDQBBACgCrJLBAiEEAkACQCAAIANrI",
+			"gVBEEkNAEEAIAU2AqCSwQJBACAEIANqIgc2AqySwQIgByAFQQFyNgIEIAQgAGogBTYCACAEIANBA3I2AgQM",
+			"AQtBAEEANgKsksECQQBBADYCoJLBAiAEIABBA3I2AgQgBCAAaiIAIAAoAgRBAXI2AgQLIARBCGohAAwNCwJ",
+			"AQQAoAqSSwQIiByADTQ0AQQAgByADayIENgKkksECQQBBACgCsJLBAiIAIANqIgU2ArCSwQIgBSAEQQFyNg",
+			"IEIAAgA0EDcjYCBCAAQQhqIQAMDQsCQAJAQQAoAvCVwQJFDQBBACgC+JXBAiEEDAELQQBCfzcC/JXBAkEAQ",
+			"oCggICAgAQ3AvSVwQJBACABQQxqQXBxQdiq1aoFczYC8JXBAkEAQQA2AoSWwQJBAEEANgLUlcECQYAgIQQL",
+			"QQAhACAEIANBL2oiBmoiAkEAIARrIgtxIgggA00NDEEAIQACQEEAKALQlcECIgRFDQBBACgCyJXBAiIFIAh",
+			"qIgkgBU0NDSAJIARLDQ0LAkACQEEALQDUlcECQQRxDQACQAJAAkACQAJAQQAoArCSwQIiBEUNAEHYlcECIQ",
+			"ADQAJAIAAoAgAiBSAESw0AIAUgACgCBGogBEsNAwsgACgCCCIADQALC0EAEBAiB0F/Rg0DIAghAgJAQQAoA",
+			"vSVwQIiAEF/aiIEIAdxRQ0AIAggB2sgBCAHakEAIABrcWohAgsgAiADTQ0DAkBBACgC0JXBAiIARQ0AQQAo",
+			"AsiVwQIiBCACaiIFIARNDQQgBSAASw0ECyACEBAiACAHRw0BDAULIAIgB2sgC3EiAhAQIgcgACgCACAAKAI",
+			"EakYNASAHIQALIABBf0YNAQJAIANBMGogAksNACAAIQcMBAsgBiACa0EAKAL4lcECIgRqQQAgBGtxIgQQEE",
+			"F/Rg0BIAQgAmohAiAAIQcMAwsgB0F/Rw0CC0EAQQAoAtSVwQJBBHI2AtSVwQILIAgQECEHQQAQECEAIAdBf",
+			"0YNBSAAQX9GDQUgByAATw0FIAAgB2siAiADQShqTQ0FC0EAQQAoAsiVwQIgAmoiADYCyJXBAgJAIABBACgC",
+			"zJXBAk0NAEEAIAA2AsyVwQILAkACQEEAKAKwksECIgRFDQBB2JXBAiEAA0AgByAAKAIAIgUgACgCBCIIakY",
+			"NAiAAKAIIIgANAAwFCwALAkACQEEAKAKoksECIgBFDQAgByAATw0BC0EAIAc2AqiSwQILQQAhAEEAIAI2At",
+			"yVwQJBACAHNgLYlcECQQBBfzYCuJLBAkEAQQAoAvCVwQI2ArySwQJBAEEANgLklcECA0AgAEEDdCIEQciSw",
+			"QJqIARBwJLBAmoiBTYCACAEQcySwQJqIAU2AgAgAEEBaiIAQSBHDQALQQAgAkFYaiIAQXggB2tBB3FBACAH",
+			"QQhqQQdxGyIEayIFNgKkksECQQAgByAEaiIENgKwksECIAQgBUEBcjYCBCAHIABqQSg2AgRBAEEAKAKAlsE",
+			"CNgK0ksECDAQLIAAtAAxBCHENAiAEIAVJDQIgBCAHTw0CIAAgCCACajYCBEEAIARBeCAEa0EHcUEAIARBCG",
+			"pBB3EbIgBqIgU2ArCSwQJBAEEAKAKkksECIAJqIgcgAGsiADYCpJLBAiAFIABBAXI2AgQgBCAHakEoNgIEQ",
+			"QBBACgCgJbBAjYCtJLBAgwDC0EAIQgMCgtBACEHDAgLAkAgB0EAKAKoksECIghPDQBBACAHNgKoksECIAch",
+			"CAsgByACaiEFQdiVwQIhAAJAAkACQAJAA0AgACgCACAFRg0BIAAoAggiAA0ADAILAAsgAC0ADEEIcUUNAQt",
+			"B2JXBAiEAA0ACQCAAKAIAIgUgBEsNACAFIAAoAgRqIgUgBEsNAwsgACgCCCEADAALAAsgACAHNgIAIAAgAC",
+			"gCBCACajYCBCAHQXggB2tBB3FBACAHQQhqQQdxG2oiCyADQQNyNgIEIAVBeCAFa0EHcUEAIAVBCGpBB3Eba",
+			"iICIAsgA2oiA2shAAJAIAIgBEcNAEEAIAM2ArCSwQJBAEEAKAKkksECIABqIgA2AqSSwQIgAyAAQQFyNgIE",
+			"DAgLAkAgAkEAKAKsksECRw0AQQAgAzYCrJLBAkEAQQAoAqCSwQIgAGoiADYCoJLBAiADIABBAXI2AgQgAyA",
+			"AaiAANgIADAgLIAIoAgQiBEEDcUEBRw0GIARBeHEhBgJAIARB/wFLDQAgAigCCCIFIARBA3YiCEEDdEHAks",
+			"ECaiIHRhoCQCACKAIMIgQgBUcNAEEAQQAoApiSwQJBfiAId3E2ApiSwQIMBwsgBCAHRhogBSAENgIMIAQgB",
+			"TYCCAwGCyACKAIYIQkCQCACKAIMIgcgAkYNACACKAIIIgQgCEkaIAQgBzYCDCAHIAQ2AggMBQsCQCACQRRq",
+			"IgUoAgAiBA0AIAIoAhAiBEUNBCACQRBqIQULA0AgBSEIIAQiB0EUaiIFKAIAIgQNACAHQRBqIQUgBygCECI",
+			"EDQALIAhBADYCAAwEC0EAIAJBWGoiAEF4IAdrQQdxQQAgB0EIakEHcRsiCGsiCzYCpJLBAkEAIAcgCGoiCD",
+			"YCsJLBAiAIIAtBAXI2AgQgByAAakEoNgIEQQBBACgCgJbBAjYCtJLBAiAEIAVBJyAFa0EHcUEAIAVBWWpBB",
+			"3EbakFRaiIAIAAgBEEQakkbIghBGzYCBCAIQRBqQQApAuCVwQI3AgAgCEEAKQLYlcECNwIIQQAgCEEIajYC",
+			"4JXBAkEAIAI2AtyVwQJBACAHNgLYlcECQQBBADYC5JXBAiAIQRhqIQADQCAAQQc2AgQgAEEIaiEHIABBBGo",
+			"hACAHIAVJDQALIAggBEYNACAIIAgoAgRBfnE2AgQgBCAIIARrIgdBAXI2AgQgCCAHNgIAAkAgB0H/AUsNAC",
+			"AHQXhxQcCSwQJqIQACQAJAQQAoApiSwQIiBUEBIAdBA3Z0IgdxDQBBACAFIAdyNgKYksECIAAhBQwBCyAAK",
+			"AIIIQULIAAgBDYCCCAFIAQ2AgwgBCAANgIMIAQgBTYCCAwBC0EfIQACQCAHQf///wdLDQAgB0EmIAdBCHZn",
+			"IgBrdkEBcSAAQQF0a0E+aiEACyAEIAA2AhwgBEIANwIQIABBAnRByJTBAmohBQJAAkACQEEAKAKcksECIgh",
+			"BASAAdCICcQ0AQQAgCCACcjYCnJLBAiAFIAQ2AgAgBCAFNgIYDAELIAdBAEEZIABBAXZrIABBH0YbdCEAIA",
+			"UoAgAhCANAIAgiBSgCBEF4cSAHRg0CIABBHXYhCCAAQQF0IQAgBSAIQQRxaiICQRBqKAIAIggNAAsgAkEQa",
+			"iAENgIAIAQgBTYCGAsgBCAENgIMIAQgBDYCCAwBCyAFKAIIIgAgBDYCDCAFIAQ2AgggBEEANgIYIAQgBTYC",
+			"DCAEIAA2AggLQQAoAqSSwQIiACADTQ0AQQAgACADayIENgKkksECQQBBACgCsJLBAiIAIANqIgU2ArCSwQI",
+			"gBSAEQQFyNgIEIAAgA0EDcjYCBCAAQQhqIQAMCAsQD0EwNgIAQQAhAAwHC0EAIQcLIAlFDQACQAJAIAIgAi",
+			"gCHCIFQQJ0QciUwQJqIgQoAgBHDQAgBCAHNgIAIAcNAUEAQQAoApySwQJBfiAFd3E2ApySwQIMAgsgCUEQQ",
+			"RQgCSgCECACRhtqIAc2AgAgB0UNAQsgByAJNgIYAkAgAigCECIERQ0AIAcgBDYCECAEIAc2AhgLIAJBFGoo",
+			"AgAiBEUNACAHQRRqIAQ2AgAgBCAHNgIYCyAGIABqIQAgAiAGaiICKAIEIQQLIAIgBEF+cTYCBCADIABBAXI",
+			"2AgQgAyAAaiAANgIAAkAgAEH/AUsNACAAQXhxQcCSwQJqIQQCQAJAQQAoApiSwQIiBUEBIABBA3Z0IgBxDQ",
+			"BBACAFIAByNgKYksECIAQhAAwBCyAEKAIIIQALIAQgAzYCCCAAIAM2AgwgAyAENgIMIAMgADYCCAwBC0EfI",
+			"QQCQCAAQf///wdLDQAgAEEmIABBCHZnIgRrdkEBcSAEQQF0a0E+aiEECyADIAQ2AhwgA0IANwIQIARBAnRB",
+			"yJTBAmohBQJAAkACQEEAKAKcksECIgdBASAEdCIIcQ0AQQAgByAIcjYCnJLBAiAFIAM2AgAgAyAFNgIYDAE",
+			"LIABBAEEZIARBAXZrIARBH0YbdCEEIAUoAgAhBwNAIAciBSgCBEF4cSAARg0CIARBHXYhByAEQQF0IQQgBS",
+			"AHQQRxaiIIQRBqKAIAIgcNAAsgCEEQaiADNgIAIAMgBTYCGAsgAyADNgIMIAMgAzYCCAwBCyAFKAIIIgAgA",
+			"zYCDCAFIAM2AgggA0EANgIYIAMgBTYCDCADIAA2AggLIAtBCGohAAwCCwJAIAtFDQACQAJAIAggCCgCHCIF",
+			"QQJ0QciUwQJqIgAoAgBHDQAgACAHNgIAIAcNAUEAIAZBfiAFd3EiBjYCnJLBAgwCCyALQRBBFCALKAIQIAh",
+			"GG2ogBzYCACAHRQ0BCyAHIAs2AhgCQCAIKAIQIgBFDQAgByAANgIQIAAgBzYCGAsgCEEUaigCACIARQ0AIA",
+			"dBFGogADYCACAAIAc2AhgLAkACQCAEQQ9LDQAgCCAEIANqIgBBA3I2AgQgCCAAaiIAIAAoAgRBAXI2AgQMA",
+			"QsgCCADQQNyNgIEIAggA2oiByAEQQFyNgIEIAcgBGogBDYCAAJAIARB/wFLDQAgBEF4cUHAksECaiEAAkAC",
+			"QEEAKAKYksECIgVBASAEQQN2dCIEcQ0AQQAgBSAEcjYCmJLBAiAAIQQMAQsgACgCCCEECyAAIAc2AgggBCA",
+			"HNgIMIAcgADYCDCAHIAQ2AggMAQtBHyEAAkAgBEH///8HSw0AIARBJiAEQQh2ZyIAa3ZBAXEgAEEBdGtBPm",
+			"ohAAsgByAANgIcIAdCADcCECAAQQJ0QciUwQJqIQUCQAJAAkAgBkEBIAB0IgNxDQBBACAGIANyNgKcksECI",
+			"AUgBzYCACAHIAU2AhgMAQsgBEEAQRkgAEEBdmsgAEEfRht0IQAgBSgCACEDA0AgAyIFKAIEQXhxIARGDQIg",
+			"AEEddiEDIABBAXQhACAFIANBBHFqIgJBEGooAgAiAw0ACyACQRBqIAc2AgAgByAFNgIYCyAHIAc2AgwgByA",
+			"HNgIIDAELIAUoAggiACAHNgIMIAUgBzYCCCAHQQA2AhggByAFNgIMIAcgADYCCAsgCEEIaiEADAELAkAgCk",
+			"UNAAJAAkAgByAHKAIcIgVBAnRByJTBAmoiACgCAEcNACAAIAg2AgAgCA0BQQAgCUF+IAV3cTYCnJLBAgwCC",
+			"yAKQRBBFCAKKAIQIAdGG2ogCDYCACAIRQ0BCyAIIAo2AhgCQCAHKAIQIgBFDQAgCCAANgIQIAAgCDYCGAsg",
+			"B0EUaigCACIARQ0AIAhBFGogADYCACAAIAg2AhgLAkACQCAEQQ9LDQAgByAEIANqIgBBA3I2AgQgByAAaiI",
+			"AIAAoAgRBAXI2AgQMAQsgByADQQNyNgIEIAcgA2oiBSAEQQFyNgIEIAUgBGogBDYCAAJAIAZFDQAgBkF4cU",
+			"HAksECaiEDQQAoAqySwQIhAAJAAkBBASAGQQN2dCIIIAJxDQBBACAIIAJyNgKYksECIAMhCAwBCyADKAIII",
+			"QgLIAMgADYCCCAIIAA2AgwgACADNgIMIAAgCDYCCAtBACAFNgKsksECQQAgBDYCoJLBAgsgB0EIaiEACyAB",
+			"QRBqJAAgAAuDDQEHfwJAIABFDQAgAEF4aiIBIABBfGooAgAiAkF4cSIAaiEDAkAgAkEBcQ0AIAJBA3FFDQE",
+			"gASABKAIAIgJrIgFBACgCqJLBAiIESQ0BIAIgAGohAAJAAkACQCABQQAoAqySwQJGDQACQCACQf8BSw0AIA",
+			"EoAggiBCACQQN2IgVBA3RBwJLBAmoiBkYaAkAgASgCDCICIARHDQBBAEEAKAKYksECQX4gBXdxNgKYksECD",
+			"AULIAIgBkYaIAQgAjYCDCACIAQ2AggMBAsgASgCGCEHAkAgASgCDCIGIAFGDQAgASgCCCICIARJGiACIAY2",
+			"AgwgBiACNgIIDAMLAkAgAUEUaiIEKAIAIgINACABKAIQIgJFDQIgAUEQaiEECwNAIAQhBSACIgZBFGoiBCg",
+			"CACICDQAgBkEQaiEEIAYoAhAiAg0ACyAFQQA2AgAMAgsgAygCBCICQQNxQQNHDQJBACAANgKgksECIAMgAk",
+			"F+cTYCBCABIABBAXI2AgQgAyAANgIADwtBACEGCyAHRQ0AAkACQCABIAEoAhwiBEECdEHIlMECaiICKAIAR",
+			"w0AIAIgBjYCACAGDQFBAEEAKAKcksECQX4gBHdxNgKcksECDAILIAdBEEEUIAcoAhAgAUYbaiAGNgIAIAZF",
+			"DQELIAYgBzYCGAJAIAEoAhAiAkUNACAGIAI2AhAgAiAGNgIYCyABQRRqKAIAIgJFDQAgBkEUaiACNgIAIAI",
+			"gBjYCGAsgASADTw0AIAMoAgQiAkEBcUUNAAJAAkACQAJAAkAgAkECcQ0AAkAgA0EAKAKwksECRw0AQQAgAT",
+			"YCsJLBAkEAQQAoAqSSwQIgAGoiADYCpJLBAiABIABBAXI2AgQgAUEAKAKsksECRw0GQQBBADYCoJLBAkEAQ",
+			"QA2AqySwQIPCwJAIANBACgCrJLBAkcNAEEAIAE2AqySwQJBAEEAKAKgksECIABqIgA2AqCSwQIgASAAQQFy",
+			"NgIEIAEgAGogADYCAA8LIAJBeHEgAGohAAJAIAJB/wFLDQAgAygCCCIEIAJBA3YiBUEDdEHAksECaiIGRho",
+			"CQCADKAIMIgIgBEcNAEEAQQAoApiSwQJBfiAFd3E2ApiSwQIMBQsgAiAGRhogBCACNgIMIAIgBDYCCAwECy",
+			"ADKAIYIQcCQCADKAIMIgYgA0YNACADKAIIIgJBACgCqJLBAkkaIAIgBjYCDCAGIAI2AggMAwsCQCADQRRqI",
+			"gQoAgAiAg0AIAMoAhAiAkUNAiADQRBqIQQLA0AgBCEFIAIiBkEUaiIEKAIAIgINACAGQRBqIQQgBigCECIC",
+			"DQALIAVBADYCAAwCCyADIAJBfnE2AgQgASAAQQFyNgIEIAEgAGogADYCAAwDC0EAIQYLIAdFDQACQAJAIAM",
+			"gAygCHCIEQQJ0QciUwQJqIgIoAgBHDQAgAiAGNgIAIAYNAUEAQQAoApySwQJBfiAEd3E2ApySwQIMAgsgB0",
+			"EQQRQgBygCECADRhtqIAY2AgAgBkUNAQsgBiAHNgIYAkAgAygCECICRQ0AIAYgAjYCECACIAY2AhgLIANBF",
+			"GooAgAiAkUNACAGQRRqIAI2AgAgAiAGNgIYCyABIABBAXI2AgQgASAAaiAANgIAIAFBACgCrJLBAkcNAEEA",
+			"IAA2AqCSwQIPCwJAIABB/wFLDQAgAEF4cUHAksECaiECAkACQEEAKAKYksECIgRBASAAQQN2dCIAcQ0AQQA",
+			"gBCAAcjYCmJLBAiACIQAMAQsgAigCCCEACyACIAE2AgggACABNgIMIAEgAjYCDCABIAA2AggPC0EfIQICQC",
+			"AAQf///wdLDQAgAEEmIABBCHZnIgJrdkEBcSACQQF0a0E+aiECCyABIAI2AhwgAUIANwIQIAJBAnRByJTBA",
+			"mohBAJAAkACQAJAQQAoApySwQIiBkEBIAJ0IgNxDQBBACAGIANyNgKcksECIAQgATYCACABIAQ2AhgMAQsg",
+			"AEEAQRkgAkEBdmsgAkEfRht0IQIgBCgCACEGA0AgBiIEKAIEQXhxIABGDQIgAkEddiEGIAJBAXQhAiAEIAZ",
+			"BBHFqIgNBEGooAgAiBg0ACyADQRBqIAE2AgAgASAENgIYCyABIAE2AgwgASABNgIIDAELIAQoAggiACABNg",
+			"IMIAQgATYCCCABQQA2AhggASAENgIMIAEgADYCCAtBAEEAKAK4ksECQX9qIgFBfyABGzYCuJLBAgsLMQEBf",
+			"yAAQQEgABshAQJAA0AgARARIgANAQJAECIiAEUNACAAEQMADAELCxAAAAsgAAsGACAAEBILBAAgAAsLACAA",
+			"KAI8EBUQAgsVAAJAIAANAEEADwsQDyAANgIAQX8L4wIBB38jAEEgayIDJAAgAyAAKAIcIgQ2AhAgACgCFCE",
+			"FIAMgAjYCHCADIAE2AhggAyAFIARrIgE2AhQgASACaiEGIANBEGohBEECIQcCQAJAAkACQAJAIAAoAjwgA0",
+			"EQakECIANBDGoQAxAXRQ0AIAQhBQwBCwNAIAYgAygCDCIBRg0CAkAgAUF/Sg0AIAQhBQwECyAEIAEgBCgCB",
+			"CIISyIJQQN0aiIFIAUoAgAgASAIQQAgCRtrIghqNgIAIARBDEEEIAkbaiIEIAQoAgAgCGs2AgAgBiABayEG",
+			"IAUhBCAAKAI8IAUgByAJayIHIANBDGoQAxAXRQ0ACwsgBkF/Rw0BCyAAIAAoAiwiATYCHCAAIAE2AhQgACA",
+			"BIAAoAjBqNgIQIAIhAQwBC0EAIQEgAEEANgIcIABCADcDECAAIAAoAgBBIHI2AgAgB0ECRg0AIAIgBSgCBG",
+			"shAQsgA0EgaiQAIAELNwEBfyMAQRBrIgMkACAAIAEgAkH/AXEgA0EIahAwEBchAiADKQMIIQEgA0EQaiQAQ",
+			"n8gASACGwsNACAAKAI8IAEgAhAZCwIACwIACw4AQZCWwQIQG0GUlsECCwkAQZCWwQIQHAsEAEEBCwIACwcA",
+			"IAAoAgALCQBBnJbBAhAhCwYAIAAkAQsEACMBCwQAIwALBgAgACQACxIBAn8jACAAa0FwcSIBJAAgAQsEACM",
+			"ACxMAQYCAwAIkA0EAQQ9qQXBxJAILBwAjACMCawsEACMDCwQAIwILuAIBA38CQCAADQBBACEBAkBBACgCmJ",
+			"bBAkUNAEEAKAKYlsECEC0hAQsCQEEAKAKYkcECRQ0AQQAoApiRwQIQLSABciEBCwJAEB0oAgAiAEUNAANAQ",
+			"QAhAgJAIAAoAkxBAEgNACAAEB8hAgsCQCAAKAIUIAAoAhxGDQAgABAtIAFyIQELAkAgAkUNACAAECALIAAo",
+			"AjgiAA0ACwsQHiABDwtBACECAkAgACgCTEEASA0AIAAQHyECCwJAAkACQCAAKAIUIAAoAhxGDQAgAEEAQQA",
+			"gACgCJBEHABogACgCFA0AQX8hASACDQEMAgsCQCAAKAIEIgEgACgCCCIDRg0AIAAgASADa6xBASAAKAIoEQ",
+			"QAGgtBACEBIABBADYCHCAAQgA3AxAgAEIANwIEIAJFDQELIAAQIAsgAQsNACABIAIgAyAAEQQACyMBAX4gA",
+			"CABIAKtIAOtQiCGhCAEEC4hBSAFQiCIpxAjIAWnCxMAIAAgAacgAUIgiKcgAiADEAQLC7aSgYAABABBgIDA",
+			"AguAkAEAAAAAAAAAADGyfhfBM8W4CfdqdtFBU0U4RRRhEHKW/RLu1eyig6aKI1yr+2OwYzIbGb+ac8L1zyq",
+			"rwY2y8TB3T088gRYhlCF+/UKW1xJRmUa4VvfHYMdkdwoo4AZTAtxdoelttKIyq2wTl3p1kfcTVFaDG2XjYe",
+			"5l5P0MpNCkVp6eeAItQihDrywGFexx7fuXaRJ0/AN7BqbbbGM9ML6+jHCt7o/Bjsm9wtP5TvJLcYWHx5heg",
+			"N2MtDW5j5+zGDTR0USDO2O8YuBjOpT6UHna2CYu9eoi7yfplFDiKxEqn8M/kW+Z4Bro8o3veFjT31DKyPsZ",
+			"SKFJrft6hQ6JkowVPD3xBFqEUIYNj48Tm7eVPjXKm3KLxQPDBHjlZUr2xnsu0yTo+Af2DB9hWv85NDO0JyR",
+			"OnilGpUkWljCJ6HVg8XNyzYVMpcSnQsCzko2WAR96hafzneSX4ks32eRc11JaYZwYae4mYi1QLmZ+LxWnlW",
+			"hrch8/ZzFoWdkMCP5U9NCio4kGd8Z4xZMR9xG29b19q1TjcKaHK4Ca5p1nZ7TuOLBNXOrVRd5Pgf8i/RR2G",
+			"/e5ujacBASNCogISIvFN0iy7ey1h2Hn7OTcXsuQoNQpXOQb3/Gwpr+h1amh5nGVehn/AmBrw2RKbs6wHnwC",
+			"V4/W9vUKHRIlGSvHR3QK0xbckxPpdVHnLng4IlsLRiYdvYAaHh8nNm8rfSusYTD3XO7FAQegvUWt3rIwtd6",
+			"qhJ4bCgjwysuU7I33OUK03FXfSE9cpknQ8Q/sGW0UN8cwPCmhVVEjpiBOv1xk412x4X165E5InDxTjEqTf/",
+			"riK5K/jytHv/ZKgs0Z1nYNiF1D/txujXcNU8psUHu8xXNEC1+Vw4SAZyUbLQM+tTIZMtoexoafmdi/aO/28",
+			"a4rpqip3DNJlm6yybmupbSn3MzeeJ1gDMI4MdLcTcRa84pPxR1+AeLLz1ukDQyXH/p9JbPMP1Kn0NbkPn7O",
+			"YtDhZJopv/2naNkhjkivjzGV6JPwX2689C0v1IRVvaoovh5m+kJ8me0GJiPuI2zre/sXkZA0rdi+Qz06Ubk",
+			"fKY40DIgvrt4aS4w0zTvPzmjdcQV/RdgPWxjJYJu41KuLvJ9RKcbDarh5J2ls0qJ6yu/aWN6stbv5KmJydW",
+			"04CQgaFUPHEy/IO9+te4IHTthJSVBKMHlZGXqM6LFK/FeQ6AD9gPiCQFHbxUW4vZYhQalTuIkP6DaAmpYAo",
+			"6QpuzJrpneSFles81hjz6pTQ83jKvUym+E92iIZMIr+BcDWhsmU3M+3vsFH+lFk9/KqoFeIx5nGQNS3lrsC",
+			"IezrFTokSjJW3VlrLeV59+7lHH9M9QthE9SuAVs0OKSrJtLros5d8HAXYJW1D241yC8lgdQfHKM1Hpf/w94",
+			"vZo00PD5ObN5W+gWOQFmt7ZNCPctUOL2fBb8MeSovfKzAB2md1yPYfGRRWC+pNBlPoelgar1VCT03FFHYw0",
+			"LIDvKse3MCz3r/wttKwXzYu8wHY3KEaLmrvpGeQzYWrmqNVCa4TJOg4x/YM4n+7bciLB2Lsbv51jJei3aAC",
+			"YfB821OzqqiRkxBnH65mxA4W4CvuwGjVSw6kN0t/JLnUi1R7uhE9wOvIfU+TBLGsdE2NA2Jqv70xVckfx9X",
+			"z0a7QOVM2u/l7XrNV73qmNRfBNqWji8g7BoQu4b8ud3dqG6sR898ZRrvGqaU2aD2K11ksVXqZU4TGHDQRZj",
+			"zsyKqDseEqzYLCAHPSjZaBnw5s7Fd92nDxAH2pTznG1U5METbKyYokIFVoCYngvg012QSWDBDy/FvXFdMUV",
+			"O5Z5Jt5TJGkoqiKkdO88sge5JddvyN3OFIV+VOuZm98TrBGH8L56owCQSghHFipLmbiLW1wxyzeKhNDY2GC",
+			"NJo2tvwvDR2xanpHkiWn7dIGxguP6ctyV/aK+uHn2jdPspZfXqu2qMpC2q4wss+XiWvuhyU+owgMm6J2SzC",
+			"yTRTfvtP0fN7SkS/yIpp2dCLyQ05uh7oYvXezAp/ptAn4b/ceOlb4ZWfqB1LLOM1O57zKXOISASJ4OToQE3",
+			"wPMz0hfgy2w0NfoqSOQEetSfVSx+L8C7CFmc1CErD63ouIiFpWrF9hx+QX36bgrg/enSicj9SHGlLxtxl/m",
+			"HZ0XODyATuE08sQjG2Ey8gipRomneendG641koCYlc4n9bYW0d6EyQ6aZQ32P/jaMsHqul5vEEMaALmheY5",
+			"sUCZbOiUoyH1XDzTpPg8pAUQzb2uUszHaayBoGI+U0KZ4HDObC8WWt381XEgQ4nfLbAkHzk6tpwEhA0KtVY",
+			"pGfTI/GS7R2wBsNRZ2/cr84RAmKi1/YED5ywk5Kgx7Zxi3GgVxj/82XqYdLB5c5BG/2g4QRdCQZv93P32M4",
+			"4tBHgssQddgDxBYGitouLMUN7lmOFTjMb6Lob0XR+RCpaxAwQR7v8Eh/QbQA1LQEjra56wQbouUZJU3Zl1k",
+			"zvd/stYaTliVdPvjkAtJcfqn4MRxd1pNoSVKeGmsdV6mVlFfiNBmYv3V1Q7OwWFLkgbOKS+9cnfJiXmBf1X",
+			"rXwjaYqaeKfhjU1nm99g4/0o8iv3QOUTsdmcIV2whn8NlYHtMS8Dj0Fk7+MgahvLXcFQr0z1njsRMD62Ncr",
+			"dEiUZKzpZVVjiaehFNEgQQKZ1Tfp4JI/FVjm8lHKOf6Y6hfCJvuLgI8rJAeew86U7jtWkWPyfOr5+mVU2wA",
+			"AAAAAAAAASEfgaLc09/b7HVeJPU832bNat+GKe8Avnag5Sii4t4bV79kin4xAcGa1bsMV94BfLvKOq6LDd6",
+			"lRwuTMA1a2ORmFBKS0YkHPqt+zRT4ZgeDimFMtiS12Fsxq3YYr7gG/hC097pza9kk3d4oPFqE2Zn8wamehl",
+			"cGQooTJmQesbHPqwynxsJibhVmZnhA641uqEd5+eI3XrFw/LPDTLxTb9XdrELuYICwDxDGnWhJb7CyMdkcy",
+			"pW8b2vNGLVUE+tpKuwHNPbPOLbwIW3rcObXtk0AcmrSOgRplbu4UHyxCbcwmqfR3m3aaOpXzQ5YRDVoV3bS",
+			"j/qY5reNECZMzD1jZ5gxOc1u4bC4QvxTEujIX7j/3UyTShSMZydmhqnkn4G5gkeZKEZDUmZYivP3wGq9ZuW",
+			"r7HZitm65PFct3/wwOb99djJeXuzqYKe7WIHYxQVgGppHAHoZ1r/CIY061JLbYWcAkrt2Tgi+vc34ZPBn57",
+			"4A7OflUrs0YduaNWqoI9LWVrsq6wr/AQmMdkA0jNbuCTFXX7UuCj3W6eyVj4CBMAhMzYoOIl3j15YA4NGkd",
+			"AzXKyH/UAao3wjy3T75mC6IDrP8IXg68lvRaTFLp7zbtNHUEFQmHgdnDgyrnhywjGrQqYqBnRJQuQ9zR+tC",
+			"lHlWD85m9MM2pYXQF44GxP02Wa/mrxlFX+qKcDxic5rZw2VwgUNsG3sftq9Z+KYh1ZS7cfzZuaB3SGiuJhT",
+			"Tf/Fhh66bNcz+U71UcULJDVfNOwN3A+gS1m/n0KjZJXgJ6c4/qGQEZ4hLEux3vL+tsuWZ4akZnrIzR0Uyds",
+			"NT2OzBbN12fnLHbWOwDqmlBBXimSjoHiglCmM79DvB8uhgvL3d1MFPyX89HwEHHpdytQexigrAMlOqhhNW2",
+			"R/onsBZlX82H1W/39g3o+XAjEMecaklssbNYgHwC/lhGRevay+N0I4Zqo50ri8MXcZyNb6UgYdQGNcUoRUj",
+			"W4PHDdnLyqVybMew+NRLB66/GGqeIIgxCzrIf78/CZPX6RelclXWFf4GFxhTSle3ItXIwOiAbRmp2BZlyZ/",
+			"su3ULyb8E9TM9XOTJAiXqsp+ANxbb2SsbAQZgEJr4NJqj2rPPQDVeRSXzXM/9FEHEhy+PECWvi/4ppILOgI",
+			"6Uf4t4URFaQ/6gDVG+Eedi4SGvjW3OPBQzrlUVi3mxNSwv98lYpmv4RvBx4Lem1tlZcdM8ZHkOYpNLfbdpp",
+			"6tDjMrfa7p4cY7mFVlCVXjMr/mU+56GpxVTOD1lGNGhVHInvMfEAn6Ov01jQe3tfjOeUuLjMT6h6yWY2E26",
+			"M39OBIdZ72bgoJTJ7YZpTw+gKejyB8uT3H/ytkPQnyQoOxuXXFE9+PvkwVo2jrvRFOR8eykPGQ3HO6TA4zW",
+			"3hsrlAeH8tBVaGTrbLJZrk3P2OmYNieoxryXlv/FIQ68pcuP+0FfCDfWhPCQdPR2L3E48mTwinCkAneNBh+",
+			"imh4uQPeSm9yclV0PiPmud+KN+rOKDSoJ5AaJ/PVg8UPb7OpmK1R1Pd1nmSlUP0CWo38+lVbLxOil9E3aKa",
+			"krwE9OYe1TPa++ScUSoixWmhU33bUeLqIeazFWxlFRxe1tlyzfDUjBaRORp6xCN6pcuO+/C/41XtjG6TR4s",
+			"Uo8N+4DjlSGMKizkAUFJ8lPw4Y7ex2AdU03AkV9lvM6Ml6ZlnFMZS1yCh3od8cWYg1hKEMJ37HeD5WsPQ9U",
+			"wpFw90MV5e7upgpjx2vjZZ3pdQjywJ19OlV3/Ha+m/ZJGgibhbg9jFBGEZ8BxjsHIwlu9DRtRR+EtWwAsBN",
+			"DlPf6E2JfO6ku281p9ttFr6Woghad7u7RvQ8+FGlqkNc2fHFrBLHa6Nwf67UwNaTuV2ykylsAD5BPyxjIr4",
+			"RxlsS4V7fNa1l8fpRgzVnvJ3r15y+yMtqMBO1Ak7DGXvICZjPcz6Gt9KQcKoDWpSmKopdZz6nOHCHcj/5zq",
+			"zqYX9oEjTzUWHd3ML6hC67M8wk2NdJE0afGokgtdfjTU0LcTqYGt6w04RRRiEnGU/BlalcDOoksm1DBKRud",
+			"NS5v1L8vkO56UQ07l8Uqwk0rmb/pw6GxAlTyikK9uRa+VgYOPLsyZfEpYf06HUh8rTBleUQbww/iTw5M72X",
+			"bqF5N+siRY1DbETKYJ7mJ6vcmSAyjx49hhGk3Z5Zs8Xkj1TWTEhL38lCaSv7JWMgYMwCUyk0mzpNAT+uheI",
+			"2wi+fz6VX887YAlLyWNxPbXLq4i+yjl6VaMcvEk8iiDiQpbHiRPCZwIqIfN+5b1XaE2AZr919RCIJTdSSIN",
+			"GSj/EvSmIrA4N36wKHX9aIP9RB6jeCPNouLFvH+r/BdviBo6VkT8qk6Xm5iKlyNwKGNYri8S82UJfNkM88E",
+			"sv8QWBoraLiwC5QmHKAb989pew72GjfAtf3/cPCRRI/KlsrbjonjM8hiTqWIApB8twW9oy54iSCuATndKPP",
+			"6b9FqDHZW613T056ICFBgLpys/GcgutoCq9Zo4168UXHkqQPW9cJJ1lir91KLxMKlF9SaicH7KMaNCq4Nv/",
+			"2jtcJ1xTgUg7sSfncxvGqFMGExCFNTQm+KTQZyx9c8aQE+SQ2s4pcXGZn1D1hm6RGS6rpwP5Xvt+jz5mk7E",
+			"ZGxY4CpFlAkOs97JxUUpKBEyfBUWmvGT2wjSnhtEVLLEiXBCyJuOf65W9msnmzNesddUt/RE6AAAAAAAAAA",
+			"BdMxKlPcGwcbpmJEp7gmHj51U270ZD0ZIfXt/MpSIa8kJtzWmY46qDpTj7ht6gexH4C+kj42HLYFUvKcEYY",
+			"+3QCBw7ZCWiXaHvSQ2LY+GMM7J6Hy5eIDxCSnH2Db1B9yIXQuSogIBHU/AX0kfGw5bBrSTA4vsCJrDBzcXa",
+			"YuADlZz+139fIbPke6vhkBliYnYmmPM1JKPSB96TGhbHwhlng6AIs/oDqRZk9T5cvEB4hDnGLPmBgcj1lOL",
+			"sG3qD7kXJ0f6+R0JeNC6EyFEBAY+mc7fa9DzAP9eLvDPX36H0t9aPIXLiYETGMdoXnaQjlVRs6QU4meIlJe",
+			"kIHO2W5t4etDsOSKsnbm9Tbjin7WS//Q5dKgLQpQ+M9lbDITPExOyrZdGEDgV0nUww52tIRqUPEQP1znWHF",
+			"X68JzUsjoUzzuEUJ4mzRIO/BkERZvUHUi1bcgPDyMbiXKN56uArpyk8/kr4RRZmmU0ZH86qUCVI30Qs3A9t",
+			"5PiuKMXZN/QG3Yt19suSycdt+pKj/X2PhLxoz5Dv2LJFDBk3mwb7USTHeWqoFF5s5XcIjf0isSqmpprQzjA",
+			"UF2cW633q8PbsZTBbINniU9GkgCrHjNS8l+dRuJq/xhmqJuHJYrQvOklHKqk/hz2fdIaa2NjSC3AyxUtKhe",
+			"EZ1Q8E+zvSETjaLc29PY8iKn8QDA1MaHcckFZP3N41RA41a45sr81P5xaI76fPkHz1s7UuF753KcNc823GL",
+			"Coa0fnOrHZdhz4RGzWuUO3aDQO+CG/gnD1YNVFOLDEOYGsn9HPtgX+YYM7XkIxKH8VT3HKtTfpuIgbqnesO",
+			"K/x/Nfg41s+bjRPc/QBPLb6oTu/vpXLsDtmputlKNK/fS/SJy+8Jbm86DIIizOoPpFpRsTBp184UK7bkBoa",
+			"RjcW569cUI6xMdchG89TBV05TeBvAxmRqj+MJ/JXwiyzMMpuhpuIuEQ2C6lmtCw3ybEmKBJ4ZqM+t+fvjyy",
+			"9Hie4oab74PeK0L5gYOxkkN7srYyNmKjaShurTUoF/AH3AqQLA3EwS2P1osrEkR/v7Hgl50Xl06V4jyMmgn",
+			"iHfsWWLGDLDEs0UWEqoQ242DfajSI7zMwUfU56JPoLUUCm82MrvEIljOxnlC19hcWjSOgZqlAEsW8CfO6sk",
+			"cMsO9nB96PXilj3k1UApRZP61OHt2ctgtqfn80jkCtDHQLLFp6JJAVUdgdcCn4ixJOWKPiF86XpEuLkshEE",
+			"oyjVf7BprB2sbpwLfCM46qqvWr/vILMGojWbyyNqJ/Gk9FxWd7Ga6KuyFSK7+w4frXPSwpRfgZIqXlO2WBU",
+			"VZSyflCsMzqh8I9ndX8CEPIslGBqQjcLRbmnt7+RBiEWZbywoeRVT+IBgamEN2Rlsd2arpu32veP64YYnmT",
+			"r3dw3nR+AEbizKFOgBqXCiZl7j7sBvxDFl1Q/mWq6w/S9B+OCbaS2p9Pzh790gWWW+aBbpHOe5Shrnm24xZ",
+			"s2GUHNsaPChUNKLznVntugkHsFagmF3LZe61bjl6eO443afLBLvIn9+IkSRC+BkNgruDgX85qXx6sGqinFh",
+			"iHCeDeAehmdJtwNZO6OfaA/+d5VxN2huzjjDBnK8hGZU+bfKOChzYJU+Kp7jlWpv03deUqkBnWkSsL59DY4",
+			"Q7j8xyrFHGufo/vZX5Zyn/ue4vyMp1jMJ4Xl5NK2xZzXylZRAYfvzwvRUU901IE7b+xIaqflq2iz9091J1s",
+			"5VoXr+XD0ahMFWfD+boE5ffE9zedLUghXouHW4FGARFmNUfSLVFN1c96N74xKJiYdKunSlW/1Fzd5NcmScH",
+			"WppUcD1SR1ppiPFN/OI2vTy+Hgu/M6TgD6y7Nn6D1YzmqYOvnKbw0dW7JpJdFoE2gI3J1B7HE2uzn2zp33d",
+			"ik7h2Twq+vALOi2TqN38McyneUgVxPN3hdO1AoEz9bZDZyYBCt/9LIIT6kueKPvtRY6+kCMx9KsM+nLat8b",
+			"yassaXX44S3VHSm6RNKy8c4aN88XvEaV8wMSHCaWFUnoBAdjJIbnZXxkYrAVrLS5Z2N8xUbCQN1aelkWd+g",
+			"TAUF9RpbJei03XctDRfhQfutGzF0wqz6Kj3vVeOOaFNlTYNJiMdYa9uNCuWfi5zClP1m+eZe0XlFbZKdcRI",
+			"V0Aod/oEPEO+Y8sWMWRhcKzG9teBFYYlmimwlFCH2xaIjI1V4Pa3/420FLfF0+rMnxEpdnWiDZmp/m81pDB",
+			"QqrtbUvQUQaihUnixld8h9ZJA3YxUb1ASx3Yyyhe+wk/0ZJf31g6z4tCkdQzUKAO/47bQMRWYcli2gD93Vk",
+			"ngBYWSmkqX+ZH9jnu5qfYy8aC9aRyUN4KAR+hf89J0UxIa201W77XjY586VIPgsRhYwglGJt1wqCklXHDJm",
+			"zN5u3hvYmym8snKgGSLT0WTAqrdV5nqeFKy2zoCrwU+EWNJZzG9oAPQ0zjKFX1C+NL1iJcmb+fFE0X5cHNZ",
+			"CINQlGstQEutvpEkGtVLoo5d8O96iHiwK2AxXwtvLYbEJnKOmTIelGEbsz7oXveRWYJRG80DxIP8v5CrvOS",
+			"RtRP503ouuaKntsQSyl9BqU6VJ3MBPxyaXDAasrFO+89q31zxYNym/Hh6YTDQrQvYuJiaMvYdVuuqPafzRm",
+			"yxvpzS4bCX/uyNjnfccSePFIZnVD8Q7O9JtXXxAtFcnq7gQx5Eko0M89NRu3lTPX0AAAAAAAAAAF6RFQ9Ib",
+			"Nu/17G8RsP+b0uJIKlJi5K09K5jeY2G/d+W8PJsgs6RBCl50sXLRQOw3SdD0MQNb2tiN1RlQl7dZhlpxXBN",
+			"FrG9puDl2QSdIwlSvnTMC9VP0u2ZNxzP2CC5j8emCcCQTGIwToagiRve1sQQF7WGU7INe26oyoS8us0yMDn",
+			"fi/TWFo25GXbCf0SieeeIY803KHnGwMuzCTpHEqSeWqYGcivJGxd6D0/5uX3vSesaQLHVplBZ/K/G4merKw",
+			"dtusmqC3CUjk0TgCGZxGDQ3AaPafUf3/ef1ktkmnS9qQ7DRCz2rwIgLmoNp2Qb9n6/fwLvCMBJ3FCVCXl1m",
+			"2WCwYAGMRlA2gvhKU+6i/QuVXA8QPLnL5FyM+yE/4hE8yyi+Yu35J9MpYJQwjx2K7j7E0XNdBrwB+sE8Esn",
+			"qP18tZXlRG/EJsM8tUwN5FaSN2IkWQKsOkmIRWeJxqFVIuob9pzJ6Tn5VZLWNYBiq02hzEcgjyrHlh6y+F+",
+			"Nxc9WV+xpSoKNo43oZUnjywYxORw72PbETl3ioxybJgBDMonBQgozDwteUn7LKppGgMzmipW7j0nIoD01ha",
+			"w6z5sSME7bPS/A037r8VIdholY7F8FDIyThhCAhLorz0NCHe/v2HVeVk1VgzRn/H7/BN4RgJOi7+oLln1bL",
+			"LihKhPy6jbL5jA/HLqG7XRvEJZVMRRZgDGBg1p5eII/FsJTnnQX6V1IU0aRPHsy4sFz79i36YYWn+L61/+F",
+			"XamP9U9RrDdQ0tFkWl7kW4ttWETzF2/JP5kG1eYYJ6XkJiGWNtwqyo9Efwcj02KmVPv2J4qa6TTgD6i2n5W",
+			"hWDuw1gngl05Q+/mImPWYBjwgRgG4XNGNrpSyXylJ3sXCTw14apkayK0kbyb7jBWAwf/Qr9slXAtTSyTxSj",
+			"BTQz+Qm+FdhdUQjZ3gv8yQ2ljhRl827DmT03Pyq2h9LJybHykUTz78WJZwQnYRr+lX3hyZyZiPQB5Vji09x",
+			"h5VER3i9oJk8b8ai5+trjpgqhXD83YRs0ADXEhhwuXt0RZTAA0ZWsqSxpcNYnI4lAPTmEUOqYcdI3rRzpwd",
+			"c0Oyb96G8MbMU6XaWNVCy7cNNM9XnS4QCIQUZh4WvKT82oVzEV7Qf0P9xqPVU78UIaNXttob08+eKncfk5B",
+			"Be2p05gqc2C2g1QpZdZ43JWCcVMhgkX9JuyPd6MnY9NsP14N53Ne8t9RopDoME7HYvwr6qxkc+bRktXOLsF",
+			"VyJtBBLRqlWjpKC/49DRDcafgGhWOcBdMhlN066rysmqoGac60LbmV4mqycZNuaVHvBdkTzf98XqdpAqxE3",
+			"9UXLPu2WBpOwBhkl23nG9DCfrfztKJFQddx/59vHcxhfjh0DdvpkvBrNzxhAFa1s7vzMQ5rNOsirvx5YrCL",
+			"YgIHtfLwBH88kxK6upzfwCyEpzzpLtK7chWyM6FCCQT7NRt6KtC98KWkDnVivGZPgufesW/TDS3cdsu+J7/",
+			"WklVWYvesLWJmC8d3+ORBudl1eAj6C0l5kCvpHfVDJaIvosm0vMi3Ftv8WKGzgNvNZNsbcXeNtKYGhYpkeM",
+			"XYfbkMqs0xTkrJTVI72D4GJhLyQixtuFWUH4kcvXi3HfjENpWd0f6WanDCywzE8d4Gq33sTxQ102nAH7LeA",
+			"TqbBRugO/6ocxCXr1Rlb718WPt068eAV3fOhi/HmRFCeIbq9HgQMesxDXhAjE6g/j5FFJszaeMu+kh78FE3",
+			"cjv1ABcr7r5SkryLhZ8a4MOHs8PpRKXw1DI1kFtJ3q5FJzrYN5JhJ2WOc1OlJpV59Jt8G8n9Kl63S7gWppZ",
+			"IACZet17KTfeJBvf+1Vj5A9eX4vGdNCK8qSid83I84vX3uYj8OlA5Sn6ZIbWxwo2+IAg0uvmuVgEHS+R+9M",
+			"E9Y1na8XG8rebc0PpYODc/UiiOa003f1OJl558+LEs4YTswO3tvmSNX1NJzUT37x/rpxdcUfinczAYMB+BP",
+			"KocW3pujpQz4nCAxeeuPXpp4jQxuT8odSGO746jcehtRRmCaf3g/WINdVnWdMBUK4bn7SIqUUEkzos2nQ0S",
+			"keDD5F3/U4OE74uIhkDaoy2mABoytIQyOKlIdukLlCWNLxvE5HDKtJggU6g/z0OUMWnYOos7HQUkZpBWUIQ",
+			"6RvSinTk75mTX4a3VVeBZ7fdI5F7HVK2zZl3rFquPEs3ZIun5o09bk0g35rHPlOQaaJ6vOl0gEET5i6ByMf",
+			"uvY7pbZH9ekM09K05rNzJLcrQL5yK8oP+G6pryLfTMJDn6jUerp34pQqQcUqTvEvL9LTz77WSARglzre7iL",
+			"OydtlTuPiYhg/bUCn8rKWnvLWuDX4Jg4n2Zn93Ol2+qEUIgfyF9ZDxsGQwhsGhrdADCs6iQwSL/knZH9gHU",
+			"Lbf+rfjRQgTpupHGmo/TEeby/R0lBvO4r3lvqdFYYq2gMQNybkh1GCZisX8VFuQNKSrdpKqfxKRgoU8QXsF",
+			"VsW/pI8vh5hZhq+RMoIO4h3SkrCB7PDGn3e0nss/IbzbI4m/eFHcRibfggNbUPk8You/Iug+BxjgLpkMou3",
+			"WYqR6pC0Rgyr/qzm0GKwuo4XvbYk5H0BdoW3IrxdVk4zbKZySNub9cJt3Sot4Lsid4TMetlmdpmPFsbuQd9",
+			"d1sr/1761WZBtOIvqsvWPZtsdYvviAQmrYOXw8XaZsIAvoBngJm02TZRQAAAAAAAAAAdw3hKr0Wpj7uGsJV",
+			"ei1MfZkXI3/HO+pD3DWEq/RamPqrOGWBSUw+xDIvRv6Od9SHRSKn1DNhcrnT+J8PupPpwaT1fiUHhU//PeJ",
+			"dWsC+pbxK77xwfagDgg/NG6ROyXE7eMD6jvPf1wXh19nxNOQ9RpbaONuJ8pt4zWKoRycBCre6b0ltmhesiS",
+			"N4ahJdLEbKVHWLOOA64PQRVyzs01uSTWZazcZuTTRz/03uual23jCIQA+TFGB4Dh6aN0idkuN2aZfWYiCER",
+			"UjwgPUd57+vC4eNFDdaqQk1wq+z42nIe4y1olLJ1N7dsiy1cbYT5TfxW7iQnK7zkc/xVsfXHSTNWoZbJv2g",
+			"MmtkH0wFgmcJgSdoQeSo2h8nGS1jQ3zpflWgWm6iVlRo857DeYEpk1MZ3bR0YAMuRb/jIq5Y2Ke3JJtVo7n",
+			"yGqGCpcy0mo3dmmjmu7l7p2CMztj+m9xzU+28YYmWPVnu+xpfEIEeJinA8BxnjP8MlNZWIjw0b5A6JcftSz",
+			"mOuoczYdPSLq3FQAiLkKUjTO/9Hi2u4AHrO85/XxeXDAoRc2n5KQ4bKW60UhNqeRbIRAlEtVTvzPCfgLYuL",
+			"JjBEbU9oIgSAdYyyvqbYlF229PgR43EbzP5dDR07LbWRPSVHsn6EOjd47ZhDsH6q6ruV0uz11yV4q2OrztI",
+			"mrWVoG+Fhl48iwy3TPpBZdbIe7qt0PxzcPY+mAoEzxICT0mV6y5yBKRx0ILIUbU/TjKnjyl7CCnoDDFVEaC",
+			"B23N0RljwijzN1UrfT9P1+/Y/CahCMt9G4Jk37WCVC3WB646abXQhyJdNsAN6V14PrKfzdHe2dLK6Ac0vzy",
+			"boHEmQAljCx8KhXzY8wdXkvWZk3H+22AWX23J6QfP6okPoEwj4hPdDaVUFrsYd4GAWkj5EhWrtgTwvKOK7/",
+			"De556baecOLOljNG8zf/RIte7Lc9zW+ZSCamGHhk4AgAj1MUoDhOVcP3GbvlkcHzhj/GSitrUS5FR4zlbsL",
+			"ehP7SXgmbFfvZPaoUpt68dH94YstXEEbkorsagfhV72sz87N09I2zxW4wyz5byBpKyHUD4aoG4NoVtnurBU",
+			"NJVbAA9Z3nP++LrcON10h6RgQLhkUIubS8lNZFPUIW8RUbRw2UtxopSbUazuz9tWzgOryLJCJEohqqYUhca",
+			"OvnsyX3pnhPwFtXViplAAVvHv7ZjCDI2p7QBElR47CQMZWtxsCrGWU9TfFonWhhL5IIWOc7LanwY8aid+bu",
+			"0brMgwv4Q1hfjC7/rSZemyfGgboEqfje7xlwdP45JR2XU98xV7a0VT6m0+kLGOmWRux8rKKXT9OOM41iWAe",
+			"SEPZ5IifxiCvyIoHJLbtX9jFay2ZoEthQdJIUl6boSI236l4440HHHP9DqzQ7HWlBPDvhm3605ud58z5qsE",
+			"52OrqLdMX15/mfDAVCJ4lBJ4LPfQiIzOioJIq113kCEjj5Sc2d1ke7t2gBZGjan+cZNcIcInXaTpaTh9T9h",
+			"BS0Bk5ErLcrUR2J2KqIkADt+foFafDar6hQdaMsOAVeZqrlfu9AT/EjA2rvp+m6/ftfxLJkkfBSvvZLFCFZ",
+			"L6NwDNvJ4iFlDDWlVGxUr1PuSQOKcZfXGUEMqgXX0h/GsMJQlQoRZ4wfh/kam1nOeRNfpbTGmrYzvBoMO2D",
+			"ffuxN1ParvRwGpuKRXyQXp5N0DmSIAUpk6z6hISGO7CEj4VDv2x4x4lur/6pykaCq8l7zci4//WmKFFw3h7",
+			"BbLELLrfl9IIbvOoECvNSvI1m0t+DAcnE+msz9T4Xb/pjfBCK+SyFuRRx8aBEOiOHUVNWdHdbUT4mXrdeyk",
+			"33AL9JlCENdh1DyER1C7Bgu32T/OWXHpMqsuTxBL2jhYyMfeYnwmS+Zs8K68bo2ajA8U/JYTzqybJIOMSAF",
+			"lffFHah06NpkOT+NdbeQkMt8lgLQAR6mKQAw3M3CZuyGRZlTa4euM3eLY8O2RNZ52M7KTCcMf4zUFpbies8",
+			"HxntTP23cis8Zip3F/QFJt1Ml2Gxyk1lBKgf/nfqOmjlgqLo0dSjf8b9ZdM7l9RyJ9fYxZ2pkVCAA+uk7xD",
+			"mXWEpVrJJLn9KQlaRiaNtCEejfCyfBVOenZunpW2eK+mQeo0YezgVcIdZ8t9A0lYHirjYYlZ0aEKoHwxRNw",
+			"bRNaX+JuwhoO+sst1ZKxpKrNu/PHOWDOySgAes7zj/fV33Ck3FhenbY24dbrpC0jEgGRCPkP/Elx5cMihEz",
+			"KXlpys/yW5xs0OZsijqEbaIqdrFJQs7C54P5FP/M+CCbJScJPLSyj96MqK95fG1+EHY4croEJ9FV37fj8q3",
+			"S3Y2DGb4x1ZhyyCqWGHQdR4MG0AbFt2UNLEN5iW8M8N/Atq6sMs+IlW/zByOUikBKnj39s0lJOAAxeFQ82A",
+			"GR9T2gCJKFwum/kuWhHSOHIWBjK1uN/kRZKsxu8gJb8tccLhJU3EYxr1aBV/1T4HRniXCZB8M9tx/D39yuT",
+			"Kz/tjbTBPLi8TzOfHxBW21XeQajjY+h/Yq6fukiyghyHFRazgl27AHBlyKEpjNFjmfS6ltX/b8euhGSEfi4",
+			"FpErWTvk9GBKP3aaQ65bJeOw0N+LcarrGSANHPM7Ba6wr6iqfQ3n0hZxtWkFR0iXv/4TLM2YuVlFbs7vtdI",
+			"WHOzhX6ccJxrEsE8CZGRttYEZwKQhrLJET+NQeeLU+OsKSt/AAAAAAAAAADlUZmWzImUFsqjMi2ZEyktL/K",
+			"ru1WavTuUR2VaMidSWnEW/Mz+rsZMXuRXd6s0e3e7tc7hZ73vYSiPyrRkTqS0zd5TIqjHMKLiLPiZ/V2NmQ",
+			"d9YQ8x1BmPvMiv7lZp9u5ZmTZ4muBi+HZrncPPet/DkzoEVQPzS9U7jQIxmrqRXd7cm6dWMwVL8S4wHAOpu",
+			"HAUf6mKzyAsZq/KZ2uoncMHSpv+/WQUVxFlaVVGMY7qKoA4zND9B348EwLIhf70Nen2U1ETMn2h/9mh+qhn",
+			"5xzEPPBjPqtuiNKHRa3fzNNns2IUNEkAWvOlTeaf8lXATp6otwZkmUnaiHYaBWI0dSO7k0uc9Pj8t628uTd",
+			"PrWYKllnortlh756A4l1gOAZSceEHDPmuytvl9yj+UhWfQVjMza/Lg1PIzNpelc/WUDuHD7vEVkCcshMZlD",
+			"b9+8koriJxZ2RtBaE6NMrSqoxiHNVVL4MzGq6VQUMAcZih+w/8eOUgATc3hmhuTZcHU67Psuaoxp7FYkYm8",
+			"Ic0NX433JvLYmWs6PtVD93Z0GIJnOjgvDyB+59QYXSqE3NQJAX7yZH2IsmyyXJdh2UYzefKgRZSgElUcQYI",
+			"gkSvu//KU5I/f0rqZlyfG6tp8V+ovfimRAgUDjErNC/QHjv8mpBhtW0l3q0DBq08+TOHp52cO8yfQmL2BAr",
+			"3RQtUTQSvsaLftm+oVTYnblYieRPg+MYJ680Y9rFhUMViWQ7ZQ8rrkPjkNTwSU31ccXAjryhXKF+CO/ZKec",
+			"6+kwuv4GWLZQXGkRLbgNr8kwoYhs07bzJybaVprN4+q+ShLP268cwAX/S2QIEUnZnJOD/Ul7wqn62hdg4fW",
+			"XsGO23/mgl2ia2AOGUnMpPYNBb07LMkKG3695NRXEXNPGNhX9jIU+LOyNoKQnVoB59RTMbL4X6UpVUZxTiq",
+			"q3H0zI8JsT69XgZnNFwrg4a7V/6ikKIXkADiMEP3H/jx5bOp1TuWbOfKQQJubgzR3C8Qm/iihUXK8b2Y/g+",
+			"5vPkU7AFowzAo7zseqtOWqpXU3k8zRVojAcJl+v2kPZ7uo4CrZDLxF3q1r1nPiaSNx45KCFYfaARTmNkyUk",
+			"pr9xhNPGPL3Kd+jFsTkWBn8uQxYPbA+fE+baV2TXU3EFnQSheoJK6GlVneAYfWBT3Aw2M6YoecqwxK9yzKM",
+			"JrPlQMtpC9hA1lZirmyAJOo4gwQBInlwjF0wJmQn153/5WnJH/+uyZmA2ut6+iU1M24PjdW03GFVC7yvsLF",
+			"4r9Qe/FNiRAH7sntPcQdBigcYlZoXqA9zU37wKTXNCt2+DUhw2rbSpOprLcP409cvFsHDFp58mdZCp6alvB",
+			"mcQ5POzl3mD+F6x6ir7sRq5PE7AkU7osWqCG9kIIiAoK+mgheY0W/bd9/Wcf1iTb5yVCrbE7crETytfr12B",
+			"Al0OQmwPGNE9abMcORaBvfXw8n7GPDoIrFshwJMlo2RkwmCrKHlNch8clrV9YNQe14XX14JKb6uOLgRp11P",
+			"2x0a3RQNcI5CO0irtjQk6CeIas6zv9hCyV0MYf1GjCSs7i4E+OhhVxS3wX8gkTUxcQTjGiUayZuf0YW1a+O",
+			"d/fpip9BuR1N87yJbAps+BxqKkXlnnrX7sGREH8jQTK/WAfc9rdXiQqW5rtLWDZsWw9wd8LMIEOppMsiWHE",
+			"bpvg9Xe7R5Q14VT5bQ+0cPp0Ep82PZIgosvYMdtr+NRNXp5XgFnehBewSWwFxyk5kCUPCl71D2nImsWks6N",
+			"lnScPg8LokUPNfUNr07yejuIq1i2156yosnJp5xsK+sJGnfyhfVHI5BbHEnZG1FYTq0CHMCCPZDX7GDj6jm",
+			"IyXw/3rbzoOQB5X60PYPGrZV41jpoml/BXeGXWJew5HQESkTmwql9GMzTBY159ZMOtw3zkyzsCmJ/lLLx08",
+			"ax1yY/YU+G3yi77qYgJrV/bevRkp144Gb0hxkL3BofTE8yQKAPpEpV1l6IOU7P8Qk4SPPnuNGkEKEkO375s",
+			"1s6GpFi1SoNDiOD/apMa2ieimpUxUoMdsuT8zgN000UNLlIjVR4nqphoNHhnOHfwdr8P/fnPynfj+Wmmy+m",
+			"aL1wzx0udg27AyXWhEK+lPpqFnbBEoGgRzRDb1h+STkGVrxF48sQktXo6Vx6p9gLlINSAJSxo9VinQcZDd1",
+			"rTCP/+DO2aDLn8EGtKi8E+n6xKyZaSU1u4xmlc0PQIaZ6WMeMaWuU/9GLedlw8vg3SMoSYiwc7kyWPAw3NY",
+			"WChA99bsgfPjfdpK7QnQanWxU977mupuILKglS5/u/e2fikBOFBJXA0rs7wDtRjFm+c6KBUOrQt6gIfHdOv",
+			"8kuxMDlNixA45VxmU7lkhX6DB1R16T//yo8d4IYN8GqM6UbSoF2o1UZHq4TKqUdAACHwtuz5Ha7XGnUoG0S",
+			"aO5F8Lho9FMKEW9LDTFfgLREdtJh+cbB3XfWlzHG8nyDIs8OXQ5rPeHd5bXoV8DuX4j8LISfWa80M6DCkuS",
+			"HWSpmuVv+LB4YSJmT4Et1tcv2zIp5J70sipxH+h9uKbEiEhLjhgLhKGNw7ck9t7iDsM640KTbcBrxpQOMSs",
+			"0LxAe7VpXTocNdRtmpv2gUmvaVZ/ym8XhSb9QOzwa0KG1baVCaHy1EpcIoMmU1lvH8afuMMCwPnTTwuueLc",
+			"OGLTy5M+d5peOeHtw2bIUPDUt4c3iV0Wlo+FoWfQAAAAAAAAAAH+du6PRNu0K/jp3R6Nt2hWBp8zkcls3H/",
+			"x17o5G27Qrg+hVLZftWSECT5nJ5bZuPn3SImo0gIM0+OvcHY22aVeHdme+XICEXQbRq1ou27NCeUwQ+f/tX",
+			"kgEnjKTy23dfHsDiTAaWzB2+qRF1GgAB2mFOf53uTbqY/DXuTsabdOuj0oCmMtbPqQO7c58uQAJu3Fwdd9o",
+			"NuSxDKJXtVy2Z4VzP+wWjYCKj/KYIPL/272QjQWbUS7tUJoIPGUml9u6+Xeh3oVG7Vfz9gYSYTS2YOyJm6n",
+			"C5YCN5vRJi6jRAA7Si9QwCwA249gKc/zvcm3Ux3XuR0yjWznNizzkL2f8f2n0oV+MtsqSY3UGk2jEkaV8Cp",
+			"soyxWnSHZ3SQqhISfLQgjUsQLwESZIiXN95oJKEVf27sZFU3z8XXPXODLqShY+DEqDkTt8+zSN7U91SSfMK",
+			"/Jw9NaYESEhj6LWvKyRohXwP20ffadPH3GYofsP/HgADgUaWN7KlQp7610UfZGsxwR25resp0HNhdEqU978",
+			"dtL6TJHwD8qb2Iees5o7Shjs+AMIOep89eZ5pMTdmCfC+QY5f35JES/zgwCBCfAnxZD8nTqqIREomn069k5",
+			"TSh+FAqdN7YJ88o9/dW+HtvxxuwDo1CRnypyxgU8YwBWRq67+0qNjxKdGpBZ5yF/O+P/SaeRz/B/OEtjoQ7",
+			"8YbZUlx5feBLu8o8jN6gwm0YgjS/mVkZ1yWRWm8xQ2UZYrTpHsa6vqNfp4fObukhRCQ06WhZEPr+GSeHuPE",
+			"KhjBeAjTJBvNdimMRWhmhLn+swFlSKubXpBb9Sjz6Ts3Y2Lpvj4u5NANih3zhWx5q5xZNSVLHyZM8rHBaPB",
+			"dhiUBiN3+PZpZwm9gKbOG2Ma25/qkk6YV2VGJElDeHVd5OHorTEjQkKbfFMO4BWvSB5FrXlZI0UrYdgW2og",
+			"VqCHgf9o++k6fPp/iYZ0reHI04jBD9x/48QCdrfhUzs4cChwKNLC8lSsVY5ePE22jxh+dRSxwqQSAu+LYl9",
+			"N4Mm2xY39bNwppWq4c4uCU21+3pGEwwv7v3zSQHq15XT7p2ZqfCrW5TLLuheCXDhqdhAOPZa7wbSSy6ewaM",
+			"0vO9YQE5puUhyqH3zP55Ak8iVbp3vOZ2x7jYmldx+ZGpUCzX7DNZ+FppMEEh9IYfNIHEDJq2G2SlUuzaVMV",
+			"Eg8u6GJfvh+TqOIMEASJAOw1Wa/BMmQKked7xfWy5z7uesBmJIQKNG/dDIJW3z0rEEC3IYfp0CGVeUlWPt8",
+			"6Qurk8vXv6ddIa0M+EZ2y4FcU3oWyTIQNXWkMp9h4BI5pFpEce6kyY2OXNtCf22lUfOirazwKX7l2R2EH58",
+			"/XJpE4/LxEHuHLm7lbcKBsuvyExsbLA72MEY67FOlpiQySusSJUspYOn+wRS6eLiphSK86syWN+1elpb+K2",
+			"/pCYU/GwBdgWZNXosxBsKy94QyV0z4tFx4wOnjZQ/81dAS6++08Yo7X1YwW573FQjOn1yH4wlj5kHbhzPK3",
+			"tr7c1br1P8grBX8EjBg1SYzJm3bXLyo2EXI4p+HCIEvDUFKTYUEUNF7r8UJXrB61+ScVMAybAcpknLbhOnY",
+			"LT11iwVgMnGgwwNliiTpxYrFnFYb7YUZ9zvquJSpXq3ezKIxPHtcoQ8y1N+zP4cVJTRL7CL268lYyj0CrbI",
+			"wfXMxd48ioK1n4s8BYa3kdtPIyZ5SPC0aD7U36LyzacG7nMCgNRu7w7dNPtbblP8YA2c4SegFNnTfGsY/Bo",
+			"pyr2sw0tj/VJZ0wr0srhHb0q92lyoxIkobw6rq1EfMxV8YHsMjD0VtjRoSEt15q+LJwaY42+aYcwCtekUlk",
+			"Hb8RHbObPIpa87JGilZDF+FQY3BnXMKwLbQRK1BDvS2WF8AdvUnA/7R99J0+fb9iD94lq9N3PsXDOlfw5Gh",
+			"BWHiZhsYJYsRhhu4/8OMBu/w9Te7GDgs6W/GpnJ05FEXGSgpNq9QeOBRoYHkrVypHidPDqB26IMYuHyfaRo",
+			"0/ubOkhAtwYDVRGM+4AS/ZQy6FdBvQGTRJryK4/6JCA1bQvwNcc3TuXK1tITZH9G1o0vCalZbCgGJTV1Zx5",
+			"Jm3fSzK7dI1r1p3qfMTpYyZsBTWbqgGXa9dHlfJZOIv9GoBKFTfQf7ChwtVhv0rykIEPyobRogbdOk1q7yK",
+			"bGkv3irUITHPuBkzIKHPdoMbQgrt3lLNIMp05+df9QHEuC/Q+CBoumdpGT3yXbqYDV2ZvsYiJyOujK9TzKO",
+			"A70r+9GTT3B1U6S/CidlZJKqelvRjuia5ET1Hwo6wpx7d2TWZua/Yg2Z65K9UpaVRRBDQL9eR2sz/swEZOp",
+			"tbazNXc0INhCT2iPSidOCO2iQrl2bTpiqluZA0t+VLICQeXNDFvnw/W4PncxSIkTUmUcUZIAgSAVnMfrrxP",
+			"v8L2GuyXoNlyBSn9gn9UlMlHiLP94rrZc99XVJMKTpTInfc9YDNSAgVaKNoO26ZPvhi3roZBK2+e1ahJ6Kn",
+			"fIiWXCCAbkMO06FDXx3V4N/lTEkq85KsfL51hFVuKQ+tiJiO1Mnl69/Tr5GrVF5IDuVCm9aGfCI6ZcGvqRv",
+			"HgetTLKUovAtlmQgbulchsMZIPvaw0hhOsfEIHNOthfUSID7x2SwiOfZSZcbGU7+CVYNTK8wubaA/t9Oo+F",
+			"HwG5xm5UXy0FfXeBS+cu2vymzbxYif5wAAAAAAAAAAAPUEklguvLBreZ584nqhVWuMmu66VB3l1vI8+cT1Q",
+			"qvWBzhrnNv+G72LooUmj+P+vX6mF36hX07Hdu6q2s1cYseD6jiC4+DSrA9w1ji3/Tes+nREYJlBhxGE0lMe",
+			"OB7JEXHWwUYWonl6/Uwv/EK/nHoISL2kbAMsju3cVbWbucSOGNjH7bUFdOWUQilX4RiR5WFGuw/PpCFYH+C",
+			"scW77b1jq5D4pQEffM2Z+0JMUWjozk3pCyzrmikmbMv9vVuWmSW42bTd4WRYi4qyDjSxE8yIXqBHVAvhDn2",
+			"kOBqujpw2fnAqU840bvfQQkHpJ2QZY9OWU6BH3uuh3SC7zORGqvXe9KmFhPxYNHDGwj9trC+gcxLQdg0W3W",
+			"KG6Egr95OgWoU8WmKXKVKbKw4x2H55JQ8o2iORHsPXzsD7AWePc9t+wy8TLu/JKb9tHXiUBpleK27Jat1mI",
+			"6zpmzPygJym0dGY5+DJ/BwjEDbVi3MVTFSENQGZOnX2pkfml8qaMihN5+VD2NNSkr8mS3GzabvCyLJIpaEg",
+			"23g6cL1fOX0h/UdIvosrNEFHtYkQuUCOqBfCHRNtUsfIrTDc+0xwMVkdPGz4mGJ4OafOrVaqCcLQ97k5VX4",
+			"bi7BNS/ughIPWSsg2w6NQkZ8qcsQCDWL6JcMis5YOtuhso5hBVhQPLviAEjU+F9s8seCox/+56VcLCfiwa7",
+			"o9RUJpQkKpT8fdH5PHP5FME89W833NUOIhpOwaLbrE4fW2pXqXSAUJ1JRT6ydEtQoAhhqLnbZ0pDLtoGLNw",
+			"eCn5v/pAnczIlIcZ7T48k4aUch1/ZhIvNv/+h5HcRjLT/wuDA4RojmML7hfrlZ80iwsbE3nNsYg7YJeJl3f",
+			"lld5gYo0FL8spbt0cKxJRanYg3ekvgAlEypC2ZbVusxDXdbaQsfzrPmvFzJj5QU9SaOnMbf3TF3zUWafhZz",
+			"2tKMm8pxRjr/UGdQwaasW4i6cqQhqfwSrTiZbycRNbxGndixdx5l9WMfM3p/JL5U0ZFSfy8r7h30E7m0KZM",
+			"nsx+2+Gp5nHf6OjQToXJLnZtN3gZVkkTN0mhc7Z6U/AR8g/msQMTzVDWme0eLw1PQvnw9h7kDXID3Wb9scg",
+			"XkSVmyGi2sVesZEJeYxmdePPNx4HLTk74zozjF8DhYuItqli5VeYbohDrfC9eSTefKY5GKyOnjZ8Uz2K9KA",
+			"ihhffp2RO9D9jFyqj9hbag9OqVAXhaHvcnaqhAXMwVWAtwS2bnYoBfcjB2J8P0i/BeLvQ17J2Q8JUuyXTIC",
+			"5tfuTQqUnOlDljAdBcTVzMF9+xbSLrS7K2gP9t1+/Z6pg8TwZbdTdQzCGqBq5xpQjinRoKB5Z9QQganwryk",
+			"u8ZJqYvYX4IAaNyu8phiwyT+1wHetz1qoSF/Vg03ACuFt3T5IS3jDT4Z4f5Ybd5MGo/qUXRzXF415vFRv3N",
+			"hHxFw+v6TaYI5qt5v+eopv3iOSGRWxgbg0QuXzAEVht2QLwHHrjmcPraUr1KpQNwD97A5WQZs4TqSij0k6N",
+			"bhB9Ouqy9H+vvk9RUFukCDu9m0MZOx76+Uhh20TBm4fBS7XJDaEhdQDlh6K3SHEClOZTsP4oy/BVDnKSCLl",
+			"7/OUNpoBB2cEOJKOU6/swkXmwoED5slAri3JVumHvqq72SlZuc6bKFASL+FwYHCNEcx/7iApVQ/6B3fU+4j",
+			"ngZsCJ9urwcIDcMkhY2JvKaYxF3FsMiYMJNrcervYR3vOzyiatIgOXkwk45wMQaC16WU9zAMR6ZBrjvbLo5",
+			"ViSi1OxAusxStvr6UPDRQMhYQK5NFdG1zMoYgPGlbMtq3WYhrutsPm5PPg8SWwey9KGEWw++B0fwM9x1sw7",
+			"zomTbzYIJ5vNXYEmVrLVWmNv6py/4qLOYLv41d9YUAyVQWCIJd0tNJaVcsFFZ9/1OKcZe6w3qGE7cwsyzI1",
+			"aoNNSKcRdPVYQ0IY7jT2HpNF+tFA31NfTRX1gQn60bSGHiJraI07oXL+LTshqLlKufiV8o9DHAtnqJqixma",
+			"e4Kyo8EXcNhDJfQj/FZUTkiK2DkfcO/g3Y2heSIxy3bWIo1WfZhOqX51XtZA2Wo/ddpyzKP/0ZHg3QuMnr7",
+			"1B+tyJ5IcrNpu8HLskiHt/vj73cCIwstFVm7aucj/imHAZXWV56Aj5B/NIkZnnWLAicaNan1+RHsnU4oTPU",
+			"MFX7FYJT8AemBltSXLhQBHIUEjLmSpGqQH+o27Y9BamUbeG7DM/HXG71vEGJsv9fuuf1ITNAPvGIjE/IYze",
+			"q8lyeBqjZxWsafbzwOWnJ2xmprrlZ0zsat5vFA7CDTI60T9dK0Dm+TEG1TxcqvMN0QmFdXkoGMbXsUzbko1",
+			"ZGIe+HJK3D7LTj4THMwWB09bfi5d6IAM4HdkzXtTLpnnDiTwOne4kkgiC6+T8mc6H/GLktLW8TGw3ZFx9G1",
+			"fpLek0Uy1ScmvGIjPzqdmoLQYQ8/z5kI2v7dv1RDA+ZgqsBaVLYHdDiEfOrpyKFjRiUjpOk9pfEeC58UgrE",
+			"/H6RfgvGCRDuN/HE+QXahr2XthoSpdlSr97WoOBkd2DEZD/wl/B0tNYtX0plMoFOTnClzxgKgppcOcV16ss",
+			"sqDeDLCWdXy98JcpMn2+ex10HPN0vYy7EiRV1vZWR72q7fs9UxeZ7aW9shjR/FLmclfTbzvppgZ9B5pKuQJ",
+			"tAMXONKEcQ7NQyp59hJ6oeFAAAAAAAAAAB5iTUwyPBuf/ISa2CQ4d3+i5teUFgRs4GPtkGYc+ViyfY/dKi7",
+			"FQy2faQq+OMEvzcELR/IK/TRSHX+FGi07BymDHchWHwcctmH7H8IJA3BWP5lSjjs/a8n+khV8McJfm+DwWD",
+			"AD/kQEAhaPpBX6KORcdMLoJ8Yze6Bb76IO//gePjmi7jzD44Hc33V6KsePYYK9ODYY+5T+Q7Z/xBIGoKxd1",
+			"DKIIDq7M78y5Rw2PtfT4VCoUAQCzEw9JGq4I8T/N6NGJ/QR+OSoQaDwYAf8iEgfwr0sNcCT197J+t4/PaeF",
+			"wKu3kg0BvBoiTWAGGwXQ+nwvLUopOctlgLffBF3/sHxe1ZJIb8Or47wzRdx5x8cD4lEIkEv73JwjWk9iQQb",
+			"ozj04Ai5zOvNR397VumU+n7GBvJj2VwKELl3IWh5wxLdVw6oXUkL4rMohTMDGVPzAKn8ujYpmwNu1viXKeG",
+			"w97+egR4c0XgH0eEKhUKBIBZiYHMMd7Ho5gwfg7DCmUwBIYn6OfephPFP9nGiqfnc4Px3CCucyRQQkggMBo",
+			"MBP+RDQHWPtjH3FC0//hToYa8Fnr6Hnd1RZ/XwwfZO1vH47T0vj8fjwTAdU1AEXL2RaAzg0X3ViKGg/I6ue",
+			"fiXaYsIX+YAcaJZQ/gxmYvq/Akb6YIY8mPJOdMZ7GdvLW56vdpa1xakW0p1KjSonT8FGi07hynktjAq5cvp",
+			"VuCbL+LOPzgemRIa0gbPVmESiUSCXt7l4GsAcbKWLoufGtN6Egk2RnFjWk8iwcYoDujBEXKZ15uPkUgkQlE",
+			"n9fCVZTuKetMkuOzsDrqyI0rHZ3dQ6uoy+UYe/mXaIsKXOe5C0PKGJbqvl8vlwk7V1NAcULuSFsRnUWXZjq",
+			"LeNAkuYfSRavXA2GYYfaRaPTC2GZPm+gplIQWY6m/POq3Ra+ebvMSaMsmmCeI18ar6Och2aa6v+qIoe/cQJ",
+			"5rKatgViBQKhQJBLMTAbYOwMoncqr/mGO5i0c0ZPp+R21IZPXdBbfISa8okmyYUeydbAtT1WZ/geQtaxUbY",
+			"5mlMO5I1KKfiRFPzucH575vNZsNxMZeQEFY4kykgJBFp3w2j4dBKbhgMBgN+yIeAYYUzM7Y46f/qHm1j7il",
+			"afpOXWFMm2TQBl7pHmw0t5UnuM3Krxd2LNmWoLPudzDi3HCEZy1U8Vsjsnazj8dt7XpUUmdM5KxUhHo/Hg2",
+			"E6pqBnBvKzqcrI32Mr7XuCPhmXGqLYS0rOd+iROYYbEt/EaeiwsyvaL6oWmWO4i0U3Z/jg6o27jccJh2tx0",
+			"+vV1roGEvjm2x0m1HkW1fkTNtIFMW9czCP+ImtO5MeSc6Yz2M+dTqdDbsO2sLXJS6wpk2yazEB+nOFjAuVH",
+			"2yDMuXKxZD5SFfxxgt8bOn8KNFp2DlND9j8EkoZgLMhtYVTKl9OtseRUZAJnvdLAN1/EnX9wPLm+avRVjx5",
+			"DMiU0pA2ercJLrAGUxW7DvU+BHlzumhL1NggrbCZqfIq9k3U8fnvPC8QaQAy2i6F0NKb1JBJsjOJNL8AU2p",
+			"zinca0nkSCjVEcvz2rdEp9P2O7ELS8YYnuK8KZgYypeYBUSQLf3PFoM9Uwi+rsOZhdqkFY4UymgJBEONHUf",
+			"G5w/juzSoosNmFNusrDvxz+kSPFzu6g1NVl8o23Z5XkHZWc8jz8y7RFhC9zRXX+hI10QQy3Fje9Xm2ta86f",
+			"Ao2WncMURQRc3c6McJU8jWntBnwe6jigdiUtiM+iQSlDFeV4od3Ksh1FvWkSXLM7KHV1mXwjwugj1eqBsc2",
+			"7YRblInHfsjD6SLV6YGwzSXN9hbKQAkxNXmJNmWTTBDTXV31RlL17v0wJLQmFDvrGxTwdwXVghTZ5iTVlkk",
+			"0TT/C8Ba1iI2zEa+JV9XOQ7b3i12U9g/6Suc/IrRZ3L9rARv2d3odBpUvdo82GlvIkMlSW/U5mnFtDh51d0",
+			"X5RtToOqG0Zjj/KsZX2PUGfjEvIHMMNiW/iNMwx3MWimzN8tbjp9WprXQM+I7elMnrugkeqgpX6ioD92uQl",
+			"1pRJNk2jbRDmXLlYMij2TrYEqOuzUX97hsxYhcxVUmRO56xUhCzbUX4vXDr7p0APLndNiXreyToev73nBa8",
+			"aMb4gpSrr1pMEjuhVRJRdCFresET3FSSBb+54tJlqIKxwJlNASCJZJUUWm7AmXdK+G0bDoZXcqzcudgtR+6",
+			"Nbi5ter7bWNSICrm5nRrhKqZnwPj9XC8vQEMUO96dltNQ92sbcU7T8rbTv9hSj2oMmL7GmTLJpAl+mhJaEQ",
+			"gd9LnWPNhtaypNX/LoG06qk7Nxn5FaLuxdtpe7RZkNLeRKhw86uaL+oWthK+56gT8YlU9GlzvhedaQqWJD+",
+			"MK4b29g7Wcfjt/e8obJs9ytHmcMqKTKnc1YqQlOgB5e7pkQ9V40YX5BSlXUuBC1vWKL7CqWfcz8As0iL3BZ",
+			"GD8hDJvStxU2vV1vrGtRMeJ+fq4VlX9cmz8e6NuQmXhP/D0pYmyJzDDckvonTW/o5B+xO56zQYWdXtF9ULa",
+			"noUmd8rzpSWVTnT9hIF8Qg3dJ/ELh5u6tGjC9Iqco60s+5H4BZpEXW4qbXq611Da9rk+djXRtyJPDNtztMq",
+			"PNdefiH87zGjCyq8ydspAtiVSPGF6RUZR3euJhH/EXWnKcxrXc0tbjjoxyyvx9BaavalYeP17EH1FEO2d+P",
+			"oLRVKIfs70dQ2ioAQYCQwQILnAEgS1AAAAAAAAUAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+			"AAAIAAAADAAAAEEtQAAAAAAAAAAAAAAAAAAIAAAAAAAAAAAAAAAAAAAD//////////wAAAAAAAAAAAAAAAA",
+			"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAhIUAAAQZyRwQILFCRpb",
+			"nRBcnJheUZyb21TdHJpbmcAAEGwkcECC2Ioc2l6ZV90IGlkeCwgc2l6ZV90IHNpemUpPDo6PnsgdGhyb3cg",
+			"J0FycmF5IGluZGV4ICcgKyBpZHggKyAnIG91dCBvZiBib3VuZHM6IFswLCcgKyBzaXplICsgJyknOyB9AA=="
+		].join("");
+		function _base64ToArrayBuffer(base64) {
+			var binary_string = window.atob(base64);
+			var len = binary_string.length;
+			var bytes = new Uint8Array(len);
+			for (var i = 0; i < len; i++) bytes[i] = binary_string.charCodeAt(i);
+			return bytes;
+		}
+		function getBinary(file) {
+			if (typeof Buffer == "function") return Buffer.from(binaryInString, "base64");
+			else return _base64ToArrayBuffer(binaryInString);
+		}
+		function getBinaryPromise() {
+			return Promise.resolve().then(function() {
+				return getBinary(wasmBinaryFile);
+			});
+		}
+		function createWasm() {
+			var info = {
+				"env": asmLibraryArg,
+				"wasi_snapshot_preview1": asmLibraryArg
+			};
+			/** @param {WebAssembly.Module=} module*/
+			function receiveInstance(instance, module) {
+				Module["asm"] = instance.exports;
+				wasmMemory = Module["asm"]["memory"];
+				assert(wasmMemory, "memory not found in wasm exports");
+				updateGlobalBufferAndViews(wasmMemory.buffer);
+				wasmTable = Module["asm"]["__indirect_function_table"];
+				assert(wasmTable, "table not found in wasm exports");
+				addOnInit(Module["asm"]["__wasm_call_ctors"]);
+				removeRunDependency("wasm-instantiate");
+			}
+			addRunDependency("wasm-instantiate");
+			var trueModule = Module;
+			function receiveInstantiationResult(result) {
+				assert(Module === trueModule, "the Module object should not be replaced during async compilation - perhaps the order of HTML elements is wrong?");
+				trueModule = null;
+				receiveInstance(result["instance"]);
+			}
+			function instantiateArrayBuffer(receiver) {
+				return getBinaryPromise().then(function(binary) {
+					return WebAssembly.instantiate(binary, info);
+				}).then(function(instance) {
+					return instance;
+				}).then(receiver, function(reason) {
+					err("failed to asynchronously prepare wasm: " + reason);
+					if (isFileURI(wasmBinaryFile)) err("warning: Loading from a file URI (" + wasmBinaryFile + ") is not supported in most browsers. See https://emscripten.org/docs/getting_started/FAQ.html#how-do-i-run-a-local-webserver-for-testing-why-does-my-program-stall-in-downloading-or-preparing");
+					abort(reason);
+				});
+			}
+			function instantiateAsync() {
+				return instantiateArrayBuffer(receiveInstantiationResult);
+			}
+			if (Module["instantiateWasm"]) try {
+				return Module["instantiateWasm"](info, receiveInstance);
+			} catch (e) {
+				err("Module.instantiateWasm callback failed with error: " + e);
+				readyPromiseReject(e);
+			}
+			instantiateAsync().catch(readyPromiseReject);
+			return {};
+		}
+		function array_bounds_check_error(idx, size) {
+			throw "Array index " + idx + " out of bounds: [0," + size + ")";
+		}
+		/** @constructor */
+		function ExitStatus(status) {
+			this.name = "ExitStatus";
+			this.message = "Program terminated with exit(" + status + ")";
+			this.status = status;
+		}
+		function callRuntimeCallbacks(callbacks) {
+			while (callbacks.length > 0) callbacks.shift()(Module);
+		}
+		function ptrToString(ptr) {
+			return "0x" + ptr.toString(16).padStart(8, "0");
+		}
+		function warnOnce(text) {
+			if (!warnOnce.shown) warnOnce.shown = {};
+			if (!warnOnce.shown[text]) {
+				warnOnce.shown[text] = 1;
+				if (ENVIRONMENT_IS_NODE) text = "warning: " + text;
+				err(text);
+			}
+		}
+		function _abort() {
+			abort("native code called abort()");
+		}
+		function getHeapMax() {
+			return 2147483648;
+		}
+		function emscripten_realloc_buffer(size) {
+			try {
+				wasmMemory.grow(size - buffer.byteLength + 65535 >>> 16);
+				updateGlobalBufferAndViews(wasmMemory.buffer);
+				return 1;
+			} catch (e) {
+				err("emscripten_realloc_buffer: Attempted to grow heap from " + buffer.byteLength + " bytes to " + size + " bytes, but got error: " + e);
+			}
+		}
+		function _emscripten_resize_heap(requestedSize) {
+			var oldSize = HEAPU8.length;
+			requestedSize = requestedSize >>> 0;
+			assert(requestedSize > oldSize);
+			var maxHeapSize = getHeapMax();
+			if (requestedSize > maxHeapSize) {
+				err("Cannot enlarge memory, asked to go up to " + requestedSize + " bytes, but the limit is " + maxHeapSize + " bytes!");
+				return false;
+			}
+			let alignUp = (x, multiple) => x + (multiple - x % multiple) % multiple;
+			for (var cutDown = 1; cutDown <= 4; cutDown *= 2) {
+				var overGrownHeapSize = oldSize * (1 + .2 / cutDown);
+				overGrownHeapSize = Math.min(overGrownHeapSize, requestedSize + 100663296);
+				var newSize = Math.min(maxHeapSize, alignUp(Math.max(requestedSize, overGrownHeapSize), 65536));
+				if (emscripten_realloc_buffer(newSize)) return true;
+			}
+			err("Failed to grow the heap from " + oldSize + " bytes to " + newSize + " bytes, not enough memory!");
+			return false;
+		}
+		var SYSCALLS = {
+			varargs: void 0,
+			get: function() {
+				assert(SYSCALLS.varargs != void 0);
+				SYSCALLS.varargs += 4;
+				return HEAP32[SYSCALLS.varargs - 4 >> 2];
+			},
+			getStr: function(ptr) {
+				return UTF8ToString(ptr);
+			}
+		};
+		function _fd_close(fd) {
+			abort("fd_close called without SYSCALLS_REQUIRE_FILESYSTEM");
+		}
+		function _fd_seek(fd, offset_low, offset_high, whence, newOffset) {
+			return 70;
+		}
+		var printCharBuffers = [
+			null,
+			[],
+			[]
+		];
+		function printChar(stream, curr) {
+			var buffer = printCharBuffers[stream];
+			assert(buffer);
+			if (curr === 0 || curr === 10) {
+				(stream === 1 ? out : err)(UTF8ArrayToString(buffer, 0));
+				buffer.length = 0;
+			} else buffer.push(curr);
+		}
+		function _fd_write(fd, iov, iovcnt, pnum) {
+			var num = 0;
+			for (var i = 0; i < iovcnt; i++) {
+				var ptr = HEAPU32[iov >> 2];
+				var len = HEAPU32[iov + 4 >> 2];
+				iov += 8;
+				for (var j = 0; j < len; j++) printChar(fd, HEAPU8[ptr + j]);
+				num += len;
+			}
+			HEAPU32[pnum >> 2] = num;
+			return 0;
+		}
+		function checkIncomingModuleAPI() {
+			ignoredModuleProp("fetchSettings");
+		}
+		var asmLibraryArg = {
+			"abort": _abort,
+			"array_bounds_check_error": array_bounds_check_error,
+			"emscripten_resize_heap": _emscripten_resize_heap,
+			"fd_close": _fd_close,
+			"fd_seek": _fd_seek,
+			"fd_write": _fd_write
+		};
+		createWasm();
+		Module["___wasm_call_ctors"] = createExportWrapper("__wasm_call_ctors");
+		/** @type {function(...*):?} */
+		var _emscripten_bind_VoidPtr___destroy___0 = Module["_emscripten_bind_VoidPtr___destroy___0"] = createExportWrapper("emscripten_bind_VoidPtr___destroy___0");
+		/** @type {function(...*):?} */
+		var _emscripten_bind_Crc64Hash_Crc64Hash_0 = Module["_emscripten_bind_Crc64Hash_Crc64Hash_0"] = createExportWrapper("emscripten_bind_Crc64Hash_Crc64Hash_0");
+		/** @type {function(...*):?} */
+		var _emscripten_bind_Crc64Hash_OnAppend_2 = Module["_emscripten_bind_Crc64Hash_OnAppend_2"] = createExportWrapper("emscripten_bind_Crc64Hash_OnAppend_2");
+		/** @type {function(...*):?} */
+		var _emscripten_bind_Crc64Hash_OnFinal_3 = Module["_emscripten_bind_Crc64Hash_OnFinal_3"] = createExportWrapper("emscripten_bind_Crc64Hash_OnFinal_3");
+		/** @type {function(...*):?} */
+		var _emscripten_bind_Crc64Hash___destroy___0 = Module["_emscripten_bind_Crc64Hash___destroy___0"] = createExportWrapper("emscripten_bind_Crc64Hash___destroy___0");
+		Module["___errno_location"] = createExportWrapper("__errno_location");
+		Module["_fflush"] = createExportWrapper("fflush");
+		Module["_malloc"] = createExportWrapper("malloc");
+		Module["_free"] = createExportWrapper("free");
+		/** @type {function(...*):?} */
+		var _emscripten_stack_init = Module["_emscripten_stack_init"] = function() {
+			return (_emscripten_stack_init = Module["_emscripten_stack_init"] = Module["asm"]["emscripten_stack_init"]).apply(null, arguments);
+		};
+		/** @type {function(...*):?} */
+		var _emscripten_stack_get_free = Module["_emscripten_stack_get_free"] = function() {
+			return (_emscripten_stack_get_free = Module["_emscripten_stack_get_free"] = Module["asm"]["emscripten_stack_get_free"]).apply(null, arguments);
+		};
+		/** @type {function(...*):?} */
+		var _emscripten_stack_get_base = Module["_emscripten_stack_get_base"] = function() {
+			return (_emscripten_stack_get_base = Module["_emscripten_stack_get_base"] = Module["asm"]["emscripten_stack_get_base"]).apply(null, arguments);
+		};
+		/** @type {function(...*):?} */
+		var _emscripten_stack_get_end = Module["_emscripten_stack_get_end"] = function() {
+			return (_emscripten_stack_get_end = Module["_emscripten_stack_get_end"] = Module["asm"]["emscripten_stack_get_end"]).apply(null, arguments);
+		};
+		Module["stackSave"] = createExportWrapper("stackSave");
+		Module["stackRestore"] = createExportWrapper("stackRestore");
+		Module["stackAlloc"] = createExportWrapper("stackAlloc");
+		/** @type {function(...*):?} */
+		var _emscripten_stack_get_current = Module["_emscripten_stack_get_current"] = function() {
+			return (_emscripten_stack_get_current = Module["_emscripten_stack_get_current"] = Module["asm"]["emscripten_stack_get_current"]).apply(null, arguments);
+		};
+		Module["dynCall_jiji"] = createExportWrapper("dynCall_jiji");
+		Module["___start_em_js"] = 5261488;
+		Module["___stop_em_js"] = 5261586;
+		[
+			"run",
+			"UTF8ArrayToString",
+			"UTF8ToString",
+			"stringToUTF8Array",
+			"stringToUTF8",
+			"lengthBytesUTF8",
+			"addOnPreRun",
+			"addOnInit",
+			"addOnPreMain",
+			"addOnExit",
+			"addOnPostRun",
+			"addRunDependency",
+			"removeRunDependency",
+			"FS_createFolder",
+			"FS_createPath",
+			"FS_createDataFile",
+			"FS_createPreloadedFile",
+			"FS_createLazyFile",
+			"FS_createLink",
+			"FS_createDevice",
+			"FS_unlink",
+			"getLEB",
+			"getFunctionTables",
+			"alignFunctionTables",
+			"registerFunctions",
+			"prettyPrint",
+			"getCompilerSetting",
+			"out",
+			"err",
+			"callMain",
+			"abort",
+			"keepRuntimeAlive",
+			"wasmMemory",
+			"stackAlloc",
+			"stackSave",
+			"stackRestore",
+			"getTempRet0",
+			"setTempRet0",
+			"writeStackCookie",
+			"checkStackCookie",
+			"ptrToString",
+			"zeroMemory",
+			"stringToNewUTF8",
+			"exitJS",
+			"getHeapMax",
+			"emscripten_realloc_buffer",
+			"ENV",
+			"ERRNO_CODES",
+			"ERRNO_MESSAGES",
+			"setErrNo",
+			"inetPton4",
+			"inetNtop4",
+			"inetPton6",
+			"inetNtop6",
+			"readSockaddr",
+			"writeSockaddr",
+			"DNS",
+			"getHostByName",
+			"Protocols",
+			"Sockets",
+			"getRandomDevice",
+			"warnOnce",
+			"traverseStack",
+			"UNWIND_CACHE",
+			"convertPCtoSourceLocation",
+			"readEmAsmArgsArray",
+			"readEmAsmArgs",
+			"runEmAsmFunction",
+			"runMainThreadEmAsm",
+			"jstoi_q",
+			"jstoi_s",
+			"getExecutableName",
+			"listenOnce",
+			"autoResumeAudioContext",
+			"dynCallLegacy",
+			"getDynCaller",
+			"dynCall",
+			"handleException",
+			"runtimeKeepalivePush",
+			"runtimeKeepalivePop",
+			"callUserCallback",
+			"maybeExit",
+			"safeSetTimeout",
+			"asmjsMangle",
+			"asyncLoad",
+			"alignMemory",
+			"mmapAlloc",
+			"writeI53ToI64",
+			"writeI53ToI64Clamped",
+			"writeI53ToI64Signaling",
+			"writeI53ToU64Clamped",
+			"writeI53ToU64Signaling",
+			"readI53FromI64",
+			"readI53FromU64",
+			"convertI32PairToI53",
+			"convertI32PairToI53Checked",
+			"convertU32PairToI53",
+			"getCFunc",
+			"ccall",
+			"cwrap",
+			"uleb128Encode",
+			"sigToWasmTypes",
+			"generateFuncType",
+			"convertJsFunctionToWasm",
+			"freeTableIndexes",
+			"functionsInTableMap",
+			"getEmptyTableSlot",
+			"updateTableMap",
+			"addFunction",
+			"removeFunction",
+			"reallyNegative",
+			"unSign",
+			"strLen",
+			"reSign",
+			"formatString",
+			"setValue",
+			"getValue",
+			"PATH",
+			"PATH_FS",
+			"intArrayFromString",
+			"intArrayToString",
+			"AsciiToString",
+			"stringToAscii",
+			"UTF16Decoder",
+			"UTF16ToString",
+			"stringToUTF16",
+			"lengthBytesUTF16",
+			"UTF32ToString",
+			"stringToUTF32",
+			"lengthBytesUTF32",
+			"allocateUTF8",
+			"allocateUTF8OnStack",
+			"writeStringToMemory",
+			"writeArrayToMemory",
+			"writeAsciiToMemory",
+			"SYSCALLS",
+			"getSocketFromFD",
+			"getSocketAddress",
+			"JSEvents",
+			"registerKeyEventCallback",
+			"specialHTMLTargets",
+			"maybeCStringToJsString",
+			"findEventTarget",
+			"findCanvasEventTarget",
+			"getBoundingClientRect",
+			"fillMouseEventData",
+			"registerMouseEventCallback",
+			"registerWheelEventCallback",
+			"registerUiEventCallback",
+			"registerFocusEventCallback",
+			"fillDeviceOrientationEventData",
+			"registerDeviceOrientationEventCallback",
+			"fillDeviceMotionEventData",
+			"registerDeviceMotionEventCallback",
+			"screenOrientation",
+			"fillOrientationChangeEventData",
+			"registerOrientationChangeEventCallback",
+			"fillFullscreenChangeEventData",
+			"registerFullscreenChangeEventCallback",
+			"JSEvents_requestFullscreen",
+			"JSEvents_resizeCanvasForFullscreen",
+			"registerRestoreOldStyle",
+			"hideEverythingExceptGivenElement",
+			"restoreHiddenElements",
+			"setLetterbox",
+			"currentFullscreenStrategy",
+			"restoreOldWindowedStyle",
+			"softFullscreenResizeWebGLRenderTarget",
+			"doRequestFullscreen",
+			"fillPointerlockChangeEventData",
+			"registerPointerlockChangeEventCallback",
+			"registerPointerlockErrorEventCallback",
+			"requestPointerLock",
+			"fillVisibilityChangeEventData",
+			"registerVisibilityChangeEventCallback",
+			"registerTouchEventCallback",
+			"fillGamepadEventData",
+			"registerGamepadEventCallback",
+			"registerBeforeUnloadEventCallback",
+			"fillBatteryEventData",
+			"battery",
+			"registerBatteryEventCallback",
+			"setCanvasElementSize",
+			"getCanvasElementSize",
+			"demangle",
+			"demangleAll",
+			"jsStackTrace",
+			"stackTrace",
+			"ExitStatus",
+			"getEnvStrings",
+			"checkWasiClock",
+			"flush_NO_FILESYSTEM",
+			"dlopenMissingError",
+			"createDyncallWrapper",
+			"setImmediateWrapped",
+			"clearImmediateWrapped",
+			"polyfillSetImmediate",
+			"uncaughtExceptionCount",
+			"exceptionLast",
+			"exceptionCaught",
+			"ExceptionInfo",
+			"exception_addRef",
+			"exception_decRef",
+			"Browser",
+			"setMainLoop",
+			"wget",
+			"FS",
+			"MEMFS",
+			"TTY",
+			"PIPEFS",
+			"SOCKFS",
+			"_setNetworkCallback",
+			"tempFixedLengthArray",
+			"miniTempWebGLFloatBuffers",
+			"heapObjectForWebGLType",
+			"heapAccessShiftForWebGLHeap",
+			"GL",
+			"emscriptenWebGLGet",
+			"computeUnpackAlignedImageSize",
+			"emscriptenWebGLGetTexPixelData",
+			"emscriptenWebGLGetUniform",
+			"webglGetUniformLocation",
+			"webglPrepareUniformLocationsBeforeFirstUse",
+			"webglGetLeftBracePos",
+			"emscriptenWebGLGetVertexAttrib",
+			"writeGLArray",
+			"AL",
+			"SDL_unicode",
+			"SDL_ttfContext",
+			"SDL_audio",
+			"SDL",
+			"SDL_gfx",
+			"GLUT",
+			"EGL",
+			"GLFW_Window",
+			"GLFW",
+			"GLEW",
+			"IDBStore",
+			"runAndAbortIfError",
+			"ALLOC_NORMAL",
+			"ALLOC_STACK",
+			"allocate"
+		].forEach(unexportedRuntimeSymbol);
+		[
+			"zeroMemory",
+			"stringToNewUTF8",
+			"exitJS",
+			"setErrNo",
+			"inetPton4",
+			"inetNtop4",
+			"inetPton6",
+			"inetNtop6",
+			"readSockaddr",
+			"writeSockaddr",
+			"getHostByName",
+			"getRandomDevice",
+			"traverseStack",
+			"convertPCtoSourceLocation",
+			"readEmAsmArgs",
+			"runEmAsmFunction",
+			"runMainThreadEmAsm",
+			"jstoi_q",
+			"jstoi_s",
+			"getExecutableName",
+			"listenOnce",
+			"autoResumeAudioContext",
+			"dynCallLegacy",
+			"getDynCaller",
+			"dynCall",
+			"handleException",
+			"runtimeKeepalivePush",
+			"runtimeKeepalivePop",
+			"callUserCallback",
+			"maybeExit",
+			"safeSetTimeout",
+			"asmjsMangle",
+			"asyncLoad",
+			"alignMemory",
+			"mmapAlloc",
+			"writeI53ToI64",
+			"writeI53ToI64Clamped",
+			"writeI53ToI64Signaling",
+			"writeI53ToU64Clamped",
+			"writeI53ToU64Signaling",
+			"readI53FromI64",
+			"readI53FromU64",
+			"convertI32PairToI53",
+			"convertU32PairToI53",
+			"getCFunc",
+			"ccall",
+			"cwrap",
+			"uleb128Encode",
+			"sigToWasmTypes",
+			"generateFuncType",
+			"convertJsFunctionToWasm",
+			"getEmptyTableSlot",
+			"updateTableMap",
+			"addFunction",
+			"removeFunction",
+			"reallyNegative",
+			"unSign",
+			"strLen",
+			"reSign",
+			"formatString",
+			"intArrayToString",
+			"AsciiToString",
+			"stringToAscii",
+			"UTF16ToString",
+			"stringToUTF16",
+			"lengthBytesUTF16",
+			"UTF32ToString",
+			"stringToUTF32",
+			"lengthBytesUTF32",
+			"allocateUTF8",
+			"allocateUTF8OnStack",
+			"writeStringToMemory",
+			"writeArrayToMemory",
+			"writeAsciiToMemory",
+			"getSocketFromFD",
+			"getSocketAddress",
+			"registerKeyEventCallback",
+			"maybeCStringToJsString",
+			"findEventTarget",
+			"findCanvasEventTarget",
+			"getBoundingClientRect",
+			"fillMouseEventData",
+			"registerMouseEventCallback",
+			"registerWheelEventCallback",
+			"registerUiEventCallback",
+			"registerFocusEventCallback",
+			"fillDeviceOrientationEventData",
+			"registerDeviceOrientationEventCallback",
+			"fillDeviceMotionEventData",
+			"registerDeviceMotionEventCallback",
+			"screenOrientation",
+			"fillOrientationChangeEventData",
+			"registerOrientationChangeEventCallback",
+			"fillFullscreenChangeEventData",
+			"registerFullscreenChangeEventCallback",
+			"JSEvents_requestFullscreen",
+			"JSEvents_resizeCanvasForFullscreen",
+			"registerRestoreOldStyle",
+			"hideEverythingExceptGivenElement",
+			"restoreHiddenElements",
+			"setLetterbox",
+			"softFullscreenResizeWebGLRenderTarget",
+			"doRequestFullscreen",
+			"fillPointerlockChangeEventData",
+			"registerPointerlockChangeEventCallback",
+			"registerPointerlockErrorEventCallback",
+			"requestPointerLock",
+			"fillVisibilityChangeEventData",
+			"registerVisibilityChangeEventCallback",
+			"registerTouchEventCallback",
+			"fillGamepadEventData",
+			"registerGamepadEventCallback",
+			"registerBeforeUnloadEventCallback",
+			"fillBatteryEventData",
+			"battery",
+			"registerBatteryEventCallback",
+			"setCanvasElementSize",
+			"getCanvasElementSize",
+			"demangle",
+			"demangleAll",
+			"jsStackTrace",
+			"stackTrace",
+			"getEnvStrings",
+			"checkWasiClock",
+			"createDyncallWrapper",
+			"setImmediateWrapped",
+			"clearImmediateWrapped",
+			"polyfillSetImmediate",
+			"ExceptionInfo",
+			"exception_addRef",
+			"exception_decRef",
+			"setMainLoop",
+			"_setNetworkCallback",
+			"heapObjectForWebGLType",
+			"heapAccessShiftForWebGLHeap",
+			"emscriptenWebGLGet",
+			"computeUnpackAlignedImageSize",
+			"emscriptenWebGLGetTexPixelData",
+			"emscriptenWebGLGetUniform",
+			"webglGetUniformLocation",
+			"webglPrepareUniformLocationsBeforeFirstUse",
+			"webglGetLeftBracePos",
+			"emscriptenWebGLGetVertexAttrib",
+			"writeGLArray",
+			"SDL_unicode",
+			"SDL_ttfContext",
+			"SDL_audio",
+			"GLFW_Window",
+			"runAndAbortIfError",
+			"ALLOC_NORMAL",
+			"ALLOC_STACK",
+			"allocate"
+		].forEach(missingLibrarySymbol);
+		var calledRun;
+		dependenciesFulfilled = function runCaller() {
+			if (!calledRun) run();
+			if (!calledRun) dependenciesFulfilled = runCaller;
+		};
+		function stackCheckInit() {
+			_emscripten_stack_init();
+			writeStackCookie();
+		}
+		/** @type {function(Array=)} */
+		function run(args) {
+			args = args || arguments_;
+			if (runDependencies > 0) return;
+			stackCheckInit();
+			preRun();
+			if (runDependencies > 0) return;
+			function doRun() {
+				if (calledRun) return;
+				calledRun = true;
+				Module["calledRun"] = true;
+				if (ABORT) return;
+				initRuntime();
+				readyPromiseResolve(Module);
+				if (Module["onRuntimeInitialized"]) Module["onRuntimeInitialized"]();
+				assert(!Module["_main"], "compiled without a main, but one is present. if you added it from JS, use Module[\"onRuntimeInitialized\"]");
+				postRun();
+			}
+			if (Module["setStatus"]) {
+				Module["setStatus"]("Running...");
+				setTimeout(function() {
+					setTimeout(function() {
+						Module["setStatus"]("");
+					}, 1);
+					doRun();
+				}, 1);
+			} else doRun();
+			checkStackCookie();
+		}
+		if (Module["preInit"]) {
+			if (typeof Module["preInit"] == "function") Module["preInit"] = [Module["preInit"]];
+			while (Module["preInit"].length > 0) Module["preInit"].pop()();
+		}
+		run();
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant) */
+		function WrapperObject() {}
+		WrapperObject.prototype = Object.create(WrapperObject.prototype);
+		WrapperObject.prototype.constructor = WrapperObject;
+		WrapperObject.prototype.__class__ = WrapperObject;
+		WrapperObject.__cache__ = {};
+		Module["WrapperObject"] = WrapperObject;
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant)
+		@param {*=} __class__ */
+		function getCache(__class__) {
+			return (__class__ || WrapperObject).__cache__;
+		}
+		Module["getCache"] = getCache;
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant)
+		@param {*=} __class__ */
+		function wrapPointer(ptr, __class__) {
+			var cache = getCache(__class__);
+			var ret = cache[ptr];
+			if (ret) return ret;
+			ret = Object.create((__class__ || WrapperObject).prototype);
+			ret.ptr = ptr;
+			return cache[ptr] = ret;
+		}
+		Module["wrapPointer"] = wrapPointer;
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant) */
+		function castObject(obj, __class__) {
+			return wrapPointer(obj.ptr, __class__);
+		}
+		Module["castObject"] = castObject;
+		Module["NULL"] = wrapPointer(0);
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant) */
+		function destroy(obj) {
+			if (!obj["__destroy__"]) throw "Error: Cannot destroy object. (Did you create it yourself?)";
+			obj["__destroy__"]();
+			delete getCache(obj.__class__)[obj.ptr];
+		}
+		Module["destroy"] = destroy;
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant) */
+		function compare(obj1, obj2) {
+			return obj1.ptr === obj2.ptr;
+		}
+		Module["compare"] = compare;
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant) */
+		function getPointer(obj) {
+			return obj.ptr;
+		}
+		Module["getPointer"] = getPointer;
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant) */
+		function getClass(obj) {
+			return obj.__class__;
+		}
+		Module["getClass"] = getClass;
+		/** @suppress {duplicate} (TODO: avoid emitting this multiple times, it is redundant) */
+		var ensureCache = {
+			buffer: 0,
+			size: 0,
+			pos: 0,
+			temps: [],
+			needed: 0,
+			prepare: function() {
+				if (ensureCache.needed) {
+					for (var i = 0; i < ensureCache.temps.length; i++) Module["_free"](ensureCache.temps[i]);
+					ensureCache.temps.length = 0;
+					Module["_free"](ensureCache.buffer);
+					ensureCache.buffer = 0;
+					ensureCache.size += ensureCache.needed;
+					ensureCache.needed = 0;
+				}
+				if (!ensureCache.buffer) {
+					ensureCache.size += 128;
+					ensureCache.buffer = Module["_malloc"](ensureCache.size);
+					assert(ensureCache.buffer);
+				}
+				ensureCache.pos = 0;
+			},
+			alloc: function(array, view) {
+				assert(ensureCache.buffer);
+				var bytes = view.BYTES_PER_ELEMENT;
+				var len = array.length * bytes;
+				len = len + 7 & -8;
+				var ret;
+				if (ensureCache.pos + len >= ensureCache.size) {
+					assert(len > 0);
+					ensureCache.needed += len;
+					ret = Module["_malloc"](len);
+					ensureCache.temps.push(ret);
+				} else {
+					ret = ensureCache.buffer + ensureCache.pos;
+					ensureCache.pos += len;
+				}
+				return ret;
+			},
+			copy: function(array, view, offset) {
+				offset >>>= 0;
+				switch (view.BYTES_PER_ELEMENT) {
+					case 2:
+						offset >>>= 1;
+						break;
+					case 4:
+						offset >>>= 2;
+						break;
+					case 8: offset >>>= 3;
+				}
+				for (var i = 0; i < array.length; i++) view[offset + i] = array[i];
+			}
+		};
+		/** @suppress {undefinedVars, duplicate} @this{Object} */ function VoidPtr() {
+			throw "cannot construct a VoidPtr, no constructor in IDL";
+		}
+		VoidPtr.prototype = Object.create(WrapperObject.prototype);
+		VoidPtr.prototype.constructor = VoidPtr;
+		VoidPtr.prototype.__class__ = VoidPtr;
+		VoidPtr.__cache__ = {};
+		Module["VoidPtr"] = VoidPtr;
+		VoidPtr.prototype["__destroy__"] = VoidPtr.prototype.__destroy__ = function() {
+			var self = this.ptr;
+			_emscripten_bind_VoidPtr___destroy___0(self);
+		};
+		/** @suppress {undefinedVars, duplicate} @this{Object} */ function Crc64Hash() {
+			this.ptr = _emscripten_bind_Crc64Hash_Crc64Hash_0();
+			getCache(Crc64Hash)[this.ptr] = this;
+		}
+		Crc64Hash.prototype = Object.create(WrapperObject.prototype);
+		Crc64Hash.prototype.constructor = Crc64Hash;
+		Crc64Hash.prototype.__class__ = Crc64Hash;
+		Crc64Hash.__cache__ = {};
+		Module["Crc64Hash"] = Crc64Hash;
+		Crc64Hash.prototype["OnAppend"] = Crc64Hash.prototype.OnAppend = function(data, length) {
+			var self = this.ptr;
+			if (data && typeof data === "object") data = data.ptr;
+			if (length && typeof length === "object") length = length.ptr;
+			_emscripten_bind_Crc64Hash_OnAppend_2(self, data, length);
+		};
+		Crc64Hash.prototype["OnFinal"] = Crc64Hash.prototype.OnFinal = function(data, length, result) {
+			var self = this.ptr;
+			if (data && typeof data === "object") data = data.ptr;
+			if (length && typeof length === "object") length = length.ptr;
+			if (result && typeof result === "object") result = result.ptr;
+			_emscripten_bind_Crc64Hash_OnFinal_3(self, data, length, result);
+		};
+		Crc64Hash.prototype["__destroy__"] = Crc64Hash.prototype.__destroy__ = function() {
+			var self = this.ptr;
+			_emscripten_bind_Crc64Hash___destroy___0(self);
+		};
+		return NativeCRC64.ready;
+	});
+})();
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/StorageCRC64Calculator.js
+/**
+* Class used to calculator CRC64 checksum
+*/
+var StorageCRC64Calculator = class StorageCRC64Calculator {
+	nativeCrc64Hash;
+	static nativeInstance;
+	constructor() {
+		this.nativeCrc64Hash = new StorageCRC64Calculator.nativeInstance.Crc64Hash();
+	}
+	static initPromise;
+	/**
+	* Initialize environment for CRC64 checksum calculator
+	*/
+	static async init() {
+		if (!this.initPromise) this.initPromise = NativeCRC64().then((instance) => {
+			this.nativeInstance = instance;
+		});
+		return this.initPromise;
+	}
+	/**
+	* Append data for CRC64 checksum calculator
+	* @param body - content to be append
+	* @param length - length of the content
+	*/
+	append(body, length) {
+		const ptr = StorageCRC64Calculator.nativeInstance._malloc(length);
+		StorageCRC64Calculator.nativeInstance.HEAPU8.set(body, ptr);
+		this.nativeCrc64Hash.OnAppend(ptr, length);
+		StorageCRC64Calculator.nativeInstance._free(ptr);
+	}
+	/**
+	* Complete CRC64 checksum calculating and get the final result.
+	* @param body -
+	* @param length -
+	* @returns
+	*/
+	final(body, length) {
+		const ptr = StorageCRC64Calculator.nativeInstance._malloc(length);
+		StorageCRC64Calculator.nativeInstance.HEAPU8.set(body, ptr);
+		const result = StorageCRC64Calculator.nativeInstance._malloc(8);
+		this.nativeCrc64Hash.OnFinal(ptr, length, result);
+		StorageCRC64Calculator.nativeInstance._free(ptr);
+		const resultArray = /* @__PURE__ */ new Uint8Array(8);
+		resultArray.set(StorageCRC64Calculator.nativeInstance.HEAPU8.subarray(result, result + 8));
+		StorageCRC64Calculator.nativeInstance._free(result);
+		return resultArray;
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/streamHelpers.js
+/**
+* Signals the end of a stream by pushing null.
+* In Node.js, this is required to signal the end of a Readable stream.
+* @internal
+*/
+function signalStreamEnd(pushData) {
+	pushData(null);
+}
+var MAX_SEGMENT_CONTENT_LENGTH = 4194304;
+var SMRegion$1;
+(function(SMRegion) {
+	SMRegion[SMRegion["StreamHeader"] = 0] = "StreamHeader";
+	SMRegion[SMRegion["StreamFooter"] = 1] = "StreamFooter";
+	SMRegion[SMRegion["SegmentHeader"] = 2] = "SegmentHeader";
+	SMRegion[SMRegion["SegmentFooter"] = 3] = "SegmentFooter";
+	SMRegion[SMRegion["SegmentContent"] = 4] = "SegmentContent";
+	SMRegion[SMRegion["Completed"] = 5] = "Completed";
+})(SMRegion$1 || (SMRegion$1 = {}));
+var StructuredMessageEncoding = class {
+	pushData;
+	contentLength;
+	messageLength;
+	constructor(pushData, contentLength) {
+		this.pushData = pushData;
+		this.contentLength = contentLength;
+		this.contentOffset = 0;
+		this.currentDataOffset = 0;
+		this.segmentsCount = Math.ceil(this.contentLength / MAX_SEGMENT_CONTENT_LENGTH);
+		this.messageLength = this.contentLength + 13 + 18 * this.segmentsCount + 8;
+		this.messageHeaderBuffer = /* @__PURE__ */ new Uint8Array(13);
+		this.segmentNumber = 0;
+		this.segmentContentLength = 0;
+		this.segmentContentOffset = 0;
+		this.state = SMRegion$1.StreamHeader;
+		this.segmentCrc64 = new StorageCRC64Calculator();
+		this.messageCrc64 = new StorageCRC64Calculator();
+	}
+	currentDataOffset;
+	contentOffset;
+	segmentsCount;
+	messageHeaderBuffer;
+	segmentNumber;
+	segmentContentLength;
+	segmentContentOffset;
+	segmentCrc64;
+	messageCrc64;
+	state;
+	sourceDataHandler = (data) => {
+		this.currentDataOffset = 0;
+		if (this.state === SMRegion$1.StreamHeader) this.handlingMessageHeader();
+		while (this.segmentNumber < this.segmentsCount) {
+			this.segmentContentLength = Math.min(MAX_SEGMENT_CONTENT_LENGTH, this.contentLength - this.contentOffset);
+			if (this.state === SMRegion$1.SegmentHeader) this.handlingSegmentHeader();
+			if (this.state === SMRegion$1.SegmentContent) this.handlingSegmentContent(data);
+			if (this.state === SMRegion$1.SegmentFooter) {
+				this.handlingSegmentFooter();
+				this.contentOffset += this.segmentContentLength;
+			}
+			if (this.currentDataOffset === data.length) break;
+		}
+		if (this.state === SMRegion$1.StreamFooter) this.handlingMessageFooter();
+	};
+	handlingMessageHeader() {
+		this.messageHeaderBuffer[0] = 1;
+		this.fillInt64(this.messageHeaderBuffer, 1, this.messageLength);
+		this.fillInt16(this.messageHeaderBuffer, 9, 1);
+		this.fillInt16(this.messageHeaderBuffer, 11, this.segmentsCount);
+		this.pushData(this.messageHeaderBuffer);
+		this.state = SMRegion$1.SegmentHeader;
+	}
+	handlingSegmentHeader() {
+		const segmentHeaderBuffer = /* @__PURE__ */ new Uint8Array(10);
+		this.fillInt16(segmentHeaderBuffer, 0, this.segmentNumber + 1);
+		this.fillInt64(segmentHeaderBuffer, 2, this.segmentContentLength);
+		this.segmentContentOffset = 0;
+		this.pushData(segmentHeaderBuffer);
+		this.state = SMRegion$1.SegmentContent;
+	}
+	handlingSegmentContent(data) {
+		const length = Math.min(this.segmentContentLength - this.segmentContentOffset, data.length - this.currentDataOffset);
+		if (length !== 0) {
+			const current_content = Uint8Array.prototype.slice.call(data, this.currentDataOffset, this.currentDataOffset + length);
+			this.messageCrc64.append(current_content, length);
+			this.segmentCrc64.append(current_content, length);
+			this.pushData(current_content);
+		}
+		this.segmentContentOffset += length;
+		this.currentDataOffset += length;
+		if (this.segmentContentOffset === this.segmentContentLength) this.state = SMRegion$1.SegmentFooter;
+	}
+	handlingSegmentFooter() {
+		const crc64Result = this.segmentCrc64.final(new Uint8Array([]), 0);
+		this.pushData(crc64Result);
+		this.segmentCrc64 = new StorageCRC64Calculator();
+		++this.segmentNumber;
+		if (this.segmentNumber === this.segmentsCount) this.state = SMRegion$1.StreamFooter;
+		else this.state = SMRegion$1.SegmentHeader;
+	}
+	handlingMessageFooter() {
+		const crc64Result = this.messageCrc64.final(new Uint8Array([]), 0);
+		this.pushData(crc64Result);
+		signalStreamEnd(this.pushData);
+		this.state = SMRegion$1.Completed;
+	}
+	fillInt64(buffer, offset, input) {
+		if (buffer.length < offset + 8) throw new Error("Uint8Array length is not expected.");
+		new DataView(buffer.buffer, buffer.byteOffset + offset, 8).setBigUint64(0, BigInt(input), true);
+	}
+	fillInt16(buffer, offset, input) {
+		if (buffer.length < offset + 2) throw new Error("Uint8Array length is not expected.");
+		new DataView(buffer.buffer, buffer.byteOffset + offset, 2).setUint16(0, input, true);
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/StructuredMessageEncodingStream.js
+function isNodeReadableStream(source) {
+	return source !== null && source instanceof Stream && typeof source._read === "function" && typeof source._readableState === "object" && typeof source.pipe === "function";
+}
+/**
+*
+* To encode structured body for CRC64 content validtion in storage uploading.
+* @param source -
+* @param contentLength -
+* @returns
+*/
+async function structuredMessageEncoding(source, contentLength) {
+	if (source === null) return {
+		body: source,
+		encodedContentLength: contentLength
+	};
+	if (isNodeReadableStream(source)) {
+		const encodingMessage = new StructuredMessageEncodingStream(source, contentLength, {});
+		return {
+			body: encodingMessage,
+			encodedContentLength: encodingMessage.messageLength()
+		};
+	}
+	if (typeof source === "function") {
+		const encodingMessage = new StructuredMessageEncodingStream(source(), contentLength, {});
+		return {
+			body: encodingMessage,
+			encodedContentLength: encodingMessage.messageLength()
+		};
+	}
+	if (source instanceof Blob) {
+		const encoding = await BrowserStream(source, contentLength);
+		return {
+			body: encoding.content,
+			encodedContentLength: encoding.encodedContentLength
+		};
+	}
+	if (typeof source === "string") {
+		const s = new Readable();
+		s._read = () => {};
+		s.push(source);
+		s.push(null);
+		const encodingMessage = await new StructuredMessageEncodingStream(s, Buffer.byteLength(source), {});
+		return {
+			body: encodingMessage,
+			encodedContentLength: encodingMessage.messageLength()
+		};
+	}
+	if (source instanceof ArrayBuffer) {
+		const encodingMessage = await new StructuredMessageEncodingStream(Readable.from(Buffer.from(source)), contentLength, {});
+		return {
+			body: encodingMessage,
+			encodedContentLength: encodingMessage.messageLength()
+		};
+	}
+	if (source instanceof Buffer) {
+		const encodingMessage = await new StructuredMessageEncodingStream(Readable.from(source), contentLength, {});
+		return {
+			body: encodingMessage,
+			encodedContentLength: encodingMessage.messageLength()
+		};
+	}
+	if (ArrayBuffer.isView(source)) {
+		const encodingMessage = await new StructuredMessageEncodingStream(Readable.from(Buffer.from(source.buffer, source.byteOffset, source.byteLength)), contentLength, {});
+		return {
+			body: encodingMessage,
+			encodedContentLength: encodingMessage.messageLength()
+		};
+	}
+	throw new Error("The specified request body type is not supported for CRC64 checksum");
+}
+async function pump(reader, controller, encodingStream) {
+	const { done, value } = await reader.read();
+	if (done) {
+		controller.close();
+		return;
+	}
+	encodingStream.sourceDataHandler(Buffer.from(value));
+}
+async function BrowserStream(source, contentLength) {
+	const reader = (source instanceof Blob ? source.stream() : source).getReader();
+	let encodingStream = void 0;
+	const stream = new ReadableStream({
+		start(controller) {
+			encodingStream = new StructuredMessageEncoding((data) => {
+				controller.enqueue(data);
+			}, contentLength);
+		},
+		pull(controller) {
+			pump(reader, controller, encodingStream).then(() => {}).catch(function(error) {
+				controller.error(error);
+			});
+		}
+	});
+	return {
+		content: await new Response(stream).blob(),
+		encodedContentLength: encodingStream.messageLength
+	};
+}
+var StructuredMessageEncodingStream = class extends Readable {
+	source;
+	encodingMethods;
+	constructor(source, contentLength, options) {
+		super({ highWaterMark: options.highWaterMark });
+		this.source = source;
+		this.encodingMethods = new StructuredMessageEncoding((dataToHandle) => {
+			if (!this.push(dataToHandle)) source.pause();
+		}, contentLength);
+		this.setSourceEventHandlers();
+	}
+	messageLength() {
+		return this.encodingMethods.messageLength;
+	}
+	setSourceEventHandlers() {
+		this.source.on("data", this.sourceDataHandler);
+		this.source.on("end", this.sourceErrorOrEndHandler);
+		this.source.on("error", this.sourceErrorOrEndHandler);
+		this.source.on("aborted", this.sourceAbortedHandler);
+	}
+	removeSourceEventHandlers() {
+		this.source.removeListener("data", this.sourceDataHandler);
+		this.source.removeListener("end", this.sourceErrorOrEndHandler);
+		this.source.removeListener("error", this.sourceErrorOrEndHandler);
+		this.source.removeListener("aborted", this.sourceAbortedHandler);
+	}
+	sourceDataHandler = (data) => {
+		this.encodingMethods.sourceDataHandler(data);
+	};
+	sourceAbortedHandler = () => {
+		const abortError = new AbortError("The operation was aborted.");
+		this.destroy(abortError);
+	};
+	sourceErrorOrEndHandler = (err) => {
+		if (err && err.name === "AbortError") {
+			this.destroy(err);
+			return;
+		}
+		this.removeSourceEventHandlers();
+	};
+	_read() {
+		this.source.resume();
+	}
+	_destroy(error, callback) {
+		this.removeSourceEventHandlers();
+		this.source.destroy();
+		callback(error === null ? void 0 : error);
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/StructuredMessageDecoding.js
+var MESSAGE_VERSION = 1;
+var MESSAGE_HEADER_LENGTH = 13;
+var SEGMENT_HEADER_LENGTH = 10;
+var FOOTER_LENGTH = 8;
+var SMRegion;
+(function(SMRegion) {
+	SMRegion[SMRegion["StreamHeader"] = 0] = "StreamHeader";
+	SMRegion[SMRegion["StreamFooter"] = 1] = "StreamFooter";
+	SMRegion[SMRegion["SegmentHeader"] = 2] = "SegmentHeader";
+	SMRegion[SMRegion["SegmentFooter"] = 3] = "SegmentFooter";
+	SMRegion[SMRegion["SegmentContent"] = 4] = "SegmentContent";
+})(SMRegion || (SMRegion = {}));
+var StructuredMessageDecoding = class {
+	pushData;
+	segmentsCount;
+	currentOffset;
+	currentDataOffset;
+	messageHeaderBuffer;
+	messageHeaderOffset;
+	segmentNumber;
+	segmentHeaderOffset;
+	segmentHeaderBuffer;
+	segmentContentOffset;
+	segmentContentLength;
+	segmentFooterOffset;
+	segmentFooterBuffer;
+	messageFooterOffset;
+	messageFooterBuffer;
+	segmentCrc64;
+	messageCrc64;
+	state;
+	constructor(pushData) {
+		this.pushData = pushData;
+		this.currentOffset = 0;
+		this.segmentsCount = 0;
+		this.messageHeaderOffset = 0;
+		this.messageHeaderBuffer = new Uint8Array(MESSAGE_HEADER_LENGTH);
+		this.currentDataOffset = 0;
+		this.segmentNumber = 0;
+		this.segmentHeaderOffset = 0;
+		this.segmentHeaderBuffer = new Uint8Array(SEGMENT_HEADER_LENGTH);
+		this.segmentContentOffset = 0;
+		this.segmentContentLength = 0;
+		this.state = SMRegion.StreamHeader;
+		this.segmentFooterOffset = 0;
+		this.segmentFooterBuffer = new Uint8Array(FOOTER_LENGTH);
+		this.messageFooterOffset = 0;
+		this.messageFooterBuffer = new Uint8Array(FOOTER_LENGTH);
+		this.segmentCrc64 = new StorageCRC64Calculator();
+		this.messageCrc64 = new StorageCRC64Calculator();
+	}
+	sourceDataHandler = (data) => {
+		this.currentDataOffset = 0;
+		if (this.state === SMRegion.StreamHeader) this.parseMessageHeader(data);
+		while (this.segmentNumber < this.segmentsCount && this.currentDataOffset < data.length) {
+			if (this.state === SMRegion.SegmentHeader) this.parseSegmentHeader(data);
+			if (this.state === SMRegion.SegmentContent) this.parseSegmentContent(data);
+			if (this.state === SMRegion.SegmentFooter) this.parseSegmentFooter(data);
+		}
+		if (this.state === SMRegion.StreamFooter) this.parseMessageFooter(data);
+	};
+	parseMessageHeader(data) {
+		const length = Math.min(MESSAGE_HEADER_LENGTH - this.messageHeaderOffset, data.length - this.currentDataOffset);
+		this.messageHeaderBuffer.set(Uint8Array.prototype.slice.call(data, this.currentDataOffset, this.currentDataOffset + length), this.messageHeaderOffset);
+		this.currentDataOffset += length;
+		this.messageHeaderOffset += length;
+		this.currentOffset += length;
+		if (this.messageHeaderOffset === MESSAGE_HEADER_LENGTH) {
+			if (this.messageHeaderBuffer[0] !== MESSAGE_VERSION) throw new Error("Unexpected message version");
+			this.segmentsCount = this.toInt16(Uint8Array.prototype.slice.call(this.messageHeaderBuffer, 11, 13));
+			this.state = SMRegion.SegmentHeader;
+		}
+	}
+	parseSegmentHeader(data) {
+		const length = Math.min(SEGMENT_HEADER_LENGTH - this.segmentHeaderOffset, data.length - this.currentDataOffset);
+		this.segmentHeaderBuffer.set(Uint8Array.prototype.slice.call(data, this.currentDataOffset, this.currentDataOffset + length), this.segmentHeaderOffset);
+		this.currentDataOffset += length;
+		this.segmentHeaderOffset += length;
+		this.currentOffset += length;
+		if (this.segmentHeaderOffset === SEGMENT_HEADER_LENGTH) {
+			if (this.toInt16(Uint8Array.prototype.slice.call(this.segmentHeaderBuffer, 0, 2)) !== this.segmentNumber + 1) throw new Error("Segment number is unexpected.");
+			this.segmentContentLength = this.toInt64(this.segmentHeaderBuffer, 2);
+			this.segmentContentOffset = 0;
+			this.state = SMRegion.SegmentContent;
+		}
+	}
+	parseSegmentContent(data) {
+		const length = Math.min(this.segmentContentLength - this.segmentContentOffset, data.length - this.currentDataOffset);
+		const dataToHandle = Uint8Array.prototype.slice.call(data, this.currentDataOffset, this.currentDataOffset + length);
+		this.segmentCrc64.append(dataToHandle, length);
+		this.messageCrc64.append(dataToHandle, length);
+		this.pushData(dataToHandle);
+		this.currentDataOffset += length;
+		this.segmentContentOffset += length;
+		this.currentOffset += length;
+		if (this.segmentContentOffset === this.segmentContentLength) this.state = SMRegion.SegmentFooter;
+	}
+	parseSegmentFooter(data) {
+		const length = Math.min(FOOTER_LENGTH - this.segmentFooterOffset, data.length - this.currentDataOffset);
+		this.segmentFooterBuffer.set(Uint8Array.prototype.slice.call(data, this.currentDataOffset, this.currentDataOffset + length), this.segmentFooterOffset);
+		this.currentDataOffset += length;
+		this.segmentFooterOffset += length;
+		this.currentOffset += length;
+		if (this.segmentFooterOffset === FOOTER_LENGTH) {
+			const crc64Result = this.segmentCrc64.final(new Uint8Array([]), 0);
+			if (!this.checkCrc64CheckSum(crc64Result, this.segmentFooterBuffer)) throw new Error(`Segment check sum mismatch, segmentNumber: ${this.segmentNumber}`);
+			++this.segmentNumber;
+			if (this.segmentNumber === this.segmentsCount) this.state = SMRegion.StreamFooter;
+			else {
+				this.segmentHeaderOffset = 0;
+				this.segmentFooterOffset = 0;
+				this.segmentCrc64 = new StorageCRC64Calculator();
+				this.state = SMRegion.SegmentHeader;
+			}
+		}
+	}
+	parseMessageFooter(data) {
+		const length = Math.min(FOOTER_LENGTH - this.messageFooterOffset, data.length - this.currentDataOffset);
+		this.messageFooterBuffer.set(Uint8Array.prototype.slice.call(data, this.currentDataOffset, this.currentDataOffset + length), this.messageFooterOffset);
+		this.currentDataOffset += length;
+		this.messageFooterOffset += length;
+		this.currentOffset += length;
+		if (this.messageFooterOffset === FOOTER_LENGTH) {
+			const crc64Result = this.messageCrc64.final(new Uint8Array([]), 0);
+			if (!this.checkCrc64CheckSum(crc64Result, this.messageFooterBuffer)) throw new Error("Check sum mismatch");
+			this.pushData(null);
+		}
+	}
+	toInt64(input, offset) {
+		if (input.length < offset + 8) throw new Error("CRC64 buffer error, something wrong with crc64 calculator");
+		const view = new DataView(input.buffer, input.byteOffset + offset, 8);
+		return Number(view.getBigUint64(0, true));
+	}
+	toInt16(input) {
+		if (input.length !== 2) throw new Error("CRC64 buffer error, something wrong with crc64 calculator");
+		return input[0] + input[1] * 256;
+	}
+	checkCrc64CheckSum(first, second) {
+		if (first.length !== 8 || second.length !== 8) throw new Error("CRC64 buffer error, something wrong with crc64 calculator");
+		for (let index = 0; index < 8; ++index) if (first[index] !== second[index]) return false;
+		return true;
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/StructuredMessageDecodingStream.js
+/**
+* To decode structured body for CRC64 content validtion in storage downloading.
+* @param source -
+*/
+async function structuredMessageDecodingBrowser(source) {
+	throw new Error("structuredMessageDecodingBrowser is only for Browser");
+}
+/**
+* To decode structured body for CRC64 content validtion in storage downloading.
+* @param source -
+* @param options -
+* @returns
+*/
+function structuredMessageDecodingStream(source, options) {
+	return new StructuredMessageDecodingStream(source, options);
+}
+var StructuredMessageDecodingStream = class extends Readable {
+	source;
+	decodingMethods;
+	constructor(source, options) {
+		super({ highWaterMark: options.highWaterMark });
+		this.source = source;
+		this.decodingMethods = new StructuredMessageDecoding((dataToHandle) => {
+			if (!this.push(dataToHandle)) source.pause();
+		});
+		this.setSourceEventHandlers();
+	}
+	_read() {
+		this.source.resume();
+	}
+	setSourceEventHandlers() {
+		this.source.on("data", this.sourceDataHandler);
+		this.source.on("end", this.sourceErrorOrEndHandler);
+		this.source.on("error", this.sourceErrorOrEndHandler);
+		this.source.on("aborted", this.sourceAbortedHandler);
+	}
+	removeSourceEventHandlers() {
+		this.source.removeListener("data", this.sourceDataHandler);
+		this.source.removeListener("end", this.sourceErrorOrEndHandler);
+		this.source.removeListener("error", this.sourceErrorOrEndHandler);
+		this.source.removeListener("aborted", this.sourceAbortedHandler);
+	}
+	sourceDataHandler = (data) => {
+		try {
+			this.decodingMethods.sourceDataHandler(data);
+		} catch (err) {
+			this.destroy(err);
+		}
+	};
+	sourceAbortedHandler = () => {
+		const abortError = new AbortError("The operation was aborted.");
+		this.destroy(abortError);
+	};
+	sourceErrorOrEndHandler = (err) => {
+		if (err) {
+			this.destroy(err);
+			return;
+		}
+		this.removeSourceEventHandlers();
+	};
+	_destroy(error, callback) {
+		this.removeSourceEventHandlers();
+		this.source.destroy();
+		callback(error === null ? void 0 : error);
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/cache.js
 var _defaultHttpClient;
 function getCachedDefaultHttpClient() {
 	if (!_defaultHttpClient) _defaultHttpClient = createDefaultHttpClient();
 	return _defaultHttpClient;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/RequestPolicy.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/RequestPolicy.js
 /**
 * The base class from which all request policies derive.
 */
@@ -36899,7 +40241,133 @@ var BaseRequestPolicy = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/utils/constants.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageBrowserPolicy.js
+/**
+* StorageBrowserPolicy will handle differences between Node.js and browser runtime, including:
+*
+* 1. Browsers cache GET/HEAD requests by adding conditional headers such as 'IF_MODIFIED_SINCE'.
+* StorageBrowserPolicy is a policy used to add a timestamp query to GET/HEAD request URL
+* thus avoid the browser cache.
+*
+* 2. Remove cookie header for security
+*
+* 3. Remove content-length header to avoid browsers warning
+*
+* In Node.js, this policy is a no-op pass-through.
+*/
+var StorageBrowserPolicy = class extends BaseRequestPolicy {
+	/**
+	* Creates an instance of StorageBrowserPolicy.
+	* @param nextPolicy -
+	* @param options -
+	*/
+	constructor(nextPolicy, options) {
+		super(nextPolicy, options);
+	}
+	/**
+	* Sends out request.
+	*
+	* @param request -
+	*/
+	async sendRequest(request) {
+		return this._nextPolicy.sendRequest(request);
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/StorageBrowserPolicyFactory.js
+/**
+* StorageBrowserPolicyFactory is a factory class helping generating StorageBrowserPolicy objects.
+*/
+var StorageBrowserPolicyFactory = class {
+	/**
+	* Creates a StorageBrowserPolicyFactory object.
+	*
+	* @param nextPolicy -
+	* @param options -
+	*/
+	create(nextPolicy, options) {
+		return new StorageBrowserPolicy(nextPolicy, options);
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/CredentialPolicy.js
+/**
+* Credential policy used to sign HTTP(S) requests before sending. This is an
+* abstract class.
+*/
+var CredentialPolicy = class extends BaseRequestPolicy {
+	/**
+	* Sends out request.
+	*
+	* @param request -
+	*/
+	sendRequest(request) {
+		return this._nextPolicy.sendRequest(this.signRequest(request));
+	}
+	/**
+	* Child classes must implement this method with request signing. This method
+	* will be executed in {@link sendRequest}.
+	*
+	* @param request -
+	*/
+	signRequest(request) {
+		return request;
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/AnonymousCredentialPolicy.js
+/**
+* AnonymousCredentialPolicy is used with HTTP(S) requests that read public resources
+* or for use with Shared Access Signatures (SAS).
+*/
+var AnonymousCredentialPolicy = class extends CredentialPolicy {
+	/**
+	* Creates an instance of AnonymousCredentialPolicy.
+	* @param nextPolicy -
+	* @param options -
+	*/
+	constructor(nextPolicy, options) {
+		super(nextPolicy, options);
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/credentials/Credential.js
+/**
+* Credential is an abstract class for Azure Storage HTTP requests signing. This
+* class will host an credentialPolicyCreator factory which generates CredentialPolicy.
+*/
+var Credential = class {
+	/**
+	* Creates a RequestPolicy object.
+	*
+	* @param _nextPolicy -
+	* @param _options -
+	*/
+	create(_nextPolicy, _options) {
+		throw new Error("Method should be implemented in children classes.");
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/credentials/AnonymousCredential.js
+/**
+* AnonymousCredential provides a credentialPolicyCreator member used to create
+* AnonymousCredentialPolicy objects. AnonymousCredentialPolicy is used with
+* HTTP(S) requests that read public resources or for use with Shared Access
+* Signatures (SAS).
+*/
+var AnonymousCredential = class extends Credential {
+	/**
+	* Creates an {@link AnonymousCredentialPolicy} object.
+	*
+	* @param nextPolicy -
+	* @param options -
+	*/
+	create(nextPolicy, options) {
+		return new AnonymousCredentialPolicy(nextPolicy, options);
+	}
+};
+//#endregion
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/utils/constants.js
 var URLConstants$1 = { Parameters: {
 	FORCE_BROWSER_NO_CACHE: "_",
 	SIGNATURE: "sig",
@@ -36934,7 +40402,7 @@ var HeaderConstants = {
 	X_MS_CopySourceErrorCode: "x-ms-copy-source-error-code"
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/utils/utils.common.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/utils/utils.common.js
 /**
 * Set URL parameter name and value. If name exists in URL parameters, old value
 * will be replaced by name key. If not provide value, the parameter will be deleted.
@@ -36958,6 +40426,7 @@ function setURLParameter$1(url, name, value) {
 	urlParsed.search = searchPieces.length ? `?${searchPieces.join("&")}` : "";
 	return urlParsed.toString();
 }
+__name(setURLParameter$1, "setURLParameter");
 /**
 * Set URL host.
 *
@@ -37029,135 +40498,7 @@ async function delay(timeInMs, aborter, abortError) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageBrowserPolicy.js
-/**
-* StorageBrowserPolicy will handle differences between Node.js and browser runtime, including:
-*
-* 1. Browsers cache GET/HEAD requests by adding conditional headers such as 'IF_MODIFIED_SINCE'.
-* StorageBrowserPolicy is a policy used to add a timestamp query to GET/HEAD request URL
-* thus avoid the browser cache.
-*
-* 2. Remove cookie header for security
-*
-* 3. Remove content-length header to avoid browsers warning
-*/
-var StorageBrowserPolicy = class extends BaseRequestPolicy {
-	/**
-	* Creates an instance of StorageBrowserPolicy.
-	* @param nextPolicy -
-	* @param options -
-	*/
-	constructor(nextPolicy, options) {
-		super(nextPolicy, options);
-	}
-	/**
-	* Sends out request.
-	*
-	* @param request -
-	*/
-	async sendRequest(request) {
-		if (isNodeLike) return this._nextPolicy.sendRequest(request);
-		if (request.method.toUpperCase() === "GET" || request.method.toUpperCase() === "HEAD") request.url = setURLParameter$1(request.url, URLConstants$1.Parameters.FORCE_BROWSER_NO_CACHE, (/* @__PURE__ */ new Date()).getTime().toString());
-		request.headers.remove(HeaderConstants.COOKIE);
-		request.headers.remove(HeaderConstants.CONTENT_LENGTH);
-		return this._nextPolicy.sendRequest(request);
-	}
-};
-//#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/StorageBrowserPolicyFactory.js
-/**
-* StorageBrowserPolicyFactory is a factory class helping generating StorageBrowserPolicy objects.
-*/
-var StorageBrowserPolicyFactory = class {
-	/**
-	* Creates a StorageBrowserPolicyFactory object.
-	*
-	* @param nextPolicy -
-	* @param options -
-	*/
-	create(nextPolicy, options) {
-		return new StorageBrowserPolicy(nextPolicy, options);
-	}
-};
-//#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/CredentialPolicy.js
-/**
-* Credential policy used to sign HTTP(S) requests before sending. This is an
-* abstract class.
-*/
-var CredentialPolicy = class extends BaseRequestPolicy {
-	/**
-	* Sends out request.
-	*
-	* @param request -
-	*/
-	sendRequest(request) {
-		return this._nextPolicy.sendRequest(this.signRequest(request));
-	}
-	/**
-	* Child classes must implement this method with request signing. This method
-	* will be executed in {@link sendRequest}.
-	*
-	* @param request -
-	*/
-	signRequest(request) {
-		return request;
-	}
-};
-//#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/AnonymousCredentialPolicy.js
-/**
-* AnonymousCredentialPolicy is used with HTTP(S) requests that read public resources
-* or for use with Shared Access Signatures (SAS).
-*/
-var AnonymousCredentialPolicy = class extends CredentialPolicy {
-	/**
-	* Creates an instance of AnonymousCredentialPolicy.
-	* @param nextPolicy -
-	* @param options -
-	*/
-	constructor(nextPolicy, options) {
-		super(nextPolicy, options);
-	}
-};
-//#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/credentials/Credential.js
-/**
-* Credential is an abstract class for Azure Storage HTTP requests signing. This
-* class will host an credentialPolicyCreator factory which generates CredentialPolicy.
-*/
-var Credential = class {
-	/**
-	* Creates a RequestPolicy object.
-	*
-	* @param _nextPolicy -
-	* @param _options -
-	*/
-	create(_nextPolicy, _options) {
-		throw new Error("Method should be implemented in children classes.");
-	}
-};
-//#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/credentials/AnonymousCredential.js
-/**
-* AnonymousCredential provides a credentialPolicyCreator member used to create
-* AnonymousCredentialPolicy objects. AnonymousCredentialPolicy is used with
-* HTTP(S) requests that read public resources or for use with Shared Access
-* Signatures (SAS).
-*/
-var AnonymousCredential = class extends Credential {
-	/**
-	* Creates an {@link AnonymousCredentialPolicy} object.
-	*
-	* @param nextPolicy -
-	* @param options -
-	*/
-	create(nextPolicy, options) {
-		return new AnonymousCredentialPolicy(nextPolicy, options);
-	}
-};
-//#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/utils/SharedKeyComparator.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/utils/SharedKeyComparator.js
 var table_lv0 = new Uint32Array([
 	0,
 	0,
@@ -37579,7 +40920,7 @@ function isLessThan(lhs, rhs) {
 	return false;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageSharedKeyCredentialPolicy.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageSharedKeyCredentialPolicy.js
 /**
 * StorageSharedKeyCredentialPolicy is a policy used to sign HTTP request with a shared key.
 */
@@ -37692,7 +41033,7 @@ var StorageSharedKeyCredentialPolicy = class extends CredentialPolicy {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/credentials/StorageSharedKeyCredential.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/credentials/StorageSharedKeyCredential.js
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
 *
@@ -37736,13 +41077,13 @@ var StorageSharedKeyCredential = class extends Credential {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/log.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/log.js
 /**
 * The `@azure/logger` configuration for this package.
 */
 var logger = createClientLogger("storage-common");
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageRetryPolicyType.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageRetryPolicyType.js
 /**
 * RetryPolicy types.
 */
@@ -37758,11 +41099,11 @@ var StorageRetryPolicyType;
 	StorageRetryPolicyType[StorageRetryPolicyType["FIXED"] = 1] = "FIXED";
 })(StorageRetryPolicyType || (StorageRetryPolicyType = {}));
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageRetryPolicy.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageRetryPolicy.js
 var DEFAULT_RETRY_OPTIONS$1 = {
-	maxRetryDelayInMs: 120 * 1e3,
+	maxRetryDelayInMs: 12e4,
 	maxTries: 4,
-	retryDelayInMs: 4 * 1e3,
+	retryDelayInMs: 4e3,
 	retryPolicyType: StorageRetryPolicyType.EXPONENTIAL,
 	secondaryHost: "",
 	tryTimeoutInMs: void 0
@@ -37900,9 +41241,7 @@ var StorageRetryPolicy = class extends BaseRequestPolicy {
 			case StorageRetryPolicyType.EXPONENTIAL:
 				delayTimeInMs = Math.min((Math.pow(2, attempt - 1) - 1) * this.retryOptions.retryDelayInMs, this.retryOptions.maxRetryDelayInMs);
 				break;
-			case StorageRetryPolicyType.FIXED:
-				delayTimeInMs = this.retryOptions.retryDelayInMs;
-				break;
+			case StorageRetryPolicyType.FIXED: delayTimeInMs = this.retryOptions.retryDelayInMs;
 		}
 		else delayTimeInMs = Math.random() * 1e3;
 		logger.info(`RetryPolicy: Delay for ${delayTimeInMs}ms`);
@@ -37910,7 +41249,7 @@ var StorageRetryPolicy = class extends BaseRequestPolicy {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/StorageRetryPolicyFactory.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/StorageRetryPolicyFactory.js
 /**
 * StorageRetryPolicyFactory is a factory class helping generating {@link StorageRetryPolicy} objects.
 */
@@ -37934,7 +41273,7 @@ var StorageRetryPolicyFactory = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageBrowserPolicyV2.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageBrowserPolicyV2.js
 /**
 * The programmatic identifier of the StorageBrowserPolicy.
 */
@@ -37942,21 +41281,19 @@ var storageBrowserPolicyName = "storageBrowserPolicy";
 /**
 * storageBrowserPolicy is a policy used to prevent browsers from caching requests
 * and to remove cookies and explicit content-length headers.
+*
+* In Node.js, this policy is a no-op pass-through.
 */
 function storageBrowserPolicy() {
 	return {
 		name: storageBrowserPolicyName,
 		async sendRequest(request, next) {
-			if (isNodeLike) return next(request);
-			if (request.method === "GET" || request.method === "HEAD") request.url = setURLParameter$1(request.url, URLConstants$1.Parameters.FORCE_BROWSER_NO_CACHE, (/* @__PURE__ */ new Date()).getTime().toString());
-			request.headers.delete(HeaderConstants.COOKIE);
-			request.headers.delete(HeaderConstants.CONTENT_LENGTH);
 			return next(request);
 		}
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageCorrectContentLengthPolicy.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageCorrectContentLengthPolicy.js
 /**
 * The programmatic identifier of the storageCorrectContentLengthPolicy.
 */
@@ -37977,15 +41314,15 @@ function storageCorrectContentLengthPolicy() {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageRetryPolicyV2.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageRetryPolicyV2.js
 /**
 * Name of the {@link storageRetryPolicy}
 */
 var storageRetryPolicyName = "storageRetryPolicy";
 var DEFAULT_RETRY_OPTIONS = {
-	maxRetryDelayInMs: 120 * 1e3,
+	maxRetryDelayInMs: 12e4,
 	maxTries: 4,
-	retryDelayInMs: 4 * 1e3,
+	retryDelayInMs: 4e3,
 	retryPolicyType: StorageRetryPolicyType.EXPONENTIAL,
 	secondaryHost: "",
 	tryTimeoutInMs: void 0
@@ -38056,9 +41393,7 @@ function storageRetryPolicy(options = {}) {
 			case StorageRetryPolicyType.EXPONENTIAL:
 				delayTimeInMs = Math.min((Math.pow(2, attempt - 1) - 1) * retryDelayInMs, maxRetryDelayInMs);
 				break;
-			case StorageRetryPolicyType.FIXED:
-				delayTimeInMs = retryDelayInMs;
-				break;
+			case StorageRetryPolicyType.FIXED: delayTimeInMs = retryDelayInMs;
 		}
 		else delayTimeInMs = Math.random() * 1e3;
 		logger.info(`RetryPolicy: Delay for ${delayTimeInMs}ms`);
@@ -38112,7 +41447,7 @@ function storageRetryPolicy(options = {}) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageSharedKeyCredentialPolicyV2.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageSharedKeyCredentialPolicyV2.js
 /**
 * The programmatic identifier of the storageSharedKeyCredentialPolicy.
 */
@@ -38209,7 +41544,7 @@ function storageSharedKeyCredentialPolicy(options) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/policies/StorageRequestFailureDetailsParserPolicy.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/policies/StorageRequestFailureDetailsParserPolicy.js
 /**
 * The programmatic identifier of the StorageRequestFailureDetailsParserPolicy.
 */
@@ -38222,7 +41557,9 @@ function storageRequestFailureDetailsParserPolicy() {
 		name: storageRequestFailureDetailsParserPolicyName,
 		async sendRequest(request, next) {
 			try {
-				return await next(request);
+				const response = await next(request);
+				if (response.status === 400 && response.bodyAsText?.includes("<Error><Code>InvalidHeaderValue</Code>") && response.bodyAsText.includes("<HeaderName>x-ms-version</HeaderName>")) response.bodyAsText = response.bodyAsText.replace(/<Message>.*<\/Message>/s, "<Message>The provided service version is not enabled on this storage account. Please see https://learn.microsoft.com/rest/api/storageservices/versioning-for-the-azure-storage-services for additional information.</Message>");
+				return response;
 			} catch (err) {
 				if (typeof err === "object" && err !== null && err.response && err.response.parsedBody) {
 					if (err.response.parsedBody.code === "InvalidHeaderValue" && err.response.parsedBody.HeaderName === "x-ms-version") err.message = "The provided service version is not enabled on this storage account. Please see https://learn.microsoft.com/rest/api/storageservices/versioning-for-the-azure-storage-services for additional information.\n";
@@ -38233,7 +41570,7 @@ function storageRequestFailureDetailsParserPolicy() {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-common@12.3.0_@azure+core-client@1.10.1/node_modules/@azure/storage-common/dist/esm/credentials/UserDelegationKeyCredential.js
+//#region node_modules/.pnpm/@azure+storage-common@12.5.0_@azure+core-client@1.11.0_supports-color@7.2.0__supports-color@7.2.0/node_modules/@azure/storage-common/dist/esm/credentials/UserDelegationKeyCredential.js
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
 *
@@ -38273,15 +41610,15 @@ var UserDelegationKeyCredential = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/utils/constants.js
-var SDK_VERSION = "12.31.0";
-var SERVICE_VERSION = "2026-02-06";
-var BLOCK_BLOB_MAX_UPLOAD_BLOB_BYTES = 256 * 1024 * 1024;
-var BLOCK_BLOB_MAX_STAGE_BLOCK_BYTES = 4e3 * 1024 * 1024;
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/utils/constants.js
+var SDK_VERSION = "12.33.0";
+var SERVICE_VERSION = "2026-06-06";
+var BLOCK_BLOB_MAX_UPLOAD_BLOB_BYTES = 268435456;
+var BLOCK_BLOB_MAX_STAGE_BLOCK_BYTES = 4194304e3;
 var BLOCK_BLOB_MAX_BLOCKS = 5e4;
-var DEFAULT_BLOCK_BUFFER_SIZE_BYTES = 8 * 1024 * 1024;
-var DEFAULT_BLOB_DOWNLOAD_BLOCK_BYTES = 4 * 1024 * 1024;
-var REQUEST_TIMEOUT = 100 * 1e3;
+var DEFAULT_BLOCK_BUFFER_SIZE_BYTES = 8388608;
+var DEFAULT_BLOB_DOWNLOAD_BLOCK_BYTES = 4194304;
+var REQUEST_TIMEOUT = 1e5;
 var URLConstants = { Parameters: {
 	FORCE_BROWSER_NO_CACHE: "_",
 	SIGNATURE: "sig",
@@ -38447,7 +41784,7 @@ var PathStylePorts = [
 	"11104"
 ];
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/Pipeline.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/Pipeline.js
 /**
 * A helper to decide if a given argument satisfies the Pipeline contract
 * @param pipeline - An argument that may be a Pipeline
@@ -38648,8 +41985,8 @@ function isCoreHttpPolicyFactory(factory) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/models/mappers.js
-var mappers_exports = /* @__PURE__ */ __exportAll$1({
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/models/mappers.js
+var mappers_exports = /* @__PURE__ */ __exportAll({
 	AccessPolicy: () => AccessPolicy,
 	AppendBlobAppendBlockExceptionHeaders: () => AppendBlobAppendBlockExceptionHeaders,
 	AppendBlobAppendBlockFromUrlExceptionHeaders: () => AppendBlobAppendBlockFromUrlExceptionHeaders,
@@ -39350,6 +42687,11 @@ var KeyInfo = {
 				required: true,
 				xmlName: "Expiry",
 				type: { name: "String" }
+			},
+			delegatedUserTid: {
+				serializedName: "DelegatedUserTid",
+				xmlName: "DelegatedUserTid",
+				type: { name: "String" }
 			}
 		}
 	}
@@ -39394,6 +42736,11 @@ var UserDelegationKey = {
 				serializedName: "SignedVersion",
 				required: true,
 				xmlName: "SignedVersion",
+				type: { name: "String" }
+			},
+			signedDelegatedUserTenantId: {
+				serializedName: "SignedDelegatedUserTid",
+				xmlName: "SignedDelegatedUserTid",
 				type: { name: "String" }
 			},
 			value: {
@@ -39929,7 +43276,8 @@ var BlobPropertiesInternal = {
 						"Hot",
 						"Cool",
 						"Archive",
-						"Cold"
+						"Cold",
+						"Smart"
 					]
 				}
 			},
@@ -39946,7 +43294,33 @@ var BlobPropertiesInternal = {
 					allowedValues: [
 						"rehydrate-pending-to-hot",
 						"rehydrate-pending-to-cool",
-						"rehydrate-pending-to-cold"
+						"rehydrate-pending-to-cold",
+						"rehydrate-pending-to-smart"
+					]
+				}
+			},
+			smartAccessTier: {
+				serializedName: "SmartAccessTier",
+				xmlName: "SmartAccessTier",
+				type: {
+					name: "Enum",
+					allowedValues: [
+						"P4",
+						"P6",
+						"P10",
+						"P15",
+						"P20",
+						"P30",
+						"P40",
+						"P50",
+						"P60",
+						"P70",
+						"P80",
+						"Hot",
+						"Cool",
+						"Archive",
+						"Cold",
+						"Smart"
 					]
 				}
 			},
@@ -40760,7 +44134,10 @@ var ServiceGetAccountInfoHeaders = {
 						"Standard_GRS",
 						"Standard_RAGRS",
 						"Standard_ZRS",
-						"Premium_LRS"
+						"Premium_LRS",
+						"Standard_GZRS",
+						"Premium_ZRS",
+						"Standard_RAGZRS"
 					]
 				}
 			},
@@ -41883,7 +45260,10 @@ var ContainerGetAccountInfoHeaders = {
 						"Standard_GRS",
 						"Standard_RAGRS",
 						"Standard_ZRS",
-						"Premium_LRS"
+						"Premium_LRS",
+						"Standard_GZRS",
+						"Premium_ZRS",
+						"Standard_RAGZRS"
 					]
 				}
 			},
@@ -42187,6 +45567,16 @@ var BlobDownloadHeaders = {
 				xmlName: "x-ms-legal-hold",
 				type: { name: "Boolean" }
 			},
+			structuredBodyType: {
+				serializedName: "x-ms-structured-body",
+				xmlName: "x-ms-structured-body",
+				type: { name: "String" }
+			},
+			structuredContentLength: {
+				serializedName: "x-ms-structured-content-length",
+				xmlName: "x-ms-structured-content-length",
+				type: { name: "Number" }
+			},
 			errorCode: {
 				serializedName: "x-ms-error-code",
 				xmlName: "x-ms-error-code",
@@ -42450,6 +45840,11 @@ var BlobGetPropertiesHeaders = {
 				serializedName: "x-ms-access-tier-change-time",
 				xmlName: "x-ms-access-tier-change-time",
 				type: { name: "DateTimeRfc1123" }
+			},
+			smartAccessTier: {
+				serializedName: "x-ms-smart-access-tier",
+				xmlName: "x-ms-smart-access-tier",
+				type: { name: "String" }
 			},
 			versionId: {
 				serializedName: "x-ms-version-id",
@@ -43615,7 +47010,10 @@ var BlobGetAccountInfoHeaders = {
 						"Standard_GRS",
 						"Standard_RAGRS",
 						"Standard_ZRS",
-						"Premium_LRS"
+						"Premium_LRS",
+						"Standard_GZRS",
+						"Premium_ZRS",
+						"Standard_RAGZRS"
 					]
 				}
 			},
@@ -44115,6 +47513,11 @@ var PageBlobUploadPagesHeaders = {
 			encryptionScope: {
 				serializedName: "x-ms-encryption-scope",
 				xmlName: "x-ms-encryption-scope",
+				type: { name: "String" }
+			},
+			structuredBodyType: {
+				serializedName: "x-ms-structured-body",
+				xmlName: "x-ms-structured-body",
 				type: { name: "String" }
 			},
 			errorCode: {
@@ -44771,6 +48174,11 @@ var AppendBlobAppendBlockHeaders = {
 				xmlName: "x-ms-encryption-scope",
 				type: { name: "String" }
 			},
+			structuredBodyType: {
+				serializedName: "x-ms-structured-body",
+				xmlName: "x-ms-structured-body",
+				type: { name: "String" }
+			},
 			errorCode: {
 				serializedName: "x-ms-error-code",
 				xmlName: "x-ms-error-code",
@@ -45006,6 +48414,11 @@ var BlockBlobUploadHeaders = {
 				xmlName: "x-ms-encryption-scope",
 				type: { name: "String" }
 			},
+			structuredBodyType: {
+				serializedName: "x-ms-structured-body",
+				xmlName: "x-ms-structured-body",
+				type: { name: "String" }
+			},
 			errorCode: {
 				serializedName: "x-ms-error-code",
 				xmlName: "x-ms-error-code",
@@ -45168,6 +48581,11 @@ var BlockBlobStageBlockHeaders = {
 			encryptionScope: {
 				serializedName: "x-ms-encryption-scope",
 				xmlName: "x-ms-encryption-scope",
+				type: { name: "String" }
+			},
+			structuredBodyType: {
+				serializedName: "x-ms-structured-body",
+				xmlName: "x-ms-structured-body",
 				type: { name: "String" }
 			},
 			errorCode: {
@@ -45426,7 +48844,7 @@ var BlockBlobGetBlockListExceptionHeaders = {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/models/parameters.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/models/parameters.js
 var contentType = {
 	parameterPath: ["options", "contentType"],
 	mapper: {
@@ -45489,7 +48907,7 @@ var timeoutInSeconds = {
 var version$2 = {
 	parameterPath: "version",
 	mapper: {
-		defaultValue: "2026-02-06",
+		defaultValue: "2026-06-06",
 		isConstant: true,
 		serializedName: "x-ms-version",
 		type: { name: "String" }
@@ -46007,6 +49425,14 @@ var rangeGetContentCRC64 = {
 		type: { name: "Boolean" }
 	}
 };
+var structuredBodyType = {
+	parameterPath: ["options", "structuredBodyType"],
+	mapper: {
+		serializedName: "x-ms-structured-body",
+		xmlName: "x-ms-structured-body",
+		type: { name: "String" }
+	}
+};
 var encryptionKey = {
 	parameterPath: [
 		"options",
@@ -46096,6 +49522,22 @@ var blobDeleteType = {
 		serializedName: "deletetype",
 		xmlName: "deletetype",
 		type: { name: "String" }
+	}
+};
+var accessTierIfModifiedSince = {
+	parameterPath: ["options", "accessTierIfModifiedSince"],
+	mapper: {
+		serializedName: "x-ms-access-tier-if-modified-since",
+		xmlName: "x-ms-access-tier-if-modified-since",
+		type: { name: "DateTimeRfc1123" }
+	}
+};
+var accessTierIfUnmodifiedSince = {
+	parameterPath: ["options", "accessTierIfUnmodifiedSince"],
+	mapper: {
+		serializedName: "x-ms-access-tier-if-unmodified-since",
+		xmlName: "x-ms-access-tier-if-unmodified-since",
+		type: { name: "DateTimeRfc1123" }
 	}
 };
 var comp11 = {
@@ -46285,7 +49727,8 @@ var tier = {
 				"Hot",
 				"Cool",
 				"Archive",
-				"Cold"
+				"Cold",
+				"Smart"
 			]
 		}
 	}
@@ -46497,7 +49940,8 @@ var tier1 = {
 				"Hot",
 				"Cool",
 				"Archive",
-				"Cold"
+				"Cold",
+				"Smart"
 			]
 		}
 	}
@@ -46700,6 +50144,14 @@ var ifSequenceNumberEqualTo = {
 		type: { name: "Number" }
 	}
 };
+var structuredContentLength = {
+	parameterPath: ["options", "structuredContentLength"],
+	mapper: {
+		serializedName: "x-ms-structured-content-length",
+		xmlName: "x-ms-structured-content-length",
+		type: { name: "Number" }
+	}
+};
 var pageWrite1 = {
 	parameterPath: "pageWrite",
 	mapper: {
@@ -46741,6 +50193,42 @@ var range1 = {
 		serializedName: "x-ms-range",
 		required: true,
 		xmlName: "x-ms-range",
+		type: { name: "String" }
+	}
+};
+var sourceEncryptionKey = {
+	parameterPath: [
+		"options",
+		"sourceCpkInfo",
+		"sourceEncryptionKey"
+	],
+	mapper: {
+		serializedName: "x-ms-source-encryption-key",
+		xmlName: "x-ms-source-encryption-key",
+		type: { name: "String" }
+	}
+};
+var sourceEncryptionKeySha256 = {
+	parameterPath: [
+		"options",
+		"sourceCpkInfo",
+		"sourceEncryptionKeySha256"
+	],
+	mapper: {
+		serializedName: "x-ms-source-encryption-key-sha256",
+		xmlName: "x-ms-source-encryption-key-sha256",
+		type: { name: "String" }
+	}
+};
+var sourceEncryptionAlgorithm = {
+	parameterPath: [
+		"options",
+		"sourceCpkInfo",
+		"sourceEncryptionAlgorithm"
+	],
+	mapper: {
+		serializedName: "x-ms-source-encryption-algorithm",
+		xmlName: "x-ms-source-encryption-algorithm",
 		type: { name: "String" }
 	}
 };
@@ -46919,7 +50407,7 @@ var listType = {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/service.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/service.js
 /** Class containing Service operations. */
 var ServiceImpl = class {
 	client;
@@ -47240,7 +50728,7 @@ var filterBlobsOperationSpec$1 = {
 	serializer: xmlSerializer$5
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/container.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/container.js
 /** Class containing Container operations. */
 var ContainerImpl = class {
 	client;
@@ -47942,7 +51430,7 @@ var getAccountInfoOperationSpec$1 = {
 	serializer: xmlSerializer$4
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/blob.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/blob.js
 /** Class containing Blob operations. */
 var BlobImpl = class {
 	client;
@@ -48235,6 +51723,7 @@ var downloadOperationSpec = {
 		range,
 		rangeGetContentMD5,
 		rangeGetContentCRC64,
+		structuredBodyType,
 		encryptionKey,
 		encryptionKeySha256,
 		encryptionAlgorithm,
@@ -48305,7 +51794,9 @@ var deleteOperationSpec = {
 		ifMatch,
 		ifNoneMatch,
 		ifTags,
-		deleteSnapshots
+		deleteSnapshots,
+		accessTierIfModifiedSince,
+		accessTierIfUnmodifiedSince
 	],
 	isXML: true,
 	serializer: xmlSerializer$3
@@ -48946,7 +52437,7 @@ var setTagsOperationSpec = {
 	serializer: xmlSerializer$3
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/pageBlob.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/pageBlob.js
 /** Class containing PageBlob operations. */
 var PageBlobImpl = class {
 	client;
@@ -49143,6 +52634,7 @@ var uploadPagesOperationSpec = {
 		ifModifiedSince,
 		ifUnmodifiedSince,
 		range,
+		structuredBodyType,
 		encryptionKey,
 		encryptionKeySha256,
 		encryptionAlgorithm,
@@ -49157,7 +52649,8 @@ var uploadPagesOperationSpec = {
 		pageWrite,
 		ifSequenceNumberLessThanOrEqualTo,
 		ifSequenceNumberLessThan,
-		ifSequenceNumberEqualTo
+		ifSequenceNumberEqualTo,
+		structuredContentLength
 	],
 	isXML: true,
 	contentType: "application/xml; charset=utf-8",
@@ -49241,7 +52734,10 @@ var uploadPagesFromURLOperationSpec = {
 		sourceUrl,
 		sourceRange,
 		sourceContentCrc64,
-		range1
+		range1,
+		sourceEncryptionKey,
+		sourceEncryptionKeySha256,
+		sourceEncryptionAlgorithm
 	],
 	isXML: true,
 	serializer: xmlSerializer$2
@@ -49406,7 +52902,7 @@ var copyIncrementalOperationSpec = {
 	serializer: xmlSerializer$2
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/appendBlob.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/appendBlob.js
 /** Class containing AppendBlob operations. */
 var AppendBlobImpl = class {
 	client;
@@ -49532,6 +53028,7 @@ var appendBlockOperationSpec = {
 		leaseId,
 		ifModifiedSince,
 		ifUnmodifiedSince,
+		structuredBodyType,
 		encryptionKey,
 		encryptionKeySha256,
 		encryptionAlgorithm,
@@ -49543,6 +53040,7 @@ var appendBlockOperationSpec = {
 		transactionalContentCrc64,
 		contentType1,
 		accept2,
+		structuredContentLength,
 		maxSize,
 		appendPosition
 	],
@@ -49588,6 +53086,9 @@ var appendBlockFromUrlOperationSpec = {
 		transactionalContentMD5,
 		sourceUrl,
 		sourceContentCrc64,
+		sourceEncryptionKey,
+		sourceEncryptionKeySha256,
+		sourceEncryptionAlgorithm,
 		maxSize,
 		appendPosition,
 		sourceRange1
@@ -49622,7 +53123,7 @@ var sealOperationSpec = {
 	serializer: xmlSerializer$1
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/blockBlob.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/operations/blockBlob.js
 /** Class containing BlockBlob operations. */
 var BlockBlobImpl = class {
 	client;
@@ -49757,6 +53258,7 @@ var uploadOperationSpec = {
 		leaseId,
 		ifModifiedSince,
 		ifUnmodifiedSince,
+		structuredBodyType,
 		encryptionKey,
 		encryptionKeySha256,
 		encryptionAlgorithm,
@@ -49779,6 +53281,7 @@ var uploadOperationSpec = {
 		transactionalContentCrc64,
 		contentType1,
 		accept2,
+		structuredContentLength,
 		blobType2
 	],
 	isXML: true,
@@ -49833,6 +53336,9 @@ var putBlobFromUrlOperationSpec = {
 		copySourceTags,
 		fileRequestIntent,
 		transactionalContentMD5,
+		sourceEncryptionKey,
+		sourceEncryptionKeySha256,
+		sourceEncryptionAlgorithm,
 		blobType2,
 		copySourceBlobProperties
 	],
@@ -49861,6 +53367,7 @@ var stageBlockOperationSpec = {
 		requestId,
 		contentLength,
 		leaseId,
+		structuredBodyType,
 		encryptionKey,
 		encryptionKeySha256,
 		encryptionAlgorithm,
@@ -49868,7 +53375,8 @@ var stageBlockOperationSpec = {
 		transactionalContentMD5,
 		transactionalContentCrc64,
 		contentType1,
-		accept2
+		accept2,
+		structuredContentLength
 	],
 	isXML: true,
 	contentType: "application/xml; charset=utf-8",
@@ -49910,6 +53418,9 @@ var stageBlockFromURLOperationSpec = {
 		fileRequestIntent,
 		sourceUrl,
 		sourceContentCrc64,
+		sourceEncryptionKey,
+		sourceEncryptionKeySha256,
+		sourceEncryptionAlgorithm,
 		sourceRange1
 	],
 	isXML: true,
@@ -49994,8 +53505,11 @@ var getBlockListOperationSpec = {
 	serializer: xmlSerializer
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/generated/src/storageClient.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/generated/src/storageClient.js
 var StorageClient$1 = class extends ExtendedServiceClient {
+	static {
+		__name(this, "StorageClient");
+	}
 	url;
 	version;
 	/**
@@ -50008,7 +53522,7 @@ var StorageClient$1 = class extends ExtendedServiceClient {
 		if (url === void 0) throw new Error("'url' cannot be null");
 		if (!options) options = {};
 		const defaults = { requestContentType: "application/json; charset=utf-8" };
-		const packageDetails = `azsdk-js-azure-storage-blob/12.30.0`;
+		const packageDetails = `azsdk-js-azure-storage-blob/12.33.0`;
 		const userAgentPrefix = options.userAgentOptions && options.userAgentOptions.userAgentPrefix ? `${options.userAgentOptions.userAgentPrefix} ${packageDetails}` : `${packageDetails}`;
 		const optionsWithDefaults = {
 			...defaults,
@@ -50018,7 +53532,7 @@ var StorageClient$1 = class extends ExtendedServiceClient {
 		};
 		super(optionsWithDefaults);
 		this.url = url;
-		this.version = options.version || "2026-02-06";
+		this.version = options.version || "2026-06-06";
 		this.service = new ServiceImpl(this);
 		this.container = new ContainerImpl(this);
 		this.blob = new BlobImpl(this);
@@ -50034,7 +53548,7 @@ var StorageClient$1 = class extends ExtendedServiceClient {
 	blockBlob;
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/StorageContextClient.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/StorageContextClient.js
 /**
 * @internal
 */
@@ -50046,7 +53560,14 @@ var StorageContextClient = class extends StorageClient$1 {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/utils/utils.common.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/utils/utils.common.js
+var accountNameSuffixes = [
+	"-secondary-ipv6",
+	"-secondary-dualstack",
+	"-ipv6",
+	"-dualstack",
+	"-secondary"
+];
 /**
 * Reserved URL characters must be properly escaped for Storage services like Blob or File.
 *
@@ -50276,6 +53797,7 @@ function truncatedISO8061Date(date, withMilliseconds = true) {
 function base64encode$1(content) {
 	return !isNodeLike ? btoa(content) : Buffer.from(content).toString("base64");
 }
+__name(base64encode$1, "base64encode");
 /**
 * Generate a 64 bytes base64 block ID string.
 *
@@ -50283,7 +53805,7 @@ function base64encode$1(content) {
 */
 function generateBlockID(blockIDPrefix, blockIndex) {
 	const maxSourceStringLength = 48;
-	const maxAllowedBlockIDPrefixLength = maxSourceStringLength - 6;
+	const maxAllowedBlockIDPrefixLength = 42;
 	if (blockIDPrefix.length > maxAllowedBlockIDPrefixLength) blockIDPrefix = blockIDPrefix.slice(0, maxAllowedBlockIDPrefixLength);
 	return base64encode$1(blockIDPrefix + padStart(blockIndex.toString(), maxSourceStringLength - blockIDPrefix.length, "0"));
 }
@@ -50322,8 +53844,16 @@ function getAccountNameFromUrl(url) {
 	const parsedUrl = new URL(url);
 	let accountName;
 	try {
-		if (parsedUrl.hostname.split(".")[1] === "blob") accountName = parsedUrl.hostname.split(".")[0];
-		else if (isIpEndpointStyle(parsedUrl)) accountName = parsedUrl.pathname.split("/")[1];
+		if (parsedUrl.hostname.split(".")[1] === "blob") {
+			accountName = parsedUrl.hostname.split(".")[0];
+			for (let i = 0; i < accountNameSuffixes.length; ++i) {
+				const suffix = accountNameSuffixes[i];
+				if (accountName.endsWith(suffix)) {
+					accountName = accountName.substring(0, accountName.length - suffix.length);
+					break;
+				}
+			}
+		} else if (isIpEndpointStyle(parsedUrl)) accountName = parsedUrl.pathname.split("/")[1];
 		else accountName = "";
 		return accountName;
 	} catch (error) {
@@ -50472,8 +54002,28 @@ function assertResponse(response) {
 	if (`_response` in response) return response;
 	throw new TypeError(`Unexpected response object ${response}`);
 }
+async function setUploadChecksumParameters(body, contentLength, parameters, uploadOptions, configContentChecksumAlgorithm) {
+	let contentChecksumAlgorithm = uploadOptions.contentChecksumAlgorithm ?? configContentChecksumAlgorithm;
+	if (contentChecksumAlgorithm === void 0) contentChecksumAlgorithm = "Customized";
+	if (contentChecksumAlgorithm === "Auto") contentChecksumAlgorithm = "StorageCrc64";
+	let bodyInfo = void 0;
+	if (contentChecksumAlgorithm === "Customized") {
+		parameters.transactionalContentMD5 = uploadOptions.transactionalContentMD5;
+		parameters.transactionalContentCrc64 = uploadOptions.transactionalContentCrc64;
+	} else if (contentChecksumAlgorithm === "StorageCrc64") {
+		await StorageCRC64Calculator.init();
+		bodyInfo = await structuredMessageEncoding(body, contentLength);
+		parameters.structuredBodyType = "XSM/1.0; properties=crc64";
+		parameters.structuredContentLength = contentLength;
+	}
+	return {
+		body: contentChecksumAlgorithm === "StorageCrc64" ? bodyInfo.body : body,
+		contentLength: contentChecksumAlgorithm === "StorageCrc64" ? bodyInfo.encodedContentLength : contentLength,
+		contentChecksumAlgorithm
+	};
+}
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/StorageClient.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/StorageClient.js
 /**
 * A StorageClient represents a based URL class for {@link BlobServiceClient}, {@link ContainerClient}
 * and etc.
@@ -50519,7 +54069,7 @@ var StorageClient = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/utils/tracing.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/utils/tracing.js
 /**
 * Creates a span using the global tracer.
 * @internal
@@ -50530,7 +54080,7 @@ var tracingClient = createTracingClient({
 	namespace: "Microsoft.Storage"
 });
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/sas/BlobSASPermissions.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/sas/BlobSASPermissions.js
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
 *
@@ -50675,7 +54225,7 @@ var BlobSASPermissions = class BlobSASPermissions {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/sas/ContainerSASPermissions.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/sas/ContainerSASPermissions.js
 /**
 * This is a helper class to construct a string representing the permissions granted by a ServiceSAS to a container.
 * Setting a value to true means that any SAS which uses these permissions will grant permissions for that operation.
@@ -50838,7 +54388,7 @@ var ContainerSASPermissions = class ContainerSASPermissions {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/sas/SasIPRange.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/sas/SasIPRange.js
 /**
 * Generate SasIPRange format string. For example:
 *
@@ -50850,7 +54400,7 @@ function ipRangeToString(ipRange) {
 	return ipRange.end ? `${ipRange.start}-${ipRange.end}` : ipRange.start;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/sas/SASQueryParameters.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/sas/SASQueryParameters.js
 /**
 * Protocols for generated SAS.
 */
@@ -50987,6 +54537,11 @@ var SASQueryParameters = class {
 	*/
 	signedVersion;
 	/**
+	* The delegated user tenant id in Azure AD.
+	* Property of user delegation key.
+	*/
+	signedDelegatedUserTid;
+	/**
 	* Authorized AAD Object ID in GUID format. The AAD Object ID of a user authorized by the owner of the User Delegation Key
 	* to perform the action granted by the SAS. The Azure Storage service will ensure that the owner of the user delegation key
 	* has the required permissions before granting access but no additional permission check for the user specified in
@@ -50999,6 +54554,18 @@ var SASQueryParameters = class {
 	*/
 	correlationId;
 	/**
+	* Keys for request headers required in the SAS token
+	*/
+	requestHeaderKeys;
+	/**
+	* Keys for request query parameters required in the SAS token
+	*/
+	requestQueryParameterKeys;
+	/** To indicate the depth of the virtual blob directory specified
+	* in the canonicalizedresource field of the string-to-sign.
+	*/
+	directoryDepth;
+	/**
 	* Optional. IP range allowed for this SAS.
 	*
 	* @readonly
@@ -51009,7 +54576,7 @@ var SASQueryParameters = class {
 			start: this.ipRangeInner.start
 		};
 	}
-	constructor(version, signature, permissionsOrOptions, services, resourceTypes, protocol, startsOn, expiresOn, ipRange, identifier, resource, cacheControl, contentDisposition, contentEncoding, contentLanguage, contentType, userDelegationKey, preauthorizedAgentObjectId, correlationId, encryptionScope, delegatedUserObjectId) {
+	constructor(version, signature, permissionsOrOptions, services, resourceTypes, protocol, startsOn, expiresOn, ipRange, identifier, resource, cacheControl, contentDisposition, contentEncoding, contentLanguage, contentType, userDelegationKey, preauthorizedAgentObjectId, correlationId, encryptionScope, delegatedUserObjectId, requestHeaderKeys, requestQueryParameterKeys, directoryDepth) {
 		this.version = version;
 		this.signature = signature;
 		if (permissionsOrOptions !== void 0 && typeof permissionsOrOptions !== "string") {
@@ -51029,6 +54596,9 @@ var SASQueryParameters = class {
 			this.contentEncoding = permissionsOrOptions.contentEncoding;
 			this.contentLanguage = permissionsOrOptions.contentLanguage;
 			this.contentType = permissionsOrOptions.contentType;
+			this.requestHeaderKeys = permissionsOrOptions.requestHeaderKeys;
+			this.requestQueryParameterKeys = permissionsOrOptions.requestQueryParameterKeys;
+			this.directoryDepth = permissionsOrOptions.directoryDepth;
 			if (permissionsOrOptions.userDelegationKey) {
 				this.signedOid = permissionsOrOptions.userDelegationKey.signedObjectId;
 				this.signedTenantId = permissionsOrOptions.userDelegationKey.signedTenantId;
@@ -51036,6 +54606,7 @@ var SASQueryParameters = class {
 				this.signedExpiresOn = permissionsOrOptions.userDelegationKey.signedExpiresOn;
 				this.signedService = permissionsOrOptions.userDelegationKey.signedService;
 				this.signedVersion = permissionsOrOptions.userDelegationKey.signedVersion;
+				this.signedDelegatedUserTid = permissionsOrOptions.userDelegationKey.signedDelegatedUserTenantId;
 				this.preauthorizedAgentObjectId = permissionsOrOptions.preauthorizedAgentObjectId;
 				this.correlationId = permissionsOrOptions.correlationId;
 			}
@@ -51056,6 +54627,9 @@ var SASQueryParameters = class {
 			this.contentEncoding = contentEncoding;
 			this.contentLanguage = contentLanguage;
 			this.contentType = contentType;
+			this.requestHeaderKeys = requestHeaderKeys;
+			this.requestQueryParameterKeys = requestQueryParameterKeys;
+			this.directoryDepth = directoryDepth;
 			if (userDelegationKey) {
 				this.signedOid = userDelegationKey.signedObjectId;
 				this.signedTenantId = userDelegationKey.signedTenantId;
@@ -51063,6 +54637,7 @@ var SASQueryParameters = class {
 				this.signedExpiresOn = userDelegationKey.signedExpiresOn;
 				this.signedService = userDelegationKey.signedService;
 				this.signedVersion = userDelegationKey.signedVersion;
+				this.signedDelegatedUserTid = userDelegationKey.signedDelegatedUserTenantId;
 				this.preauthorizedAgentObjectId = preauthorizedAgentObjectId;
 				this.correlationId = correlationId;
 			}
@@ -51091,7 +54666,6 @@ var SASQueryParameters = class {
 			"skv",
 			"sr",
 			"sp",
-			"sig",
 			"rscc",
 			"rscd",
 			"rsce",
@@ -51099,7 +54673,12 @@ var SASQueryParameters = class {
 			"rsct",
 			"saoid",
 			"scid",
-			"sduoid"
+			"sdd",
+			"sduoid",
+			"skdutid",
+			"srh",
+			"srq",
+			"sig"
 		];
 		const queries = [];
 		for (const param of params) switch (param) {
@@ -51148,6 +54727,9 @@ var SASQueryParameters = class {
 			case "skv":
 				this.tryAppendQueryParameter(queries, param, this.signedVersion);
 				break;
+			case "skdutid":
+				this.tryAppendQueryParameter(queries, param, this.signedDelegatedUserTid);
+				break;
 			case "sr":
 				this.tryAppendQueryParameter(queries, param, this.resource);
 				break;
@@ -51181,6 +54763,13 @@ var SASQueryParameters = class {
 			case "sduoid":
 				this.tryAppendQueryParameter(queries, param, this.delegatedUserObjectId);
 				break;
+			case "srh":
+				this.tryAppendQueryParameter(queries, param, this.requestHeaderKeys);
+				break;
+			case "srq":
+				this.tryAppendQueryParameter(queries, param, this.requestQueryParameterKeys);
+				break;
+			case "sdd": this.tryAppendQueryParameter(queries, param, this.directoryDepth !== void 0 ? this.directoryDepth.toString() : "");
 		}
 		return queries.join("&");
 	}
@@ -51199,7 +54788,7 @@ var SASQueryParameters = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/sas/BlobSASSignatureValues.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/sas/BlobSASSignatureValues.js
 function generateBlobSASQueryParameters(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName) {
 	return generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKeyCredentialOrUserDelegationKey, accountName).sasQueryParameters;
 }
@@ -51209,14 +54798,23 @@ function generateBlobSASQueryParametersInternal(blobSASSignatureValues, sharedKe
 	let userDelegationKeyCredential;
 	if (sharedKeyCredential === void 0 && accountName !== void 0) userDelegationKeyCredential = new UserDelegationKeyCredential(accountName, sharedKeyCredentialOrUserDelegationKey);
 	if (sharedKeyCredential === void 0 && userDelegationKeyCredential === void 0) throw TypeError("Invalid sharedKeyCredential, userDelegationKey or accountName.");
-	if (version >= "2020-12-06") if (sharedKeyCredential !== void 0) return generateBlobSASQueryParameters20201206(blobSASSignatureValues, sharedKeyCredential);
-	else if (version >= "2025-07-05") return generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userDelegationKeyCredential);
-	else return generateBlobSASQueryParametersUDK20201206(blobSASSignatureValues, userDelegationKeyCredential);
-	if (version >= "2018-11-09") if (sharedKeyCredential !== void 0) return generateBlobSASQueryParameters20181109(blobSASSignatureValues, sharedKeyCredential);
-	else if (version >= "2020-02-10") return generateBlobSASQueryParametersUDK20200210(blobSASSignatureValues, userDelegationKeyCredential);
-	else return generateBlobSASQueryParametersUDK20181109(blobSASSignatureValues, userDelegationKeyCredential);
-	if (version >= "2015-04-05") if (sharedKeyCredential !== void 0) return generateBlobSASQueryParameters20150405(blobSASSignatureValues, sharedKeyCredential);
-	else throw new RangeError("'version' must be >= '2018-11-09' when generating user delegation SAS using user delegation key.");
+	if (version >= "2020-12-06") {
+		if (sharedKeyCredential !== void 0) return generateBlobSASQueryParameters20201206(blobSASSignatureValues, sharedKeyCredential);
+		else if (version >= "2026-04-06") return generateBlobSASQueryParametersUDK20260406(blobSASSignatureValues, userDelegationKeyCredential);
+		else if (version >= "2025-07-05") return generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userDelegationKeyCredential);
+		else return generateBlobSASQueryParametersUDK20201206(blobSASSignatureValues, userDelegationKeyCredential);
+	}
+	if (version >= "2018-11-09") {
+		if (sharedKeyCredential !== void 0) {
+			if (version >= "2020-02-10") return generateBlobSASQueryParameters20200210(blobSASSignatureValues, sharedKeyCredential);
+			else return generateBlobSASQueryParameters20181109(blobSASSignatureValues, sharedKeyCredential);
+		} else if (version >= "2020-02-10") return generateBlobSASQueryParametersUDK20200210(blobSASSignatureValues, userDelegationKeyCredential);
+		else return generateBlobSASQueryParametersUDK20181109(blobSASSignatureValues, userDelegationKeyCredential);
+	}
+	if (version >= "2015-04-05") {
+		if (sharedKeyCredential !== void 0) return generateBlobSASQueryParameters20150405(blobSASSignatureValues, sharedKeyCredential);
+		else throw new RangeError("'version' must be >= '2018-11-09' when generating user delegation SAS using user delegation key.");
+	}
 	throw new RangeError("'version' must be >= '2015-04-05'.");
 }
 /**
@@ -51241,8 +54839,10 @@ function generateBlobSASQueryParameters20150405(blobSASSignatureValues, sharedKe
 	let resource = "c";
 	if (blobSASSignatureValues.blobName) resource = "b";
 	let verifiedPermissions;
-	if (blobSASSignatureValues.permissions) if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
-	else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
 	const stringToSign = [
 		verifiedPermissions ? verifiedPermissions : "",
 		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
@@ -51294,8 +54894,10 @@ function generateBlobSASQueryParameters20181109(blobSASSignatureValues, sharedKe
 		}
 	}
 	let verifiedPermissions;
-	if (blobSASSignatureValues.permissions) if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
-	else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
 	const stringToSign = [
 		verifiedPermissions ? verifiedPermissions : "",
 		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
@@ -51321,6 +54923,69 @@ function generateBlobSASQueryParameters20181109(blobSASSignatureValues, sharedKe
 }
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
+* IMPLEMENTATION FOR API VERSION FROM 2020-02-10.
+*
+* Creates an instance of SASQueryParameters.
+*
+* Only accepts required settings needed to create a SAS. For optional settings please
+* set corresponding properties directly, such as permissions, startsOn and identifier.
+*
+* WARNING: When identifier is not provided, permissions and expiresOn are required.
+* You MUST assign value to identifier or expiresOn & permissions manually if you initial with
+* this constructor.
+*
+* @param blobSASSignatureValues -
+* @param sharedKeyCredential -
+*/
+function generateBlobSASQueryParameters20200210(blobSASSignatureValues, sharedKeyCredential) {
+	blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
+	if (!blobSASSignatureValues.identifier && !(blobSASSignatureValues.permissions && blobSASSignatureValues.expiresOn)) throw new RangeError("Must provide 'permissions' and 'expiresOn' for Blob SAS generation when 'identifier' is not provided.");
+	let resource = "c";
+	let timestamp = blobSASSignatureValues.snapshotTime;
+	let directoryDepth = void 0;
+	if (blobSASSignatureValues.blobName) {
+		if (blobSASSignatureValues.isDirectory === true) {
+			resource = "d";
+			directoryDepth = trimBlobName(blobSASSignatureValues.blobName).split("/").length;
+		} else {
+			resource = "b";
+			if (blobSASSignatureValues.snapshotTime) resource = "bs";
+			else if (blobSASSignatureValues.versionId) {
+				resource = "bv";
+				timestamp = blobSASSignatureValues.versionId;
+			}
+		}
+	}
+	let verifiedPermissions;
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
+	const stringToSign = [
+		verifiedPermissions ? verifiedPermissions : "",
+		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
+		blobSASSignatureValues.expiresOn ? truncatedISO8061Date(blobSASSignatureValues.expiresOn, false) : "",
+		getCanonicalName(sharedKeyCredential.accountName, blobSASSignatureValues.containerName, blobSASSignatureValues.blobName),
+		blobSASSignatureValues.identifier,
+		blobSASSignatureValues.ipRange ? ipRangeToString(blobSASSignatureValues.ipRange) : "",
+		blobSASSignatureValues.protocol ? blobSASSignatureValues.protocol : "",
+		blobSASSignatureValues.version,
+		resource,
+		timestamp,
+		blobSASSignatureValues.cacheControl ? blobSASSignatureValues.cacheControl : "",
+		blobSASSignatureValues.contentDisposition ? blobSASSignatureValues.contentDisposition : "",
+		blobSASSignatureValues.contentEncoding ? blobSASSignatureValues.contentEncoding : "",
+		blobSASSignatureValues.contentLanguage ? blobSASSignatureValues.contentLanguage : "",
+		blobSASSignatureValues.contentType ? blobSASSignatureValues.contentType : ""
+	].join("\n");
+	const signature = sharedKeyCredential.computeHMACSHA256(stringToSign);
+	return {
+		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, void 0, void 0, void 0, void 0, void 0, void 0, void 0, directoryDepth),
+		stringToSign
+	};
+}
+/**
+* ONLY AVAILABLE IN NODE.JS RUNTIME.
 * IMPLEMENTATION FOR API VERSION FROM 2020-12-06.
 *
 * Creates an instance of SASQueryParameters.
@@ -51340,17 +55005,25 @@ function generateBlobSASQueryParameters20201206(blobSASSignatureValues, sharedKe
 	if (!blobSASSignatureValues.identifier && !(blobSASSignatureValues.permissions && blobSASSignatureValues.expiresOn)) throw new RangeError("Must provide 'permissions' and 'expiresOn' for Blob SAS generation when 'identifier' is not provided.");
 	let resource = "c";
 	let timestamp = blobSASSignatureValues.snapshotTime;
+	let directoryDepth = void 0;
 	if (blobSASSignatureValues.blobName) {
-		resource = "b";
-		if (blobSASSignatureValues.snapshotTime) resource = "bs";
-		else if (blobSASSignatureValues.versionId) {
-			resource = "bv";
-			timestamp = blobSASSignatureValues.versionId;
+		if (blobSASSignatureValues.isDirectory === true) {
+			resource = "d";
+			directoryDepth = trimBlobName(blobSASSignatureValues.blobName).split("/").length;
+		} else {
+			resource = "b";
+			if (blobSASSignatureValues.snapshotTime) resource = "bs";
+			else if (blobSASSignatureValues.versionId) {
+				resource = "bv";
+				timestamp = blobSASSignatureValues.versionId;
+			}
 		}
 	}
 	let verifiedPermissions;
-	if (blobSASSignatureValues.permissions) if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
-	else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
 	const stringToSign = [
 		verifiedPermissions ? verifiedPermissions : "",
 		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
@@ -51371,7 +55044,7 @@ function generateBlobSASQueryParameters20201206(blobSASSignatureValues, sharedKe
 	].join("\n");
 	const signature = sharedKeyCredential.computeHMACSHA256(stringToSign);
 	return {
-		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, void 0, void 0, void 0, blobSASSignatureValues.encryptionScope),
+		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, void 0, void 0, void 0, blobSASSignatureValues.encryptionScope, void 0, void 0, void 0, directoryDepth),
 		stringToSign
 	};
 }
@@ -51403,8 +55076,10 @@ function generateBlobSASQueryParametersUDK20181109(blobSASSignatureValues, userD
 		}
 	}
 	let verifiedPermissions;
-	if (blobSASSignatureValues.permissions) if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
-	else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
 	const stringToSign = [
 		verifiedPermissions ? verifiedPermissions : "",
 		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
@@ -51452,17 +55127,25 @@ function generateBlobSASQueryParametersUDK20200210(blobSASSignatureValues, userD
 	if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) throw new RangeError("Must provide 'permissions' and 'expiresOn' for Blob SAS generation when generating user delegation SAS.");
 	let resource = "c";
 	let timestamp = blobSASSignatureValues.snapshotTime;
+	let directoryDepth = void 0;
 	if (blobSASSignatureValues.blobName) {
-		resource = "b";
-		if (blobSASSignatureValues.snapshotTime) resource = "bs";
-		else if (blobSASSignatureValues.versionId) {
-			resource = "bv";
-			timestamp = blobSASSignatureValues.versionId;
+		if (blobSASSignatureValues.isDirectory === true) {
+			resource = "d";
+			directoryDepth = trimBlobName(blobSASSignatureValues.blobName).split("/").length;
+		} else {
+			resource = "b";
+			if (blobSASSignatureValues.snapshotTime) resource = "bs";
+			else if (blobSASSignatureValues.versionId) {
+				resource = "bv";
+				timestamp = blobSASSignatureValues.versionId;
+			}
 		}
 	}
 	let verifiedPermissions;
-	if (blobSASSignatureValues.permissions) if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
-	else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
 	const stringToSign = [
 		verifiedPermissions ? verifiedPermissions : "",
 		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
@@ -51490,7 +55173,7 @@ function generateBlobSASQueryParametersUDK20200210(blobSASSignatureValues, userD
 	].join("\n");
 	const signature = userDelegationKeyCredential.computeHMACSHA256(stringToSign);
 	return {
-		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, userDelegationKeyCredential.userDelegationKey, blobSASSignatureValues.preauthorizedAgentObjectId, blobSASSignatureValues.correlationId),
+		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, userDelegationKeyCredential.userDelegationKey, blobSASSignatureValues.preauthorizedAgentObjectId, blobSASSignatureValues.correlationId, void 0, void 0, void 0, void 0, directoryDepth),
 		stringToSign
 	};
 }
@@ -51513,17 +55196,25 @@ function generateBlobSASQueryParametersUDK20201206(blobSASSignatureValues, userD
 	if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) throw new RangeError("Must provide 'permissions' and 'expiresOn' for Blob SAS generation when generating user delegation SAS.");
 	let resource = "c";
 	let timestamp = blobSASSignatureValues.snapshotTime;
+	let directoryDepth = void 0;
 	if (blobSASSignatureValues.blobName) {
-		resource = "b";
-		if (blobSASSignatureValues.snapshotTime) resource = "bs";
-		else if (blobSASSignatureValues.versionId) {
-			resource = "bv";
-			timestamp = blobSASSignatureValues.versionId;
+		if (blobSASSignatureValues.isDirectory === true) {
+			resource = "d";
+			directoryDepth = trimBlobName(blobSASSignatureValues.blobName).split("/").length;
+		} else {
+			resource = "b";
+			if (blobSASSignatureValues.snapshotTime) resource = "bs";
+			else if (blobSASSignatureValues.versionId) {
+				resource = "bv";
+				timestamp = blobSASSignatureValues.versionId;
+			}
 		}
 	}
 	let verifiedPermissions;
-	if (blobSASSignatureValues.permissions) if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
-	else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
 	const stringToSign = [
 		verifiedPermissions ? verifiedPermissions : "",
 		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
@@ -51552,7 +55243,7 @@ function generateBlobSASQueryParametersUDK20201206(blobSASSignatureValues, userD
 	].join("\n");
 	const signature = userDelegationKeyCredential.computeHMACSHA256(stringToSign);
 	return {
-		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, userDelegationKeyCredential.userDelegationKey, blobSASSignatureValues.preauthorizedAgentObjectId, blobSASSignatureValues.correlationId, blobSASSignatureValues.encryptionScope),
+		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, userDelegationKeyCredential.userDelegationKey, blobSASSignatureValues.preauthorizedAgentObjectId, blobSASSignatureValues.correlationId, blobSASSignatureValues.encryptionScope, void 0, void 0, void 0, directoryDepth),
 		stringToSign
 	};
 }
@@ -51575,17 +55266,25 @@ function generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userD
 	if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) throw new RangeError("Must provide 'permissions' and 'expiresOn' for Blob SAS generation when generating user delegation SAS.");
 	let resource = "c";
 	let timestamp = blobSASSignatureValues.snapshotTime;
+	let directoryDepth = void 0;
 	if (blobSASSignatureValues.blobName) {
-		resource = "b";
-		if (blobSASSignatureValues.snapshotTime) resource = "bs";
-		else if (blobSASSignatureValues.versionId) {
-			resource = "bv";
-			timestamp = blobSASSignatureValues.versionId;
+		if (blobSASSignatureValues.isDirectory === true) {
+			resource = "d";
+			directoryDepth = trimBlobName(blobSASSignatureValues.blobName).split("/").length;
+		} else {
+			resource = "b";
+			if (blobSASSignatureValues.snapshotTime) resource = "bs";
+			else if (blobSASSignatureValues.versionId) {
+				resource = "bv";
+				timestamp = blobSASSignatureValues.versionId;
+			}
 		}
 	}
 	let verifiedPermissions;
-	if (blobSASSignatureValues.permissions) if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
-	else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
 	const stringToSign = [
 		verifiedPermissions ? verifiedPermissions : "",
 		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
@@ -51600,7 +55299,7 @@ function generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userD
 		blobSASSignatureValues.preauthorizedAgentObjectId,
 		void 0,
 		blobSASSignatureValues.correlationId,
-		void 0,
+		userDelegationKeyCredential.userDelegationKey.signedDelegatedUserTenantId,
 		blobSASSignatureValues.delegatedUserObjectId,
 		blobSASSignatureValues.ipRange ? ipRangeToString(blobSASSignatureValues.ipRange) : "",
 		blobSASSignatureValues.protocol ? blobSASSignatureValues.protocol : "",
@@ -51616,9 +55315,110 @@ function generateBlobSASQueryParametersUDK20250705(blobSASSignatureValues, userD
 	].join("\n");
 	const signature = userDelegationKeyCredential.computeHMACSHA256(stringToSign);
 	return {
-		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, userDelegationKeyCredential.userDelegationKey, blobSASSignatureValues.preauthorizedAgentObjectId, blobSASSignatureValues.correlationId, blobSASSignatureValues.encryptionScope, blobSASSignatureValues.delegatedUserObjectId),
+		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, userDelegationKeyCredential.userDelegationKey, blobSASSignatureValues.preauthorizedAgentObjectId, blobSASSignatureValues.correlationId, blobSASSignatureValues.encryptionScope, blobSASSignatureValues.delegatedUserObjectId, void 0, void 0, directoryDepth),
 		stringToSign
 	};
+}
+/**
+* ONLY AVAILABLE IN NODE.JS RUNTIME.
+* IMPLEMENTATION FOR API VERSION FROM 2020-12-06.
+*
+* Creates an instance of SASQueryParameters.
+*
+* Only accepts required settings needed to create a SAS. For optional settings please
+* set corresponding properties directly, such as permissions, startsOn.
+*
+* WARNING: identifier will be ignored, permissions and expiresOn are required.
+*
+* @param blobSASSignatureValues -
+* @param userDelegationKeyCredential -
+*/
+function generateBlobSASQueryParametersUDK20260406(blobSASSignatureValues, userDelegationKeyCredential) {
+	blobSASSignatureValues = SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues);
+	if (!blobSASSignatureValues.permissions || !blobSASSignatureValues.expiresOn) throw new RangeError("Must provide 'permissions' and 'expiresOn' for Blob SAS generation when generating user delegation SAS.");
+	let resource = "c";
+	let timestamp = blobSASSignatureValues.snapshotTime;
+	let directoryDepth = void 0;
+	if (blobSASSignatureValues.blobName) {
+		if (blobSASSignatureValues.isDirectory === true) {
+			resource = "d";
+			directoryDepth = trimBlobName(blobSASSignatureValues.blobName).split("/").length;
+		} else {
+			resource = "b";
+			if (blobSASSignatureValues.snapshotTime) resource = "bs";
+			else if (blobSASSignatureValues.versionId) {
+				resource = "bv";
+				timestamp = blobSASSignatureValues.versionId;
+			}
+		}
+	}
+	let verifiedPermissions;
+	if (blobSASSignatureValues.permissions) {
+		if (blobSASSignatureValues.blobName) verifiedPermissions = BlobSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+		else verifiedPermissions = ContainerSASPermissions.parse(blobSASSignatureValues.permissions.toString()).toString();
+	}
+	const stringToSign = [
+		verifiedPermissions ? verifiedPermissions : "",
+		blobSASSignatureValues.startsOn ? truncatedISO8061Date(blobSASSignatureValues.startsOn, false) : "",
+		blobSASSignatureValues.expiresOn ? truncatedISO8061Date(blobSASSignatureValues.expiresOn, false) : "",
+		getCanonicalName(userDelegationKeyCredential.accountName, blobSASSignatureValues.containerName, blobSASSignatureValues.blobName),
+		userDelegationKeyCredential.userDelegationKey.signedObjectId,
+		userDelegationKeyCredential.userDelegationKey.signedTenantId,
+		userDelegationKeyCredential.userDelegationKey.signedStartsOn ? truncatedISO8061Date(userDelegationKeyCredential.userDelegationKey.signedStartsOn, false) : "",
+		userDelegationKeyCredential.userDelegationKey.signedExpiresOn ? truncatedISO8061Date(userDelegationKeyCredential.userDelegationKey.signedExpiresOn, false) : "",
+		userDelegationKeyCredential.userDelegationKey.signedService,
+		userDelegationKeyCredential.userDelegationKey.signedVersion,
+		blobSASSignatureValues.preauthorizedAgentObjectId,
+		void 0,
+		blobSASSignatureValues.correlationId,
+		userDelegationKeyCredential.userDelegationKey.signedDelegatedUserTenantId,
+		blobSASSignatureValues.delegatedUserObjectId,
+		blobSASSignatureValues.ipRange ? ipRangeToString(blobSASSignatureValues.ipRange) : "",
+		blobSASSignatureValues.protocol ? blobSASSignatureValues.protocol : "",
+		blobSASSignatureValues.version,
+		resource,
+		timestamp,
+		blobSASSignatureValues.encryptionScope,
+		formatRequestHeadersForSasSigning(blobSASSignatureValues.requestHeaders),
+		formatRequestQueryParametersForSasSigning(blobSASSignatureValues.requestQueryParameters),
+		blobSASSignatureValues.cacheControl,
+		blobSASSignatureValues.contentDisposition,
+		blobSASSignatureValues.contentEncoding,
+		blobSASSignatureValues.contentLanguage,
+		blobSASSignatureValues.contentType
+	].join("\n");
+	const signature = userDelegationKeyCredential.computeHMACSHA256(stringToSign);
+	return {
+		sasQueryParameters: new SASQueryParameters(blobSASSignatureValues.version, signature, verifiedPermissions, void 0, void 0, blobSASSignatureValues.protocol, blobSASSignatureValues.startsOn, blobSASSignatureValues.expiresOn, blobSASSignatureValues.ipRange, blobSASSignatureValues.identifier, resource, blobSASSignatureValues.cacheControl, blobSASSignatureValues.contentDisposition, blobSASSignatureValues.contentEncoding, blobSASSignatureValues.contentLanguage, blobSASSignatureValues.contentType, userDelegationKeyCredential.userDelegationKey, blobSASSignatureValues.preauthorizedAgentObjectId, blobSASSignatureValues.correlationId, blobSASSignatureValues.encryptionScope, blobSASSignatureValues.delegatedUserObjectId, getKeysOfRequestHeaders(blobSASSignatureValues.requestHeaders), getKeysOfRequestHeaders(blobSASSignatureValues.requestQueryParameters), directoryDepth),
+		stringToSign
+	};
+}
+function formatRequestHeadersForSasSigning(requestHeaders) {
+	if (requestHeaders === void 0) return;
+	let canonicalValue = "";
+	Object.keys(requestHeaders).forEach(function(key) {
+		canonicalValue = canonicalValue + key + ":" + requestHeaders[key] + "\n";
+	});
+	return canonicalValue;
+}
+function formatRequestQueryParametersForSasSigning(queryParameters) {
+	if (queryParameters === void 0) return;
+	let canonicalValue = "";
+	Object.keys(queryParameters).forEach(function(key) {
+		canonicalValue = canonicalValue + "\n" + key + ":" + queryParameters[key];
+	});
+	return canonicalValue;
+}
+function getKeysOfRequestHeaders(requestHeaders) {
+	if (requestHeaders === void 0) return;
+	let requestKeys = "";
+	let index = 0;
+	Object.keys(requestHeaders).forEach(function(key) {
+		if (index !== 0) requestKeys = requestKeys + ",";
+		requestKeys = requestKeys + key;
+		++index;
+	});
+	return requestKeys;
 }
 function getCanonicalName(accountName, containerName, blobName) {
 	const elements = [`/blob/${accountName}/${containerName}`];
@@ -51642,8 +55442,14 @@ function SASSignatureValuesSanityCheckAndAutofill(blobSASSignatureValues) {
 	blobSASSignatureValues.version = version;
 	return blobSASSignatureValues;
 }
+function trimBlobName(blobName) {
+	let internalName = blobName;
+	while (internalName.startsWith("/")) internalName = internalName.substring(1);
+	while (internalName.endsWith("/")) internalName = internalName.substring(0, internalName.length - 1);
+	return internalName;
+}
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/BlobLeaseClient.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/BlobLeaseClient.js
 /**
 * A client that manages leases for a {@link ContainerClient} or a {@link BlobClient}.
 */
@@ -51811,7 +55617,7 @@ var BlobLeaseClient = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/utils/RetriableReadableStream.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/utils/RetriableReadableStream.js
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
 *
@@ -51887,16 +55693,17 @@ var RetriableReadableStream = class extends Readable {
 		}
 		this.removeSourceEventHandlers();
 		if (this.offset - 1 === this.end) this.push(null);
-		else if (this.offset <= this.end) if (this.retries < this.maxRetryRequests) {
-			this.retries += 1;
-			this.getter(this.offset).then((newSource) => {
-				this.source = newSource;
-				this.setSourceEventHandlers();
-			}).catch((error) => {
-				this.destroy(error);
-			});
-		} else this.destroy(/* @__PURE__ */ new Error(`Data corruption failure: received less data than required and reached maxRetires limitation. Received data offset: ${this.offset - 1}, data needed offset: ${this.end}, retries: ${this.retries}, max retries: ${this.maxRetryRequests}`));
-		else this.destroy(/* @__PURE__ */ new Error(`Data corruption failure: Received more data than original request, data needed offset is ${this.end}, received offset: ${this.offset - 1}`));
+		else if (this.offset <= this.end) {
+			if (this.retries < this.maxRetryRequests) {
+				this.retries += 1;
+				this.getter(this.offset).then((newSource) => {
+					this.source = newSource;
+					this.setSourceEventHandlers();
+				}).catch((error) => {
+					this.destroy(error);
+				});
+			} else this.destroy(/* @__PURE__ */ new Error(`Data corruption failure: received less data than required and reached maxRetires limitation. Received data offset: ${this.offset - 1}, data needed offset: ${this.end}, retries: ${this.retries}, max retries: ${this.maxRetryRequests}`));
+		} else this.destroy(/* @__PURE__ */ new Error(`Data corruption failure: Received more data than original request, data needed offset is ${this.end}, received offset: ${this.offset - 1}`));
 	};
 	_destroy(error, callback) {
 		this.removeSourceEventHandlers();
@@ -51905,7 +55712,7 @@ var RetriableReadableStream = class extends Readable {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/BlobDownloadResponse.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/BlobDownloadResponse.js
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
 *
@@ -52324,6 +56131,9 @@ var BlobDownloadResponse = class {
 	get legalHold() {
 		return this.originalResponse.legalHold;
 	}
+	get structuredBodyType() {
+		return this.originalResponse.structuredBodyType;
+	}
 	/**
 	* The response body as a browser Blob.
 	* Always undefined in node.js.
@@ -52363,11 +56173,12 @@ var BlobDownloadResponse = class {
 	*/
 	constructor(originalResponse, getter, offset, count, options = {}) {
 		this.originalResponse = originalResponse;
-		this.blobDownloadStream = new RetriableReadableStream(this.originalResponse.readableStreamBody, getter, offset, count, options);
+		const streamBody = this.originalResponse.structuredBodyType === void 0 ? this.originalResponse.readableStreamBody : structuredMessageDecodingStream(this.originalResponse.readableStreamBody, options);
+		this.blobDownloadStream = new RetriableReadableStream(streamBody, getter, offset, count, options);
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroConstants.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroConstants.js
 var AVRO_INIT_BYTES = new Uint8Array([
 	79,
 	98,
@@ -52377,7 +56188,7 @@ var AVRO_INIT_BYTES = new Uint8Array([
 var AVRO_CODEC_KEY = "avro.codec";
 var AVRO_SCHEMA_KEY = "avro.schema";
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroParser.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroParser.js
 var AvroParser = class AvroParser {
 	/**
 	* Reads a fixed number of bytes from the stream.
@@ -52403,7 +56214,9 @@ var AvroParser = class AvroParser {
 	static async readZigZagLong(stream, options = {}) {
 		let zigZagEncoded = 0;
 		let significanceInBit = 0;
-		let byte, haveMoreByte, significanceInFloat;
+		let byte;
+		let haveMoreByte;
+		let significanceInFloat;
 		do {
 			byte = await AvroParser.readByte(stream, options);
 			haveMoreByte = byte & 128;
@@ -52628,7 +56441,7 @@ var AvroRecordType = class extends AvroType {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/utils/utils.common.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/utils/utils.common.js
 function arraysEqual(a, b) {
 	if (a === b) return true;
 	if (a == null || b == null) return false;
@@ -52637,7 +56450,7 @@ function arraysEqual(a, b) {
 	return true;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReader.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReader.js
 var AvroReader = class {
 	_dataStream;
 	_headerStream;
@@ -52706,10 +56519,10 @@ var AvroReader = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReadable.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReadable.js
 var AvroReadable = class {};
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReadableFromStream.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/internal-avro/AvroReadableFromStream.js
 var ABORT_ERROR = new AbortError("Reading from the avro stream was aborted.");
 var AvroReadableFromStream = class extends AvroReadable {
 	_position;
@@ -52729,7 +56542,7 @@ var AvroReadableFromStream = class extends AvroReadable {
 	async read(size, options = {}) {
 		if (options.abortSignal?.aborted) throw ABORT_ERROR;
 		if (size < 0) throw new Error(`size parameter should be positive: ${size}`);
-		if (size === 0) return new Uint8Array();
+		if (size === 0) return /* @__PURE__ */ new Uint8Array();
 		if (!this._readable.readable) throw new Error("Stream no longer readable.");
 		const chunk = this._readable.read(size);
 		if (chunk) {
@@ -52768,7 +56581,7 @@ var AvroReadableFromStream = class extends AvroReadable {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/utils/BlobQuickQueryStream.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/utils/BlobQuickQueryStream.js
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
 *
@@ -52856,7 +56669,7 @@ var BlobQuickQueryStream = class extends Readable {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/BlobQueryResponse.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/BlobQueryResponse.js
 /**
 * ONLY AVAILABLE IN NODE.JS RUNTIME.
 *
@@ -53218,7 +57031,7 @@ var BlobQueryResponse = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/models.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/models.js
 /**
 * Represents the access tier on a blob.
 * For detailed information about block blob level tiering see {@link https://learn.microsoft.com/azure/storage/blobs/storage-blob-storage-tiers|Hot, cool and archive storage tiers.}
@@ -53318,7 +57131,7 @@ var StorageBlobAudience;
 	StorageBlobAudience["DiskComputeOAuthScopes"] = "https://disk.compute.azure.com/.default";
 })(StorageBlobAudience || (StorageBlobAudience = {}));
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/PageBlobRangeResponse.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/PageBlobRangeResponse.js
 /**
 * Function that converts PageRange and ClearRange to a common Range object.
 * PageRange and ClearRange have start and end while Range offset and count
@@ -53348,7 +57161,7 @@ function rangeResponseFromModel(response) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+core-lro@2.7.2/node_modules/@azure/core-lro/dist/esm/legacy/poller.js
+//#region node_modules/.pnpm/@azure+core-lro@2.7.2_supports-color@7.2.0/node_modules/@azure/core-lro/dist/esm/legacy/poller.js
 /**
 * When a poller is manually stopped through the `stopPolling` method,
 * the poller will be rejected with an instance of the PollerStoppedError.
@@ -53714,7 +57527,7 @@ var Poller = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/pollers/BlobStartCopyFromUrlPoller.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/pollers/BlobStartCopyFromUrlPoller.js
 /**
 * This is the poller returned by {@link BlobClient.beginCopyFromURL}.
 * This can not be instantiated directly outside of this package.
@@ -53820,7 +57633,7 @@ function makeBlobBeginCopyFromURLPollOperation(state) {
 	};
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/Range.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/Range.js
 /**
 * Generate a range string. For example:
 *
@@ -53834,7 +57647,7 @@ function rangeToString(iRange) {
 	return iRange.count ? `bytes=${iRange.offset}-${iRange.offset + iRange.count - 1}` : `bytes=${iRange.offset}-`;
 }
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/utils/Batch.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/utils/Batch.js
 /**
 * States for Batch.
 */
@@ -53947,7 +57760,7 @@ var Batch = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/utils/utils.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/utils/utils.js
 /**
 * Reads a readable stream into buffer. Fill the buffer from offset to end.
 *
@@ -53968,12 +57781,18 @@ async function streamToBuffer(stream, buffer, offset, end, encoding) {
 				resolve();
 				return;
 			}
-			let chunk = stream.read();
-			if (!chunk) return;
-			if (typeof chunk === "string") chunk = Buffer.from(chunk, encoding);
-			const chunkLength = pos + chunk.length > count ? count - pos : chunk.length;
-			buffer.fill(chunk.slice(0, chunkLength), offset + pos, offset + pos + chunkLength);
-			pos += chunkLength;
+			let chunk;
+			while ((chunk = stream.read()) !== null) {
+				if (typeof chunk === "string") chunk = Buffer.from(chunk, encoding);
+				const chunkLength = pos + chunk.length > count ? count - pos : chunk.length;
+				buffer.fill(chunk.slice(0, chunkLength), offset + pos, offset + pos + chunkLength);
+				pos += chunkLength;
+				if (pos >= count) {
+					clearTimeout(timeout);
+					resolve();
+					return;
+				}
+			}
 		});
 		stream.on("end", () => {
 			clearTimeout(timeout);
@@ -54015,7 +57834,7 @@ async function readStreamToLocalFile(rs, file) {
 var fsStat = util.promisify(fs.stat);
 var fsCreateReadStream = fs.createReadStream;
 //#endregion
-//#region node_modules/.pnpm/@azure+storage-blob@12.31.0/node_modules/@azure/storage-blob/dist/esm/Clients.js
+//#region node_modules/.pnpm/@azure+storage-blob@12.33.0_supports-color@7.2.0/node_modules/@azure/storage-blob/dist/esm/Clients.js
 /**
 * A BlobClient represents a URL to an Azure Storage blob; the blob may be a block blob,
 * append blob, or page blob.
@@ -54029,6 +57848,10 @@ var BlobClient = class BlobClient extends StorageClient {
 	_containerName;
 	_versionId;
 	_snapshot;
+	/**
+	* Config used in creating blob client instances.
+	*/
+	blobClientConfig;
 	/**
 	* The name of the blob.
 	*/
@@ -54048,6 +57871,7 @@ var BlobClient = class BlobClient extends StorageClient {
 		if (isPipelineLike(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			pipeline = credentialOrPipelineOrContainerName;
+			options = blobNameOrOptions;
 		} else if (isNodeLike && credentialOrPipelineOrContainerName instanceof StorageSharedKeyCredential || credentialOrPipelineOrContainerName instanceof AnonymousCredential || isTokenCredential(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			options = blobNameOrOptions;
@@ -54060,13 +57884,14 @@ var BlobClient = class BlobClient extends StorageClient {
 			const containerName = credentialOrPipelineOrContainerName;
 			const blobName = blobNameOrOptions;
 			const extractedCreds = extractConnectionStringParts(urlOrConnectionString);
-			if (extractedCreds.kind === "AccountConnString") if (isNodeLike) {
-				const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
-				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
-				if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
-				pipeline = newPipeline(sharedKeyCredential, options);
-			} else throw new Error("Account connection string is only supported in Node.js environment");
-			else if (extractedCreds.kind === "SASConnString") {
+			if (extractedCreds.kind === "AccountConnString") {
+				if (isNodeLike) {
+					const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
+					url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
+					if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+					pipeline = newPipeline(sharedKeyCredential, options);
+				} else throw new Error("Account connection string is only supported in Node.js environment");
+			} else if (extractedCreds.kind === "SASConnString") {
 				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName)) + "?" + extractedCreds.accountSas;
 				pipeline = newPipeline(new AnonymousCredential(), options);
 			} else throw new Error("Connection string must be either an Account connection string or a SAS connection string");
@@ -54076,6 +57901,7 @@ var BlobClient = class BlobClient extends StorageClient {
 		this.blobContext = this.storageClientContext.blob;
 		this._snapshot = getURLParameter(this.url, URLConstants.Parameters.SNAPSHOT);
 		this._versionId = getURLParameter(this.url, URLConstants.Parameters.VERSIONID);
+		this.blobClientConfig = options;
 	}
 	/**
 	* Creates a new BlobClient object identical to the source but with the specified snapshot timestamp.
@@ -54085,7 +57911,7 @@ var BlobClient = class BlobClient extends StorageClient {
 	* @returns A new BlobClient object identical to the source but with the specified snapshot timestamp
 	*/
 	withSnapshot(snapshot) {
-		return new BlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline);
+		return new BlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* Creates a new BlobClient object pointing to a version of this blob.
@@ -54095,28 +57921,28 @@ var BlobClient = class BlobClient extends StorageClient {
 	* @returns A new BlobClient object pointing to the version of this blob.
 	*/
 	withVersion(versionId) {
-		return new BlobClient(setURLParameter(this.url, URLConstants.Parameters.VERSIONID, versionId.length === 0 ? void 0 : versionId), this.pipeline);
+		return new BlobClient(setURLParameter(this.url, URLConstants.Parameters.VERSIONID, versionId.length === 0 ? void 0 : versionId), this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* Creates a AppendBlobClient object.
 	*
 	*/
 	getAppendBlobClient() {
-		return new AppendBlobClient(this.url, this.pipeline);
+		return new AppendBlobClient(this.url, this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* Creates a BlockBlobClient object.
 	*
 	*/
 	getBlockBlobClient() {
-		return new BlockBlobClient(this.url, this.pipeline);
+		return new BlockBlobClient(this.url, this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* Creates a PageBlobClient object.
 	*
 	*/
 	getPageBlobClient() {
-		return new PageBlobClient(this.url, this.pipeline);
+		return new PageBlobClient(this.url, this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* Reads or downloads a blob from the system, including its metadata and properties.
@@ -54137,6 +57963,7 @@ var BlobClient = class BlobClient extends StorageClient {
 	* ```ts snippet:ReadmeSampleDownloadBlob_Node
 	* import { BlobServiceClient } from "@azure/storage-blob";
 	* import { DefaultAzureCredential } from "@azure/identity";
+	* import { buffer } from "node:stream/consumers";
 	*
 	* const account = "<account>";
 	* const blobServiceClient = new BlobServiceClient(
@@ -54153,22 +57980,10 @@ var BlobClient = class BlobClient extends StorageClient {
 	* // In Node.js, get downloaded data by accessing downloadBlockBlobResponse.readableStreamBody
 	* const downloadBlockBlobResponse = await blobClient.download();
 	* if (downloadBlockBlobResponse.readableStreamBody) {
-	*   const downloaded = await streamToString(downloadBlockBlobResponse.readableStreamBody);
-	*   console.log(`Downloaded blob content: ${downloaded}`);
-	* }
-	*
-	* async function streamToString(stream: NodeJS.ReadableStream): Promise<string> {
-	*   const result = await new Promise<Buffer<ArrayBuffer>>((resolve, reject) => {
-	*     const chunks: Buffer[] = [];
-	*     stream.on("data", (data) => {
-	*       chunks.push(Buffer.isBuffer(data) ? data : Buffer.from(data));
-	*     });
-	*     stream.on("end", () => {
-	*       resolve(Buffer.concat(chunks));
-	*     });
-	*     stream.on("error", reject);
-	*   });
-	*   return result.toString();
+	*   // Download the raw bytes of the blob. Use `text` from "node:stream/consumers"
+	*   // instead if you want to read the content as a string directly.
+	*   const downloaded = await buffer(downloadBlockBlobResponse.readableStreamBody);
+	*   console.log(`Downloaded blob content: ${downloaded.toString()}`);
 	* }
 	* ```
 	*
@@ -54204,6 +58019,10 @@ var BlobClient = class BlobClient extends StorageClient {
 		options.conditions = options.conditions || {};
 		ensureCpkIfSpecified(options.customerProvidedKey, this.isHttps);
 		return tracingClient.withSpan("BlobClient-download", options, async (updatedOptions) => {
+			let contentChecksumAlgorithm = options.contentChecksumAlgorithm ?? this.blobClientConfig?.downloadContentChecksumAlgorithm;
+			if (contentChecksumAlgorithm === void 0) contentChecksumAlgorithm = "Customized";
+			else if (contentChecksumAlgorithm === "Auto") contentChecksumAlgorithm = "StorageCrc64";
+			if (contentChecksumAlgorithm === "StorageCrc64") await StorageCRC64Calculator.init();
 			const res = assertResponse(await this.blobContext.download({
 				abortSignal: options.abortSignal,
 				leaseAccessConditions: options.conditions,
@@ -54220,7 +58039,8 @@ var BlobClient = class BlobClient extends StorageClient {
 				rangeGetContentCRC64: options.rangeGetContentCrc64,
 				snapshot: options.snapshot,
 				cpkInfo: options.customerProvidedKey,
-				tracingOptions: updatedOptions.tracingOptions
+				tracingOptions: updatedOptions.tracingOptions,
+				structuredBodyType: contentChecksumAlgorithm === "StorageCrc64" ? "XSM/1.0; properties=crc64" : void 0
 			}));
 			const wrappedRes = {
 				...res,
@@ -54228,10 +58048,15 @@ var BlobClient = class BlobClient extends StorageClient {
 				objectReplicationDestinationPolicyId: res.objectReplicationPolicyId,
 				objectReplicationSourceProperties: parseObjectReplicationRecord(res.objectReplicationRules)
 			};
-			if (!isNodeLike) return wrappedRes;
+			if (!isNodeLike) {
+				if (contentChecksumAlgorithm === "StorageCrc64") wrappedRes.blobBody = structuredMessageDecodingBrowser(await wrappedRes.blobBody);
+				return wrappedRes;
+			}
 			if (options.maxRetryRequests === void 0 || options.maxRetryRequests < 0) options.maxRetryRequests = 5;
 			if (res.contentLength === void 0) throw new RangeError(`File download response doesn't contain valid content length header`);
+			if (contentChecksumAlgorithm === "StorageCrc64" && res.structuredContentLength === void 0) throw new RangeError(`Unexpected structured content length`);
 			if (!res.etag) throw new RangeError(`File download response doesn't contain valid etag header`);
+			const expectedContentLength = contentChecksumAlgorithm === "StorageCrc64" ? res.structuredContentLength : res.contentLength;
 			return new BlobDownloadResponse(wrappedRes, async (start) => {
 				const updatedDownloadOptions = {
 					leaseAccessConditions: options.conditions,
@@ -54243,19 +58068,22 @@ var BlobClient = class BlobClient extends StorageClient {
 						ifTags: options.conditions?.tagConditions
 					},
 					range: rangeToString({
-						count: offset + res.contentLength - start,
+						count: offset + expectedContentLength - start,
 						offset: start
 					}),
 					rangeGetContentMD5: options.rangeGetContentMD5,
 					rangeGetContentCRC64: options.rangeGetContentCrc64,
 					snapshot: options.snapshot,
-					cpkInfo: options.customerProvidedKey
+					cpkInfo: options.customerProvidedKey,
+					structuredBodyType: contentChecksumAlgorithm === "StorageCrc64" ? "XSM/1.0; properties=crc64" : void 0
 				};
-				return (await this.blobContext.download({
+				const resBody = (await this.blobContext.download({
 					abortSignal: options.abortSignal,
 					...updatedDownloadOptions
 				})).readableStreamBody;
-			}, offset, res.contentLength, {
+				if (contentChecksumAlgorithm === "StorageCrc64") return structuredMessageDecodingStream(resBody, {});
+				else return resBody;
+			}, offset, expectedContentLength, {
 				maxRetryRequests: options.maxRetryRequests,
 				onProgress: options.onProgress
 			});
@@ -54342,7 +58170,9 @@ var BlobClient = class BlobClient extends StorageClient {
 					...options.conditions,
 					ifTags: options.conditions?.tagConditions
 				},
-				tracingOptions: updatedOptions.tracingOptions
+				tracingOptions: updatedOptions.tracingOptions,
+				accessTierIfModifiedSince: options.conditions?.accessTierIfModifiedSince,
+				accessTierIfUnmodifiedSince: options.conditions?.accessTierIfUnmodifiedSince
 			}));
 		});
 	}
@@ -54747,6 +58577,7 @@ var BlobClient = class BlobClient extends StorageClient {
 					conditions: options.conditions,
 					maxRetryRequests: options.maxRetryRequestsPerBlock,
 					customerProvidedKey: options.customerProvidedKey,
+					contentChecksumAlgorithm: options.contentChecksumAlgorithm,
 					tracingOptions: updatedOptions.tracingOptions
 				})).readableStreamBody;
 				await streamToBuffer(stream, buffer, off - offset, chunkEnd - offset);
@@ -55014,30 +58845,34 @@ var AppendBlobClient = class AppendBlobClient extends BlobClient {
 		if (isPipelineLike(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			pipeline = credentialOrPipelineOrContainerName;
+			options = blobNameOrOptions;
 		} else if (isNodeLike && credentialOrPipelineOrContainerName instanceof StorageSharedKeyCredential || credentialOrPipelineOrContainerName instanceof AnonymousCredential || isTokenCredential(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			options = blobNameOrOptions;
 			pipeline = newPipeline(credentialOrPipelineOrContainerName, options);
 		} else if (!credentialOrPipelineOrContainerName && typeof credentialOrPipelineOrContainerName !== "string") {
 			url = urlOrConnectionString;
+			options = blobNameOrOptions;
 			pipeline = newPipeline(new AnonymousCredential(), options);
 		} else if (credentialOrPipelineOrContainerName && typeof credentialOrPipelineOrContainerName === "string" && blobNameOrOptions && typeof blobNameOrOptions === "string") {
 			const containerName = credentialOrPipelineOrContainerName;
 			const blobName = blobNameOrOptions;
 			const extractedCreds = extractConnectionStringParts(urlOrConnectionString);
-			if (extractedCreds.kind === "AccountConnString") if (isNodeLike) {
-				const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
-				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
-				if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
-				pipeline = newPipeline(sharedKeyCredential, options);
-			} else throw new Error("Account connection string is only supported in Node.js environment");
-			else if (extractedCreds.kind === "SASConnString") {
+			if (extractedCreds.kind === "AccountConnString") {
+				if (isNodeLike) {
+					const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
+					url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
+					if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+					pipeline = newPipeline(sharedKeyCredential, options);
+				} else throw new Error("Account connection string is only supported in Node.js environment");
+			} else if (extractedCreds.kind === "SASConnString") {
 				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName)) + "?" + extractedCreds.accountSas;
 				pipeline = newPipeline(new AnonymousCredential(), options);
 			} else throw new Error("Connection string must be either an Account connection string or a SAS connection string");
 		} else throw new Error("Expecting non-empty strings for containerName and blobName parameters");
 		super(url, pipeline);
 		this.appendBlobContext = this.storageClientContext.appendBlob;
+		this.blobClientConfig = options;
 	}
 	/**
 	* Creates a new AppendBlobClient object identical to the source but with the
@@ -55048,7 +58883,7 @@ var AppendBlobClient = class AppendBlobClient extends BlobClient {
 	* @returns A new AppendBlobClient object identical to the source but with the specified snapshot timestamp.
 	*/
 	withSnapshot(snapshot) {
-		return new AppendBlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline);
+		return new AppendBlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* Creates a 0-length append blob. Call AppendBlock to append data to an append blob.
@@ -55191,7 +59026,7 @@ var AppendBlobClient = class AppendBlobClient extends BlobClient {
 		options.conditions = options.conditions || {};
 		ensureCpkIfSpecified(options.customerProvidedKey, this.isHttps);
 		return tracingClient.withSpan("AppendBlobClient-appendBlock", options, async (updatedOptions) => {
-			return assertResponse(await this.appendBlobContext.appendBlock(contentLength, body, {
+			const parameters = {
 				abortSignal: options.abortSignal,
 				appendPositionAccessConditions: options.conditions,
 				leaseAccessConditions: options.conditions,
@@ -55200,12 +59035,12 @@ var AppendBlobClient = class AppendBlobClient extends BlobClient {
 					ifTags: options.conditions?.tagConditions
 				},
 				requestOptions: { onUploadProgress: options.onProgress },
-				transactionalContentMD5: options.transactionalContentMD5,
-				transactionalContentCrc64: options.transactionalContentCrc64,
 				cpkInfo: options.customerProvidedKey,
 				encryptionScope: options.encryptionScope,
 				tracingOptions: updatedOptions.tracingOptions
-			}));
+			};
+			const uploadBodyParameters = await setUploadChecksumParameters(body, contentLength, parameters, options, this.blobClientConfig?.uploadContentChecksumAlgorithm);
+			return assertResponse(await this.appendBlobContext.appendBlock(uploadBodyParameters.contentLength, uploadBodyParameters.body, parameters));
 		});
 	}
 	/**
@@ -55251,7 +59086,12 @@ var AppendBlobClient = class AppendBlobClient extends BlobClient {
 				cpkInfo: options.customerProvidedKey,
 				encryptionScope: options.encryptionScope,
 				fileRequestIntent: options.sourceShareTokenIntent,
-				tracingOptions: updatedOptions.tracingOptions
+				tracingOptions: updatedOptions.tracingOptions,
+				sourceCpkInfo: {
+					sourceEncryptionKey: options.sourceCustomerProvidedKey?.encryptionKey,
+					sourceEncryptionAlgorithm: options.sourceCustomerProvidedKey?.encryptionAlgorithm,
+					sourceEncryptionKeySha256: options.sourceCustomerProvidedKey?.encryptionKeySha256
+				}
 			}));
 		});
 	}
@@ -55278,6 +59118,7 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 		if (isPipelineLike(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			pipeline = credentialOrPipelineOrContainerName;
+			options = blobNameOrOptions;
 		} else if (isNodeLike && credentialOrPipelineOrContainerName instanceof StorageSharedKeyCredential || credentialOrPipelineOrContainerName instanceof AnonymousCredential || isTokenCredential(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			options = blobNameOrOptions;
@@ -55290,13 +59131,14 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 			const containerName = credentialOrPipelineOrContainerName;
 			const blobName = blobNameOrOptions;
 			const extractedCreds = extractConnectionStringParts(urlOrConnectionString);
-			if (extractedCreds.kind === "AccountConnString") if (isNodeLike) {
-				const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
-				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
-				if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
-				pipeline = newPipeline(sharedKeyCredential, options);
-			} else throw new Error("Account connection string is only supported in Node.js environment");
-			else if (extractedCreds.kind === "SASConnString") {
+			if (extractedCreds.kind === "AccountConnString") {
+				if (isNodeLike) {
+					const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
+					url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
+					if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+					pipeline = newPipeline(sharedKeyCredential, options);
+				} else throw new Error("Account connection string is only supported in Node.js environment");
+			} else if (extractedCreds.kind === "SASConnString") {
 				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName)) + "?" + extractedCreds.accountSas;
 				pipeline = newPipeline(new AnonymousCredential(), options);
 			} else throw new Error("Connection string must be either an Account connection string or a SAS connection string");
@@ -55304,6 +59146,7 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 		super(url, pipeline);
 		this.blockBlobContext = this.storageClientContext.blockBlob;
 		this._blobContext = this.storageClientContext.blob;
+		this.blobClientConfig = options;
 	}
 	/**
 	* Creates a new BlockBlobClient object identical to the source but with the
@@ -55314,7 +59157,7 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 	* @returns A new BlockBlobClient object identical to the source but with the specified snapshot timestamp.
 	*/
 	withSnapshot(snapshot) {
-		return new BlockBlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline);
+		return new BlockBlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* ONLY AVAILABLE IN NODE.JS RUNTIME.
@@ -55326,6 +59169,7 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 	* ```ts snippet:ClientsQuery
 	* import { BlobServiceClient } from "@azure/storage-blob";
 	* import { DefaultAzureCredential } from "@azure/identity";
+	* import { buffer } from "node:stream/consumers";
 	*
 	* const account = "<account>";
 	* const blobServiceClient = new BlobServiceClient(
@@ -55341,22 +59185,10 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 	* // Query and convert a blob to a string
 	* const queryBlockBlobResponse = await blockBlobClient.query("select from BlobStorage");
 	* if (queryBlockBlobResponse.readableStreamBody) {
-	*   const downloadedBuffer = await streamToBuffer(queryBlockBlobResponse.readableStreamBody);
-	*   const downloaded = downloadedBuffer.toString();
-	*   console.log(`Query blob content: ${downloaded}`);
-	* }
-	*
-	* async function streamToBuffer(readableStream: NodeJS.ReadableStream): Promise<Buffer> {
-	*   return new Promise((resolve, reject) => {
-	*     const chunks: Buffer[] = [];
-	*     readableStream.on("data", (data) => {
-	*       chunks.push(data instanceof Buffer ? data : Buffer.from(data));
-	*     });
-	*     readableStream.on("end", () => {
-	*       resolve(Buffer.concat(chunks));
-	*     });
-	*     readableStream.on("error", reject);
-	*   });
+	*   // Read the response bytes. Use `text` from "node:stream/consumers" instead
+	*   // if you want the response as a string directly.
+	*   const downloadedBuffer = await buffer(queryBlockBlobResponse.readableStreamBody);
+	*   console.log(`Query blob content: ${downloadedBuffer.toString()}`);
 	* }
 	* ```
 	*
@@ -55434,7 +59266,7 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 		options.conditions = options.conditions || {};
 		ensureCpkIfSpecified(options.customerProvidedKey, this.isHttps);
 		return tracingClient.withSpan("BlockBlobClient-upload", options, async (updatedOptions) => {
-			return assertResponse(await this.blockBlobContext.upload(contentLength, body, {
+			const parameters = {
 				abortSignal: options.abortSignal,
 				blobHttpHeaders: options.blobHTTPHeaders,
 				leaseAccessConditions: options.conditions,
@@ -55452,7 +59284,9 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 				tier: toAccessTier(options.tier),
 				blobTagsString: toBlobTagsString(options.tags),
 				tracingOptions: updatedOptions.tracingOptions
-			}));
+			};
+			const uploadBodyParameters = await setUploadChecksumParameters(body, contentLength, parameters, options, this.blobClientConfig?.uploadContentChecksumAlgorithm);
+			return assertResponse(await this.blockBlobContext.upload(uploadBodyParameters.contentLength, uploadBodyParameters.body, parameters));
 		});
 	}
 	/**
@@ -55498,7 +59332,12 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 				blobTagsString: toBlobTagsString(options.tags),
 				copySourceTags: options.copySourceTags,
 				fileRequestIntent: options.sourceShareTokenIntent,
-				tracingOptions: updatedOptions.tracingOptions
+				tracingOptions: updatedOptions.tracingOptions,
+				sourceCpkInfo: {
+					sourceEncryptionKey: options.sourceCustomerProvidedKey?.encryptionKey,
+					sourceEncryptionAlgorithm: options.sourceCustomerProvidedKey?.encryptionAlgorithm,
+					sourceEncryptionKeySha256: options.sourceCustomerProvidedKey?.encryptionKeySha256
+				}
 			}));
 		});
 	}
@@ -55516,16 +59355,16 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 	async stageBlock(blockId, body, contentLength, options = {}) {
 		ensureCpkIfSpecified(options.customerProvidedKey, this.isHttps);
 		return tracingClient.withSpan("BlockBlobClient-stageBlock", options, async (updatedOptions) => {
-			return assertResponse(await this.blockBlobContext.stageBlock(blockId, contentLength, body, {
+			const parameters = {
 				abortSignal: options.abortSignal,
 				leaseAccessConditions: options.conditions,
 				requestOptions: { onUploadProgress: options.onProgress },
-				transactionalContentMD5: options.transactionalContentMD5,
-				transactionalContentCrc64: options.transactionalContentCrc64,
 				cpkInfo: options.customerProvidedKey,
 				encryptionScope: options.encryptionScope,
 				tracingOptions: updatedOptions.tracingOptions
-			}));
+			};
+			const uploadBodyParameters = await setUploadChecksumParameters(body, contentLength, parameters, options, this.blobClientConfig?.uploadContentChecksumAlgorithm);
+			return assertResponse(await this.blockBlobContext.stageBlock(blockId, uploadBodyParameters.contentLength, uploadBodyParameters.body, parameters));
 		});
 	}
 	/**
@@ -55565,7 +59404,12 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 				encryptionScope: options.encryptionScope,
 				copySourceAuthorization: httpAuthorizationToString(options.sourceAuthorization),
 				fileRequestIntent: options.sourceShareTokenIntent,
-				tracingOptions: updatedOptions.tracingOptions
+				tracingOptions: updatedOptions.tracingOptions,
+				sourceCpkInfo: {
+					sourceEncryptionKey: options.sourceCustomerProvidedKey?.encryptionKey,
+					sourceEncryptionAlgorithm: options.sourceCustomerProvidedKey?.encryptionAlgorithm,
+					sourceEncryptionKeySha256: options.sourceCustomerProvidedKey?.encryptionKeySha256
+				}
 			}));
 		});
 	}
@@ -55734,7 +59578,8 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 					abortSignal: options.abortSignal,
 					conditions: options.conditions,
 					encryptionScope: options.encryptionScope,
-					tracingOptions: updatedOptions.tracingOptions
+					tracingOptions: updatedOptions.tracingOptions,
+					contentChecksumAlgorithm: options.contentChecksumAlgorithm
 				});
 				transferProgress += contentLength;
 				if (options.onProgress) options.onProgress({ loadedBytes: transferProgress });
@@ -55803,7 +59648,8 @@ var BlockBlobClient = class BlockBlobClient extends BlobClient {
 					customerProvidedKey: options.customerProvidedKey,
 					conditions: options.conditions,
 					encryptionScope: options.encryptionScope,
-					tracingOptions: updatedOptions.tracingOptions
+					tracingOptions: updatedOptions.tracingOptions,
+					contentChecksumAlgorithm: options.contentChecksumAlgorithm
 				});
 				transferProgress += length;
 				if (options.onProgress) options.onProgress({ loadedBytes: transferProgress });
@@ -55830,30 +59676,34 @@ var PageBlobClient = class PageBlobClient extends BlobClient {
 		if (isPipelineLike(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			pipeline = credentialOrPipelineOrContainerName;
+			options = blobNameOrOptions;
 		} else if (isNodeLike && credentialOrPipelineOrContainerName instanceof StorageSharedKeyCredential || credentialOrPipelineOrContainerName instanceof AnonymousCredential || isTokenCredential(credentialOrPipelineOrContainerName)) {
 			url = urlOrConnectionString;
 			options = blobNameOrOptions;
 			pipeline = newPipeline(credentialOrPipelineOrContainerName, options);
 		} else if (!credentialOrPipelineOrContainerName && typeof credentialOrPipelineOrContainerName !== "string") {
 			url = urlOrConnectionString;
+			options = blobNameOrOptions;
 			pipeline = newPipeline(new AnonymousCredential(), options);
 		} else if (credentialOrPipelineOrContainerName && typeof credentialOrPipelineOrContainerName === "string" && blobNameOrOptions && typeof blobNameOrOptions === "string") {
 			const containerName = credentialOrPipelineOrContainerName;
 			const blobName = blobNameOrOptions;
 			const extractedCreds = extractConnectionStringParts(urlOrConnectionString);
-			if (extractedCreds.kind === "AccountConnString") if (isNodeLike) {
-				const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
-				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
-				if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
-				pipeline = newPipeline(sharedKeyCredential, options);
-			} else throw new Error("Account connection string is only supported in Node.js environment");
-			else if (extractedCreds.kind === "SASConnString") {
+			if (extractedCreds.kind === "AccountConnString") {
+				if (isNodeLike) {
+					const sharedKeyCredential = new StorageSharedKeyCredential(extractedCreds.accountName, extractedCreds.accountKey);
+					url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName));
+					if (!options.proxyOptions) options.proxyOptions = getDefaultProxySettings(extractedCreds.proxyUri);
+					pipeline = newPipeline(sharedKeyCredential, options);
+				} else throw new Error("Account connection string is only supported in Node.js environment");
+			} else if (extractedCreds.kind === "SASConnString") {
 				url = appendToURLPath(appendToURLPath(extractedCreds.url, encodeURIComponent(containerName)), encodeURIComponent(blobName)) + "?" + extractedCreds.accountSas;
 				pipeline = newPipeline(new AnonymousCredential(), options);
 			} else throw new Error("Connection string must be either an Account connection string or a SAS connection string");
 		} else throw new Error("Expecting non-empty strings for containerName and blobName parameters");
 		super(url, pipeline);
 		this.pageBlobContext = this.storageClientContext.pageBlob;
+		this.blobClientConfig = options;
 	}
 	/**
 	* Creates a new PageBlobClient object identical to the source but with the
@@ -55864,7 +59714,7 @@ var PageBlobClient = class PageBlobClient extends BlobClient {
 	* @returns A new PageBlobClient object identical to the source but with the specified snapshot timestamp.
 	*/
 	withSnapshot(snapshot) {
-		return new PageBlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline);
+		return new PageBlobClient(setURLParameter(this.url, URLConstants.Parameters.SNAPSHOT, snapshot.length === 0 ? void 0 : snapshot), this.pipeline, this.blobClientConfig);
 	}
 	/**
 	* Creates a page blob of the specified length. Call uploadPages to upload data
@@ -55947,7 +59797,7 @@ var PageBlobClient = class PageBlobClient extends BlobClient {
 		options.conditions = options.conditions || {};
 		ensureCpkIfSpecified(options.customerProvidedKey, this.isHttps);
 		return tracingClient.withSpan("PageBlobClient-uploadPages", options, async (updatedOptions) => {
-			return assertResponse(await this.pageBlobContext.uploadPages(count, body, {
+			const parameters = {
 				abortSignal: options.abortSignal,
 				leaseAccessConditions: options.conditions,
 				modifiedAccessConditions: {
@@ -55960,12 +59810,12 @@ var PageBlobClient = class PageBlobClient extends BlobClient {
 					count
 				}),
 				sequenceNumberAccessConditions: options.conditions,
-				transactionalContentMD5: options.transactionalContentMD5,
-				transactionalContentCrc64: options.transactionalContentCrc64,
 				cpkInfo: options.customerProvidedKey,
 				encryptionScope: options.encryptionScope,
 				tracingOptions: updatedOptions.tracingOptions
-			}));
+			};
+			const uploadBodyParameters = await setUploadChecksumParameters(body, count, parameters, options, this.blobClientConfig?.uploadContentChecksumAlgorithm);
+			return assertResponse(await this.pageBlobContext.uploadPages(uploadBodyParameters.contentLength, uploadBodyParameters.body, parameters));
 		});
 	}
 	/**
@@ -56010,7 +59860,12 @@ var PageBlobClient = class PageBlobClient extends BlobClient {
 				encryptionScope: options.encryptionScope,
 				copySourceAuthorization: httpAuthorizationToString(options.sourceAuthorization),
 				fileRequestIntent: options.sourceShareTokenIntent,
-				tracingOptions: updatedOptions.tracingOptions
+				tracingOptions: updatedOptions.tracingOptions,
+				sourceCpkInfo: {
+					sourceEncryptionKey: options.sourceCustomerProvidedKey?.encryptionKey,
+					sourceEncryptionAlgorithm: options.sourceCustomerProvidedKey?.encryptionAlgorithm,
+					sourceEncryptionKeySha256: options.sourceCustomerProvidedKey?.encryptionKeySha256
+				}
 			}));
 		});
 	}
@@ -56545,7 +60400,7 @@ var PageBlobClient = class PageBlobClient extends BlobClient {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/shared/errors.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/shared/errors.js
 var InvalidResponseError = class extends Error {
 	constructor(message) {
 		super(message);
@@ -56587,7 +60442,7 @@ var RateLimitError = class extends Error {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/uploadUtils.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/uploadUtils.js
 var __awaiter$9 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -56654,7 +60509,7 @@ var UploadProgress = class {
 		const transferredBytes = this.sentBytes;
 		const percentage = (100 * (transferredBytes / this.contentLength)).toFixed(1);
 		const elapsedTime = Date.now() - this.startTime;
-		const uploadSpeed = (transferredBytes / (1024 * 1024) / (elapsedTime / 1e3)).toFixed(1);
+		const uploadSpeed = (transferredBytes / 1048576 / (elapsedTime / 1e3)).toFixed(1);
 		info(`Sent ${transferredBytes} of ${this.contentLength} (${percentage}%), ${uploadSpeed} MBs/sec`);
 		if (this.isDone()) this.displayedComplete = true;
 	}
@@ -56710,7 +60565,7 @@ function uploadCacheArchiveSDK(signedUploadURL, archivePath, options) {
 		const uploadOptions = {
 			blockSize: options === null || options === void 0 ? void 0 : options.uploadChunkSize,
 			concurrency: options === null || options === void 0 ? void 0 : options.uploadConcurrency,
-			maxSingleShotSize: 128 * 1024 * 1024,
+			maxSingleShotSize: 134217728,
 			onProgress: uploadProgress.onProgress()
 		};
 		try {
@@ -56728,7 +60583,7 @@ function uploadCacheArchiveSDK(signedUploadURL, archivePath, options) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/requestUtils.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/requestUtils.js
 var __awaiter$8 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -56830,7 +60685,7 @@ function retryHttpClientResponse(name_1, method_1) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/downloadUtils.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/downloadUtils.js
 var __awaiter$7 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -56924,7 +60779,7 @@ var DownloadProgress = class {
 		const transferredBytes = this.segmentOffset + this.receivedBytes;
 		const percentage = (100 * (transferredBytes / this.contentLength)).toFixed(1);
 		const elapsedTime = Date.now() - this.startTime;
-		const downloadSpeed = (transferredBytes / (1024 * 1024) / (elapsedTime / 1e3)).toFixed(1);
+		const downloadSpeed = (transferredBytes / 1048576 / (elapsedTime / 1e3)).toFixed(1);
 		info(`Received ${transferredBytes} of ${this.contentLength} (${percentage}%), ${downloadSpeed} MBs/sec`);
 		if (this.isDone()) this.displayedComplete = true;
 	}
@@ -57009,7 +60864,7 @@ function downloadCacheHttpClientConcurrent(archiveLocation, archivePath, options
 			const length = parseInt(lengthHeader);
 			if (Number.isNaN(length)) throw new Error(`Could not interpret Content-Length: ${length}`);
 			const downloads = [];
-			const blockSize = 4 * 1024 * 1024;
+			const blockSize = 4194304;
 			for (let offset = 0; offset < length; offset += blockSize) {
 				const count = Math.min(blockSize, length - offset);
 				downloads.push({
@@ -57130,7 +60985,7 @@ var promiseWithTimeout = (timeoutMs, promise) => __awaiter$7(void 0, void 0, voi
 	});
 });
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/options.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/options.js
 /**
 * Returns a copy of the upload options with defaults filled in.
 *
@@ -57140,7 +60995,7 @@ function getUploadOptions(copy) {
 	const result = {
 		useAzureSdk: false,
 		uploadConcurrency: 4,
-		uploadChunkSize: 32 * 1024 * 1024
+		uploadChunkSize: 33554432
 	};
 	if (copy) {
 		if (typeof copy.useAzureSdk === "boolean") result.useAzureSdk = copy.useAzureSdk;
@@ -57151,7 +61006,7 @@ function getUploadOptions(copy) {
 	* Add env var overrides
 	*/
 	result.uploadConcurrency = !isNaN(Number(process.env["CACHE_UPLOAD_CONCURRENCY"])) ? Math.min(32, Number(process.env["CACHE_UPLOAD_CONCURRENCY"])) : result.uploadConcurrency;
-	result.uploadChunkSize = !isNaN(Number(process.env["CACHE_UPLOAD_CHUNK_SIZE"])) ? Math.min(128 * 1024 * 1024, Number(process.env["CACHE_UPLOAD_CHUNK_SIZE"]) * 1024 * 1024) : result.uploadChunkSize;
+	result.uploadChunkSize = !isNaN(Number(process.env["CACHE_UPLOAD_CHUNK_SIZE"])) ? Math.min(134217728, Number(process.env["CACHE_UPLOAD_CHUNK_SIZE"]) * 1024 * 1024) : result.uploadChunkSize;
 	debug(`Use Azure SDK: ${result.useAzureSdk}`);
 	debug(`Upload concurrency: ${result.uploadConcurrency}`);
 	debug(`Upload chunk size: ${result.uploadChunkSize}`);
@@ -57190,7 +61045,7 @@ function getDownloadOptions(copy) {
 	return result;
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/config.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/config.js
 function isGhes() {
 	const hostname = new URL(process.env["GITHUB_SERVER_URL"] || "https://github.com").hostname.trimEnd().toUpperCase();
 	const isGitHubHost = hostname === "GITHUB.COM";
@@ -57202,6 +61057,23 @@ function getCacheServiceVersion() {
 	if (isGhes()) return "v1";
 	return process.env["ACTIONS_CACHE_SERVICE_V2"] ? "v2" : "v1";
 }
+var KNOWN_CACHE_MODES = [
+	"none",
+	"read",
+	"write",
+	"write-only"
+];
+function getCacheMode() {
+	return (process.env["ACTIONS_CACHE_MODE"] || "").trim().toLowerCase();
+}
+function isCacheReadable(mode) {
+	if (!KNOWN_CACHE_MODES.includes(mode)) return true;
+	return mode === "read" || mode === "write";
+}
+function isCacheWritable(mode) {
+	if (!KNOWN_CACHE_MODES.includes(mode)) return true;
+	return mode === "write" || mode === "write-only";
+}
 function getCacheServiceURL() {
 	const version = getCacheServiceVersion();
 	switch (version) {
@@ -57211,8 +61083,8 @@ function getCacheServiceURL() {
 	}
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/package.json
-var package_exports = /* @__PURE__ */ __exportAll$1({
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/package.json
+var package_exports = /* @__PURE__ */ __exportAll({
 	bugs: () => bugs,
 	default: () => package_default,
 	dependencies: () => dependencies,
@@ -57236,7 +61108,7 @@ var package_exports = /* @__PURE__ */ __exportAll$1({
 }), name, version$1, description, keywords, homepage, type, main$1, types, exports$1, directories, files, publishConfig, repository, scripts, bugs, dependencies, devDependencies, overrides, package_default;
 var init_package = __esmMin((() => {
 	name = "@actions/cache";
-	version$1 = "6.0.1";
+	version$1 = "6.2.0";
 	description = "Actions cache lib";
 	keywords = [
 		"github",
@@ -57312,7 +61184,7 @@ var init_package = __esmMin((() => {
 	};
 }));
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/shared/user-agent.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/shared/user-agent.js
 var import_package_version = (/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	module.exports = { version: (init_package(), __toCommonJS(package_exports).default).version };
 })))();
@@ -57323,7 +61195,7 @@ function getUserAgentString() {
 	return `@actions/cache-${import_package_version.version}`;
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/cacheHttpClient.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/cacheHttpClient.js
 var __awaiter$6 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -57370,6 +61242,7 @@ function createHttpClient() {
 }
 function getCacheEntry(keys, paths, options) {
 	return __awaiter$6(this, void 0, void 0, function* () {
+		var _a;
 		const httpClient = createHttpClient();
 		const version = getCacheVersion(paths, options === null || options === void 0 ? void 0 : options.compressionMethod, options === null || options === void 0 ? void 0 : options.enableCrossOsArchive);
 		const resource = `cache?keys=${encodeURIComponent(keys.join(","))}&version=${version}`;
@@ -57380,7 +61253,11 @@ function getCacheEntry(keys, paths, options) {
 			if (isDebug()) yield printCachesListForDiagnostics(keys[0], httpClient, version);
 			return null;
 		}
-		if (!isSuccessStatusCode(response.statusCode)) throw new Error(`Cache service responded with ${response.statusCode}`);
+		if (!isSuccessStatusCode(response.statusCode)) {
+			const errorMessage = (_a = response.error) === null || _a === void 0 ? void 0 : _a.message;
+			if (errorMessage === null || errorMessage === void 0 ? void 0 : errorMessage.includes("cache read denied:")) throw new Error(errorMessage);
+			throw new Error(`Cache service responded with ${response.statusCode}`);
+		}
 		const cacheResult = response.result;
 		const cacheDownloadUrl = cacheResult === null || cacheResult === void 0 ? void 0 : cacheResult.archiveLocation;
 		if (!cacheDownloadUrl) throw new Error("Cache not found.");
@@ -57410,10 +61287,11 @@ function downloadCache(archiveLocation, archivePath, options) {
 	return __awaiter$6(this, void 0, void 0, function* () {
 		const archiveUrl = new URL$1(archiveLocation);
 		const downloadOptions = getDownloadOptions(options);
-		if (archiveUrl.hostname.endsWith(".blob.core.windows.net")) if (downloadOptions.useAzureSdk) yield downloadCacheStorageSDK(archiveLocation, archivePath, downloadOptions);
-		else if (downloadOptions.concurrentBlobDownloads) yield downloadCacheHttpClientConcurrent(archiveLocation, archivePath, downloadOptions);
-		else yield downloadCacheHttpClient(archiveLocation, archivePath);
-		else yield downloadCacheHttpClient(archiveLocation, archivePath);
+		if (archiveUrl.hostname.endsWith(".blob.core.windows.net")) {
+			if (downloadOptions.useAzureSdk) yield downloadCacheStorageSDK(archiveLocation, archivePath, downloadOptions);
+			else if (downloadOptions.concurrentBlobDownloads) yield downloadCacheHttpClientConcurrent(archiveLocation, archivePath, downloadOptions);
+			else yield downloadCacheHttpClient(archiveLocation, archivePath);
+		} else yield downloadCacheHttpClient(archiveLocation, archivePath);
 	});
 }
 function reserveCache(key, paths, options) {
@@ -57497,13 +61375,14 @@ function saveCache$1(cacheId, archivePath, signedUploadURL, options) {
 			yield uploadFile(httpClient, cacheId, archivePath, options);
 			debug("Commiting cache");
 			const cacheSize = getArchiveFileSizeInBytes(archivePath);
-			info(`Cache Size: ~${Math.round(cacheSize / (1024 * 1024))} MB (${cacheSize} B)`);
+			info(`Cache Size: ~${Math.round(cacheSize / 1048576)} MB (${cacheSize} B)`);
 			const commitCacheResponse = yield commitCache(httpClient, cacheId, cacheSize);
 			if (!isSuccessStatusCode(commitCacheResponse.statusCode)) throw new Error(`Cache service responded with ${commitCacheResponse.statusCode} during commit cache.`);
 			info("Cache saved successfully");
 		}
 	});
 }
+__name(saveCache$1, "saveCache");
 //#endregion
 //#region node_modules/.pnpm/@protobuf-ts+runtime@2.11.1/node_modules/@protobuf-ts/runtime/build/es2015/json-typings.js
 /**
@@ -57546,7 +61425,11 @@ function base64decode(base64Str) {
 	let es = base64Str.length * 3 / 4;
 	if (base64Str[base64Str.length - 2] == "=") es -= 2;
 	else if (base64Str[base64Str.length - 1] == "=") es -= 1;
-	let bytes = new Uint8Array(es), bytePos = 0, groupPos = 0, b, p = 0;
+	let bytes = new Uint8Array(es);
+	let bytePos = 0;
+	let groupPos = 0;
+	let b;
+	let p = 0;
 	for (let i = 0; i < base64Str.length; i++) {
 		b = decTable[base64Str.charCodeAt(i)];
 		if (b === void 0) switch (base64Str[i]) {
@@ -57575,7 +61458,6 @@ function base64decode(base64Str) {
 			case 3:
 				bytes[bytePos++] = (p & 3) << 6 | b;
 				groupPos = 0;
-				break;
 		}
 	}
 	if (groupPos == 1) throw Error(`invalid base64 string.`);
@@ -57587,7 +61469,10 @@ function base64decode(base64Str) {
 * Does not insert newlines.
 */
 function base64encode(bytes) {
-	let base64 = "", groupPos = 0, b, p = 0;
+	let base64 = "";
+	let groupPos = 0;
+	let b;
+	let p = 0;
 	for (let i = 0; i < bytes.length; i++) {
 		b = bytes[i];
 		switch (groupPos) {
@@ -57605,7 +61490,6 @@ function base64encode(bytes) {
 				base64 += encTable[p | b >> 6];
 				base64 += encTable[b & 63];
 				groupPos = 0;
-				break;
 		}
 	}
 	if (groupPos) {
@@ -57778,7 +61662,7 @@ function varint64write(lo, hi, bytes) {
 	}
 	bytes.push(hi >>> 31 & 1);
 }
-var TWO_PWR_32_DBL$1 = 65536 * 65536;
+var TWO_PWR_32_DBL$1 = 4294967296;
 /**
 * Parse decimal string of 64 bit integer value as two JS numbers.
 *
@@ -58059,7 +61943,8 @@ var PbLong = class PbLong extends SharedPbLong {
 	* Invert all the bits and add one to the result.
 	*/
 	negate() {
-		let hi = ~this.hi, lo = this.lo;
+		let hi = ~this.hi;
+		let lo = this.lo;
 		if (lo) lo = ~lo + 1;
 		else hi += 1;
 		return new PbLong(lo, hi);
@@ -58121,7 +62006,9 @@ var BinaryReader = class {
 	* Reads a tag - field number and wire type.
 	*/
 	tag() {
-		let tag = this.uint32(), fieldNo = tag >>> 3, wireType = tag & 7;
+		let tag = this.uint32();
+		let fieldNo = tag >>> 3;
+		let wireType = tag & 7;
 		if (fieldNo <= 0 || wireType < 0 || wireType > 5) throw new Error("illegal tag: field no " + fieldNo + " wire type " + wireType);
 		return [fieldNo, wireType];
 	}
@@ -58261,7 +62148,12 @@ var BinaryReader = class {
 function assert$1(condition, msg) {
 	if (!condition) throw new Error(msg);
 }
-var FLOAT32_MAX = 34028234663852886e22, FLOAT32_MIN = -34028234663852886e22, UINT32_MAX = 4294967295, INT32_MAX = 2147483647, INT32_MIN = -2147483648;
+__name(assert$1, "assert");
+var FLOAT32_MAX = 34028234663852886e22;
+var FLOAT32_MIN = -34028234663852886e22;
+var UINT32_MAX = 4294967295;
+var INT32_MAX = 2147483647;
+var INT32_MIN = -2147483648;
 function assertInt32(arg) {
 	if (typeof arg !== "number") throw new Error("invalid int 32: " + typeof arg);
 	if (!Number.isInteger(arg) || arg > INT32_MAX || arg < INT32_MIN) throw new Error("invalid int 32: " + arg);
@@ -58409,7 +62301,7 @@ var BinaryWriter = class {
 	*/
 	float(value) {
 		assertFloat32(value);
-		let chunk = new Uint8Array(4);
+		let chunk = /* @__PURE__ */ new Uint8Array(4);
 		new DataView(chunk.buffer).setFloat32(0, value, true);
 		return this.raw(chunk);
 	}
@@ -58417,7 +62309,7 @@ var BinaryWriter = class {
 	* Write a `double` value, a 64-bit floating point number.
 	*/
 	double(value) {
-		let chunk = new Uint8Array(8);
+		let chunk = /* @__PURE__ */ new Uint8Array(8);
 		new DataView(chunk.buffer).setFloat64(0, value, true);
 		return this.raw(chunk);
 	}
@@ -58426,7 +62318,7 @@ var BinaryWriter = class {
 	*/
 	fixed32(value) {
 		assertUInt32(value);
-		let chunk = new Uint8Array(4);
+		let chunk = /* @__PURE__ */ new Uint8Array(4);
 		new DataView(chunk.buffer).setUint32(0, value, true);
 		return this.raw(chunk);
 	}
@@ -58435,7 +62327,7 @@ var BinaryWriter = class {
 	*/
 	sfixed32(value) {
 		assertInt32(value);
-		let chunk = new Uint8Array(4);
+		let chunk = /* @__PURE__ */ new Uint8Array(4);
 		new DataView(chunk.buffer).setInt32(0, value, true);
 		return this.raw(chunk);
 	}
@@ -58452,7 +62344,7 @@ var BinaryWriter = class {
 	* Write a `fixed64` value, a signed, fixed-length 64-bit integer.
 	*/
 	sfixed64(value) {
-		let chunk = new Uint8Array(8);
+		let chunk = /* @__PURE__ */ new Uint8Array(8);
 		let view = new DataView(chunk.buffer);
 		let long = PbLong.from(value);
 		view.setInt32(0, long.lo, true);
@@ -58463,7 +62355,7 @@ var BinaryWriter = class {
 	* Write a `fixed64` value, an unsigned, fixed-length 64 bit integer.
 	*/
 	fixed64(value) {
-		let chunk = new Uint8Array(8);
+		let chunk = /* @__PURE__ */ new Uint8Array(8);
 		let view = new DataView(chunk.buffer);
 		let long = PbULong.from(value);
 		view.setInt32(0, long.lo, true);
@@ -58482,7 +62374,8 @@ var BinaryWriter = class {
 	* Write a `sint64` value, a signed, zig-zag-encoded 64-bit varint.
 	*/
 	sint64(value) {
-		let long = PbLong.from(value), sign = long.hi >> 31;
+		let long = PbLong.from(value);
+		let sign = long.hi >> 31;
 		varint64write(long.lo << 1 ^ sign, (long.hi << 1 | long.lo >>> 31) ^ sign, this.buf);
 		return this;
 	}
@@ -58502,7 +62395,8 @@ var defaultsWrite = {
 	enumAsInteger: false,
 	useProtoFieldName: false,
 	prettySpaces: 0
-}, defaultsRead = { ignoreUnknownFields: false };
+};
+var defaultsRead = { ignoreUnknownFields: false };
 /**
 * Make options for reading JSON data from partial options.
 */
@@ -58650,7 +62544,10 @@ var RepeatType;
 * Turns PartialFieldInfo into FieldInfo.
 */
 function normalizeFieldInfo(field) {
-	var _a, _b, _c, _d;
+	var _a;
+	var _b;
+	var _c;
+	var _d;
 	field.localName = (_a = field.localName) !== null && _a !== void 0 ? _a : lowerCamelCase(field.name);
 	field.jsonName = (_b = field.jsonName) !== null && _b !== void 0 ? _b : lowerCamelCase(field.name);
 	field.repeat = (_c = field.repeat) !== null && _c !== void 0 ? _c : RepeatType.NO;
@@ -58705,7 +62602,9 @@ var ReflectionTypeCheck = class {
 	}
 	prepare() {
 		if (this.data) return;
-		const req = [], known = [], oneofs = [];
+		const req = [];
+		const known = [];
+		const oneofs = [];
 		for (let field of this.fields) if (field.oneof) {
 			if (!oneofs.includes(field.oneof)) {
 				oneofs.push(field.oneof);
@@ -58722,9 +62621,7 @@ var ReflectionTypeCheck = class {
 				case "message":
 					if (field.repeat) req.push(field.localName);
 					break;
-				case "map":
-					req.push(field.localName);
-					break;
+				case "map": req.push(field.localName);
 			}
 		}
 		this.data = {
@@ -58757,7 +62654,8 @@ var ReflectionTypeCheck = class {
 		if (depth < 0) return true;
 		if (message === null || message === void 0 || typeof message != "object") return false;
 		this.prepare();
-		let keys = Object.keys(message), data = this.data;
+		let keys = Object.keys(message);
+		let data = this.data;
 		if (keys.length < data.req.length || data.req.some((n) => !keys.includes(n))) return false;
 		if (!allowExcessProperties) {
 			if (keys.some((k) => !data.known.includes(k))) return false;
@@ -58801,7 +62699,6 @@ var ReflectionTypeCheck = class {
 					case "enum": return this.scalars(Object.values(arg), ScalarType.INT32, depth);
 					case "message": return this.messages(Object.values(arg), field.V.T(), allowExcessProperties, depth);
 				}
-				break;
 		}
 		return true;
 	}
@@ -58945,9 +62842,7 @@ var ReflectionJsonReader = class {
 							val = this.enum(field.V.T(), jsonObjValue, field.name, options.ignoreUnknownFields);
 							if (val === false) continue;
 							break;
-						case "scalar":
-							val = this.scalar(jsonObjValue, field.V.T, field.V.L, field.name);
-							break;
+						case "scalar": val = this.scalar(jsonObjValue, field.V.T, field.V.L, field.name);
 					}
 					this.assert(val !== void 0, field.name + " map value", jsonObjValue);
 					let key = jsonObjKey;
@@ -58970,9 +62865,7 @@ var ReflectionJsonReader = class {
 							val = this.enum(field.T(), jsonItem, field.name, options.ignoreUnknownFields);
 							if (val === false) continue;
 							break;
-						case "scalar":
-							val = this.scalar(jsonItem, field.T, field.L, field.name);
-							break;
+						case "scalar": val = this.scalar(jsonItem, field.T, field.L, field.name);
 					}
 					this.assert(val !== void 0, field.name, jsonValue);
 					fieldArr.push(val);
@@ -58994,7 +62887,6 @@ var ReflectionJsonReader = class {
 				case "scalar":
 					if (jsonValue === null) continue;
 					target[localName] = this.scalar(jsonValue, field.T, field.L, field.name);
-					break;
 			}
 		}
 	}
@@ -59059,8 +62951,10 @@ var ReflectionJsonReader = class {
 					let int32;
 					if (typeof json == "number") int32 = json;
 					else if (json === "") e = "empty string";
-					else if (typeof json == "string") if (json.trim().length !== json.length) e = "extra whitespace";
-					else int32 = Number(json);
+					else if (typeof json == "string") {
+						if (json.trim().length !== json.length) e = "extra whitespace";
+						else int32 = Number(json);
+					}
 					if (int32 === void 0) break;
 					if (type == ScalarType.UINT32) assertUInt32(int32);
 					else assertInt32(int32);
@@ -59088,7 +62982,7 @@ var ReflectionJsonReader = class {
 					}
 					return json;
 				case ScalarType.BYTES:
-					if (json === null || json === "") return new Uint8Array(0);
+					if (json === null || json === "") return /* @__PURE__ */ new Uint8Array(0);
 					if (typeof json !== "string") break;
 					return base64decode(json);
 			}
@@ -59115,7 +63009,8 @@ var ReflectionJsonWriter = class {
 	* Converts the message to a JSON object, based on the field descriptors.
 	*/
 	write(message, options) {
-		const json = {}, source = message;
+		const json = {};
+		const source = message;
 		for (const field of this.fields) {
 			if (!field.oneof) {
 				let jsonValue = this.field(field, source[field.localName], options);
@@ -59160,7 +63055,6 @@ var ReflectionJsonWriter = class {
 						assert$1(val !== void 0);
 						jsonObj[entryKey.toString()] = val;
 					}
-					break;
 			}
 			if (options.emitDefaultValues || Object.keys(jsonObj).length > 0) jsonValue = jsonObj;
 		} else if (field.repeat) {
@@ -59190,7 +63084,6 @@ var ReflectionJsonWriter = class {
 						assert$1(val !== void 0);
 						jsonArr.push(val);
 					}
-					break;
 			}
 			if (options.emitDefaultValues || jsonArr.length > 0 || options.emitDefaultValues) jsonValue = jsonArr;
 		} else switch (field.kind) {
@@ -59200,9 +63093,7 @@ var ReflectionJsonWriter = class {
 			case "enum":
 				jsonValue = this.enum(field.T(), value, field.name, field.opt, options.emitDefaultValues, options.enumAsInteger);
 				break;
-			case "message":
-				jsonValue = this.message(field.T(), value, field.name, options);
-				break;
+			case "message": jsonValue = this.message(field.T(), value, field.name, options);
 		}
 		return jsonValue;
 	}
@@ -59295,7 +63186,7 @@ function reflectionScalarDefault(type, longType = LongType.STRING) {
 		case ScalarType.SINT64: return reflectionLongConvert(PbLong.ZERO, longType);
 		case ScalarType.DOUBLE:
 		case ScalarType.FLOAT: return 0;
-		case ScalarType.BYTES: return new Uint8Array(0);
+		case ScalarType.BYTES: return /* @__PURE__ */ new Uint8Array(0);
 		case ScalarType.STRING: return "";
 		default: return 0;
 	}
@@ -59339,7 +63230,9 @@ var ReflectionBinaryReader = class {
 				if (u !== false) (u === true ? UnknownFieldHandler.onRead : u)(this.info.typeName, message, fieldNo, wireType, d);
 				continue;
 			}
-			let target = message, repeated = field.repeat, localName = field.localName;
+			let target = message;
+			let repeated = field.repeat;
+			let localName = field.localName;
 			if (field.oneof) {
 				target = target[field.oneof];
 				if (target.oneofKind !== localName) target = message[field.oneof] = { oneofKind: localName };
@@ -59367,7 +63260,6 @@ var ReflectionBinaryReader = class {
 				case "map":
 					let [mapKey, mapVal] = this.mapEntry(field, reader, options);
 					target[localName][mapKey] = mapVal;
-					break;
 			}
 		}
 	}
@@ -59394,9 +63286,7 @@ var ReflectionBinaryReader = class {
 						case "enum":
 							val = reader.int32();
 							break;
-						case "message":
-							val = field.V.T().internalBinaryRead(reader, reader.uint32(), options);
-							break;
+						case "message": val = field.V.T().internalBinaryRead(reader, reader.uint32(), options);
 					}
 					break;
 				default: throw new Error(`Unknown field ${fieldNo} (wire type ${wireType}) in map entry for ${this.info.typeName}#${field.name}`);
@@ -59413,9 +63303,7 @@ var ReflectionBinaryReader = class {
 			case "enum":
 				val = 0;
 				break;
-			case "message":
-				val = field.V.T().create();
-				break;
+			case "message": val = field.V.T().create();
 		}
 		return [key, val];
 	}
@@ -59462,7 +63350,10 @@ var ReflectionBinaryWriter = class {
 	write(message, writer, options) {
 		this.prepare();
 		for (const field of this.fields) {
-			let value, emitDefault, repeated = field.repeat, localName = field.localName;
+			let value;
+			let emitDefault;
+			let repeated = field.repeat;
+			let localName = field.localName;
 			if (field.oneof) {
 				const group = message[field.oneof];
 				if (group.oneofKind !== localName) continue;
@@ -59492,7 +63383,6 @@ var ReflectionBinaryWriter = class {
 				case "map":
 					assert$1(typeof value == "object" && value !== null);
 					for (const [key, val] of Object.entries(value)) this.mapEntry(writer, options, field, key, val);
-					break;
 			}
 		}
 		let u = options.writeUnknownFields;
@@ -59513,7 +63403,6 @@ var ReflectionBinaryWriter = class {
 			case ScalarType.BOOL:
 				assert$1(key == "true" || key == "false");
 				keyValue = key == "true";
-				break;
 		}
 		this.scalar(writer, field.K, 1, keyValue, true);
 		switch (field.V.kind) {
@@ -59523,9 +63412,7 @@ var ReflectionBinaryWriter = class {
 			case "enum":
 				this.scalar(writer, ScalarType.INT32, 2, value, true);
 				break;
-			case "message":
-				this.message(writer, options, field.V.T(), 2, value);
-				break;
+			case "message": this.message(writer, options, field.V.T(), 2, value);
 		}
 		writer.join();
 	}
@@ -59632,7 +63519,6 @@ var ReflectionBinaryWriter = class {
 			case ScalarType.SINT64:
 				d = i || PbLong.from(value).isZero();
 				m = "sint64";
-				break;
 		}
 		return [
 			t,
@@ -59671,9 +63557,7 @@ function reflectionCreate(type) {
 			case "enum":
 				msg[name] = 0;
 				break;
-			case "map":
-				msg[name] = {};
-				break;
+			case "map": msg[name] = {};
 		}
 	}
 	return msg;
@@ -59703,7 +63587,9 @@ function reflectionCreate(type) {
 * which appends repeated fields.
 */
 function reflectionMergePartial(info, target, source) {
-	let fieldValue, input = source, output;
+	let fieldValue;
+	let input = source;
+	let output;
 	for (let field of info.fields) {
 		let name = field.localName;
 		if (field.oneof) {
@@ -59734,18 +63620,15 @@ function reflectionMergePartial(info, target, source) {
 				else if (output[name] === void 0) output[name] = T.create(fieldValue);
 				else T.mergePartial(output[name], fieldValue);
 				break;
-			case "map":
-				switch (field.V.kind) {
-					case "scalar":
-					case "enum":
-						Object.assign(output[name], fieldValue);
-						break;
-					case "message":
-						let T = field.V.T();
-						for (let k of Object.keys(fieldValue)) output[name][k] = T.create(fieldValue[k]);
-						break;
-				}
-				break;
+			case "map": switch (field.V.kind) {
+				case "scalar":
+				case "enum":
+					Object.assign(output[name], fieldValue);
+					break;
+				case "message":
+					let T = field.V.T();
+					for (let k of Object.keys(fieldValue)) output[name][k] = T.create(fieldValue[k]);
+			}
 		}
 	}
 }
@@ -59776,7 +63659,6 @@ function reflectionEquals(info, a, b) {
 			case "message":
 				let T = field.T();
 				if (!(field.repeat ? repeatedMsgEq(T, val_a, val_b) : T.equals(val_a, val_b))) return false;
-				break;
 		}
 	}
 	return true;
@@ -59966,7 +63848,9 @@ var MessageType = class {
 * Turns PartialMethodInfo into MethodInfo.
 */
 function normalizeMethodInfo(method, service) {
-	var _a, _b, _c;
+	var _a;
+	var _b;
+	var _c;
 	let m = method;
 	m.service = service;
 	m.localName = (_a = m.localName) !== null && _a !== void 0 ? _a : lowerCamelCase(m.name);
@@ -59986,7 +63870,7 @@ var ServiceType = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/generated/results/entities/v1/cachescope.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/generated/results/entities/v1/cachescope.js
 var CacheScope$Type = class extends MessageType {
 	constructor() {
 		super("github.actions.results.entities.v1.CacheScope", [{
@@ -60014,7 +63898,8 @@ var CacheScope$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60046,7 +63931,7 @@ var CacheScope$Type = class extends MessageType {
 */
 var CacheScope = new CacheScope$Type();
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/generated/results/entities/v1/cachemetadata.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/generated/results/entities/v1/cachemetadata.js
 var CacheMetadata$Type = class extends MessageType {
 	constructor() {
 		super("github.actions.results.entities.v1.CacheMetadata", [{
@@ -60075,7 +63960,8 @@ var CacheMetadata$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60107,7 +63993,7 @@ var CacheMetadata$Type = class extends MessageType {
 */
 var CacheMetadata = new CacheMetadata$Type();
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/generated/results/api/v1/cache.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/generated/results/api/v1/cache.js
 var CreateCacheEntryRequest$Type = class extends MessageType {
 	constructor() {
 		super("github.actions.results.api.v1.CreateCacheEntryRequest", [
@@ -60144,7 +64030,8 @@ var CreateCacheEntryRequest$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60216,7 +64103,8 @@ var CreateCacheEntryResponse$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60294,7 +64182,8 @@ var FinalizeCacheEntryUploadRequest$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60370,7 +64259,8 @@ var FinalizeCacheEntryUploadResponse$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60449,7 +64339,8 @@ var GetCacheEntryDownloadURLRequest$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60525,7 +64416,8 @@ var GetCacheEntryDownloadURLResponse$Type = class extends MessageType {
 		return message;
 	}
 	internalBinaryRead(reader, length, options, target) {
-		let message = target !== null && target !== void 0 ? target : this.create(), end = reader.pos + length;
+		let message = target !== null && target !== void 0 ? target : this.create();
+		let end = reader.pos + length;
 		while (reader.pos < end) {
 			let [fieldNo, wireType] = reader.tag();
 			switch (fieldNo) {
@@ -60581,7 +64473,7 @@ new ServiceType("github.actions.results.api.v1.CacheService", [
 	}
 ]);
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/generated/results/api/v1/cache.twirp-client.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/generated/results/api/v1/cache.twirp-client.js
 var CacheServiceClientJSON = class {
 	constructor(rpc) {
 		this.rpc = rpc;
@@ -60612,7 +64504,7 @@ var CacheServiceClientJSON = class {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/shared/util.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/shared/util.js
 /**
 * Masks the `sig` parameter in a URL and sets it as a secret.
 *
@@ -60672,7 +64564,7 @@ function maskSecretUrls(body) {
 	if ("signed_download_url" in body && typeof body.signed_download_url === "string") maskSigUrl(body.signed_download_url);
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/shared/cacheTwirpClient.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/shared/cacheTwirpClient.js
 var __awaiter$5 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -60816,7 +64708,7 @@ function internalCacheTwirpClient(options) {
 	return new CacheServiceClientJSON(new CacheServiceClient(getUserAgentString(), options === null || options === void 0 ? void 0 : options.maxAttempts, options === null || options === void 0 ? void 0 : options.retryIntervalMs, options === null || options === void 0 ? void 0 : options.retryMultiplier));
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/internal/tar.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/internal/tar.js
 var __awaiter$4 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -60872,7 +64764,6 @@ function getTarPath() {
 					type: ArchiveToolType.BSD
 				};
 			}
-			default: break;
 		}
 		return {
 			path: yield which("tar", true),
@@ -60894,17 +64785,13 @@ function getTarArgs(tarPath_1, compressionMethod_1, type_1) {
 			case "extract":
 				args.push("-xf", BSD_TAR_ZSTD ? tarFile : archivePath.replace(new RegExp(`\\${path$2.sep}`, "g"), "/"), "-P", "-C", workingDirectory.replace(new RegExp(`\\${path$2.sep}`, "g"), "/"));
 				break;
-			case "list":
-				args.push("-tf", BSD_TAR_ZSTD ? tarFile : archivePath.replace(new RegExp(`\\${path$2.sep}`, "g"), "/"), "-P");
-				break;
+			case "list": args.push("-tf", BSD_TAR_ZSTD ? tarFile : archivePath.replace(new RegExp(`\\${path$2.sep}`, "g"), "/"), "-P");
 		}
 		if (tarPath.type === ArchiveToolType.GNU) switch (process.platform) {
 			case "win32":
 				args.push("--force-local");
 				break;
-			case "darwin":
-				args.push("--delay-directory-restore");
-				break;
+			case "darwin": args.push("--delay-directory-restore");
 		}
 		return args;
 	});
@@ -60993,7 +64880,7 @@ function createTar(archiveFolder, sourceDirectories, compressionMethod) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@actions+cache@6.0.1/node_modules/@actions/cache/lib/cache.js
+//#region node_modules/.pnpm/@actions+cache@6.2.0_supports-color@7.2.0/node_modules/@actions/cache/lib/cache.js
 var __awaiter$3 = function(thisArg, _arguments, P, generator) {
 	function adopt(value) {
 		return value instanceof P ? value : new P(function(resolve) {
@@ -61035,6 +64922,34 @@ var ReserveCacheError = class ReserveCacheError extends Error {
 		Object.setPrototypeOf(this, ReserveCacheError.prototype);
 	}
 };
+/**
+* Raised when the cache backend refuses to reserve a writable cache entry
+* because the JWT issued for this run was scoped read-only (for example, the
+* run was triggered by an event the repository administrator classified as
+* untrusted). The service-supplied detail message always begins with
+* `cache write denied:` (the full error message includes additional context
+* like the cache key).
+*
+* Extends ReserveCacheError for source-compatibility: existing
+* `instanceof ReserveCacheError` checks and `typedError.name ===
+* ReserveCacheError.name` paths keep working, while consumers that want to
+* distinguish the policy case can match on this subclass.
+*/
+var CacheWriteDeniedError = class CacheWriteDeniedError extends ReserveCacheError {
+	constructor(message) {
+		super(message);
+		this.name = "CacheWriteDeniedError";
+		Object.setPrototypeOf(this, CacheWriteDeniedError.prototype);
+	}
+};
+var CACHE_READ_DENIED_PREFIX = CacheReadDeniedMessagePrefix;
+var CacheReadDeniedError = class CacheReadDeniedError extends Error {
+	constructor(message) {
+		super(message);
+		this.name = "CacheReadDeniedError";
+		Object.setPrototypeOf(this, CacheReadDeniedError.prototype);
+	}
+};
 var FinalizeCacheError = class FinalizeCacheError extends Error {
 	constructor(message) {
 		super(message);
@@ -61064,6 +64979,12 @@ function restoreCache(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 		const cacheServiceVersion = getCacheServiceVersion();
 		debug(`Cache service version: ${cacheServiceVersion}`);
 		checkPaths(paths);
+		const cacheMode = getCacheMode();
+		if (!isCacheReadable(cacheMode)) {
+			info(`Cache restore skipped: the effective cache-mode '${cacheMode}' does not permit reads.`);
+			debug(`Skipped restore for paths [${paths.join(", ")}] with primary key '${primaryKey}'.`);
+			return;
+		}
 		switch (cacheServiceVersion) {
 			case "v2": return yield restoreCacheV2(paths, primaryKey, restoreKeys, options, enableCrossOsArchive);
 			default: return yield restoreCacheV1(paths, primaryKey, restoreKeys, options, enableCrossOsArchive);
@@ -61082,6 +65003,7 @@ function restoreCache(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 */
 function restoreCacheV1(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 	return __awaiter$3(this, arguments, void 0, function* (paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
+		var _a;
 		restoreKeys = restoreKeys || [];
 		const keys = [primaryKey, ...restoreKeys];
 		debug("Resolved Keys:");
@@ -61091,10 +65013,17 @@ function restoreCacheV1(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 		const compressionMethod = yield getCompressionMethod();
 		let archivePath = "";
 		try {
-			const cacheEntry = yield getCacheEntry(keys, paths, {
-				compressionMethod,
-				enableCrossOsArchive
-			});
+			let cacheEntry;
+			try {
+				cacheEntry = yield getCacheEntry(keys, paths, {
+					compressionMethod,
+					enableCrossOsArchive
+				});
+			} catch (error) {
+				const errorMessage = (_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : "";
+				if (errorMessage.includes(CACHE_READ_DENIED_PREFIX)) throw new CacheReadDeniedError(errorMessage);
+				throw error;
+			}
 			if (!(cacheEntry === null || cacheEntry === void 0 ? void 0 : cacheEntry.archiveLocation)) return;
 			if (options === null || options === void 0 ? void 0 : options.lookupOnly) {
 				info("Lookup only - skipping download");
@@ -61105,15 +65034,15 @@ function restoreCacheV1(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 			yield downloadCache(cacheEntry.archiveLocation, archivePath, options);
 			if (isDebug()) yield listTar(archivePath, compressionMethod);
 			const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
-			info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+			info(`Cache Size: ~${Math.round(archiveFileSize / 1048576)} MB (${archiveFileSize} B)`);
 			yield extractTar(archivePath, compressionMethod);
 			info("Cache restored successfully");
 			return cacheEntry.cacheKey;
-		} catch (error$3) {
-			const typedError = error$3;
-			if (typedError.name === ValidationError.name) throw error$3;
-			else if (typedError instanceof HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) error(`Failed to restore: ${error$3.message}`);
-			else warning(`Failed to restore: ${error$3.message}`);
+		} catch (error$2) {
+			const typedError = error$2;
+			if (typedError.name === ValidationError.name) throw error$2;
+			else if (typedError instanceof HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) error(`Failed to restore: ${error$2.message}`);
+			else warning(`Failed to restore: ${error$2.message}`);
 		} finally {
 			try {
 				yield unlinkFile(archivePath);
@@ -61135,6 +65064,7 @@ function restoreCacheV1(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 */
 function restoreCacheV2(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 	return __awaiter$3(this, arguments, void 0, function* (paths, primaryKey, restoreKeys, options, enableCrossOsArchive = false) {
+		var _a;
 		options = Object.assign(Object.assign({}, options), { useAzureSdk: true });
 		restoreKeys = restoreKeys || [];
 		const keys = [primaryKey, ...restoreKeys];
@@ -61151,7 +65081,14 @@ function restoreCacheV2(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 				restoreKeys,
 				version: getCacheVersion(paths, compressionMethod, enableCrossOsArchive)
 			};
-			const response = yield twirpClient.GetCacheEntryDownloadURL(request);
+			let response;
+			try {
+				response = yield twirpClient.GetCacheEntryDownloadURL(request);
+			} catch (error) {
+				const errorMessage = (_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : "";
+				if (errorMessage.includes(CACHE_READ_DENIED_PREFIX)) throw new CacheReadDeniedError(errorMessage);
+				throw error;
+			}
 			if (!response.ok) {
 				debug(`Cache not found for version ${request.version} of keys: ${keys.join(", ")}`);
 				return;
@@ -61167,16 +65104,16 @@ function restoreCacheV2(paths_1, primaryKey_1, restoreKeys_1, options_1) {
 			debug(`Starting download of archive to: ${archivePath}`);
 			yield downloadCache(response.signedDownloadUrl, archivePath, options);
 			const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
-			info(`Cache Size: ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B)`);
+			info(`Cache Size: ~${Math.round(archiveFileSize / 1048576)} MB (${archiveFileSize} B)`);
 			if (isDebug()) yield listTar(archivePath, compressionMethod);
 			yield extractTar(archivePath, compressionMethod);
 			info("Cache restored successfully");
 			return response.matchedKey;
-		} catch (error$4) {
-			const typedError = error$4;
-			if (typedError.name === ValidationError.name) throw error$4;
-			else if (typedError instanceof HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) error(`Failed to restore: ${error$4.message}`);
-			else warning(`Failed to restore: ${error$4.message}`);
+		} catch (error$5) {
+			const typedError = error$5;
+			if (typedError.name === ValidationError.name) throw error$5;
+			else if (typedError instanceof HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) error(`Failed to restore: ${error$5.message}`);
+			else warning(`Failed to restore: ${error$5.message}`);
 		} finally {
 			try {
 				if (archivePath) yield unlinkFile(archivePath);
@@ -61201,6 +65138,12 @@ function saveCache(paths_1, key_1, options_1) {
 		debug(`Cache service version: ${cacheServiceVersion}`);
 		checkPaths(paths);
 		checkKey(key);
+		const cacheMode = getCacheMode();
+		if (!isCacheWritable(cacheMode)) {
+			info(`Cache save skipped: the effective cache-mode '${cacheMode}' does not permit writes.`);
+			debug(`Skipped save for paths [${paths.join(", ")}] with key '${key}'.`);
+			return -1;
+		}
 		switch (cacheServiceVersion) {
 			case "v2": return yield saveCacheV2(paths, key, options, enableCrossOsArchive);
 			default: return yield saveCacheV1(paths, key, options, enableCrossOsArchive);
@@ -61218,7 +65161,12 @@ function saveCache(paths_1, key_1, options_1) {
 */
 function saveCacheV1(paths_1, key_1, options_1) {
 	return __awaiter$3(this, arguments, void 0, function* (paths, key, options, enableCrossOsArchive = false) {
-		var _a, _b, _c, _d, _e;
+		var _a;
+		var _b;
+		var _c;
+		var _d;
+		var _e;
+		var _f;
 		const compressionMethod = yield getCompressionMethod();
 		let cacheId = -1;
 		const cachePaths = yield resolvePaths(paths);
@@ -61231,10 +65179,10 @@ function saveCacheV1(paths_1, key_1, options_1) {
 		try {
 			yield createTar(archiveFolder, cachePaths, compressionMethod);
 			if (isDebug()) yield listTar(archivePath, compressionMethod);
-			const fileSizeLimit = 10 * 1024 * 1024 * 1024;
+			const fileSizeLimit = 10737418240;
 			const archiveFileSize = getArchiveFileSizeInBytes(archivePath);
 			debug(`File Size: ${archiveFileSize}`);
-			if (archiveFileSize > fileSizeLimit && !isGhes()) throw new Error(`Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
+			if (archiveFileSize > fileSizeLimit && !isGhes()) throw new Error(`Cache size of ~${Math.round(archiveFileSize / 1048576)} MB (${archiveFileSize} B) is over the 10GB limit, not saving cache.`);
 			debug("Reserving Cache");
 			const reserveCacheResponse = yield reserveCache(key, paths, {
 				compressionMethod,
@@ -61242,13 +65190,17 @@ function saveCacheV1(paths_1, key_1, options_1) {
 				cacheSize: archiveFileSize
 			});
 			if ((_a = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.result) === null || _a === void 0 ? void 0 : _a.cacheId) cacheId = (_b = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.result) === null || _b === void 0 ? void 0 : _b.cacheId;
-			else if ((reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.statusCode) === 400) throw new Error((_d = (_c = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _c === void 0 ? void 0 : _c.message) !== null && _d !== void 0 ? _d : `Cache size of ~${Math.round(archiveFileSize / (1024 * 1024))} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`);
-			else throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache. More details: ${(_e = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _e === void 0 ? void 0 : _e.message}`);
+			else if ((reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.statusCode) === 400) throw new Error((_d = (_c = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _c === void 0 ? void 0 : _c.message) !== null && _d !== void 0 ? _d : `Cache size of ~${Math.round(archiveFileSize / 1048576)} MB (${archiveFileSize} B) is over the data cap limit, not saving cache.`);
+			else {
+				const detailMessage = (_e = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _e === void 0 ? void 0 : _e.message;
+				if (detailMessage === null || detailMessage === void 0 ? void 0 : detailMessage.startsWith("cache write denied:")) throw new CacheWriteDeniedError(`Unable to reserve cache with key ${key}. More details: ${detailMessage}`);
+				throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache. More details: ${(_f = reserveCacheResponse === null || reserveCacheResponse === void 0 ? void 0 : reserveCacheResponse.error) === null || _f === void 0 ? void 0 : _f.message}`);
+			}
 			debug(`Saving Cache (ID: ${cacheId})`);
 			yield saveCache$1(cacheId, archivePath, "", options);
-		} catch (error$5) {
-			const typedError = error$5;
-			if (typedError.name === ValidationError.name) throw error$5;
+		} catch (error$4) {
+			const typedError = error$4;
+			if (typedError.name === ValidationError.name) throw error$4;
 			else if (typedError.name === ReserveCacheError.name) info(`Failed to save: ${typedError.message}`);
 			else if (typedError instanceof HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) error(`Failed to save: ${typedError.message}`);
 			else warning(`Failed to save: ${typedError.message}`);
@@ -61273,8 +65225,9 @@ function saveCacheV1(paths_1, key_1, options_1) {
 */
 function saveCacheV2(paths_1, key_1, options_1) {
 	return __awaiter$3(this, arguments, void 0, function* (paths, key, options, enableCrossOsArchive = false) {
+		var _a;
 		options = Object.assign(Object.assign({}, options), {
-			uploadChunkSize: 64 * 1024 * 1024,
+			uploadChunkSize: 67108864,
 			uploadConcurrency: 8,
 			useAzureSdk: true
 		});
@@ -61304,12 +65257,14 @@ function saveCacheV2(paths_1, key_1, options_1) {
 			try {
 				const response = yield twirpClient.CreateCacheEntry(request);
 				if (!response.ok) {
-					if (response.message) warning(`Cache reservation failed: ${response.message}`);
+					if (response.message && !response.message.startsWith("cache write denied:")) warning(`Cache reservation failed: ${response.message}`);
 					throw new Error(response.message || "Response was not ok");
 				}
 				signedUploadUrl = response.signedUploadUrl;
 			} catch (error) {
 				debug(`Failed to reserve cache: ${error}`);
+				const errorMessage = (_a = error === null || error === void 0 ? void 0 : error.message) !== null && _a !== void 0 ? _a : "";
+				if (errorMessage.startsWith("cache write denied:")) throw new CacheWriteDeniedError(`Unable to reserve cache with key ${key}. More details: ${errorMessage}`);
 				throw new ReserveCacheError(`Unable to reserve cache with key ${key}, another job may be creating this cache.`);
 			}
 			debug(`Attempting to upload cache located at: ${archivePath}`);
@@ -61326,9 +65281,9 @@ function saveCacheV2(paths_1, key_1, options_1) {
 				throw new Error(`Unable to finalize cache with key ${key}, another job may be finalizing this cache.`);
 			}
 			cacheId = parseInt(finalizeResponse.entryId);
-		} catch (error$2) {
-			const typedError = error$2;
-			if (typedError.name === ValidationError.name) throw error$2;
+		} catch (error$3) {
+			const typedError = error$3;
+			if (typedError.name === ValidationError.name) throw error$3;
 			else if (typedError.name === ReserveCacheError.name) info(`Failed to save: ${typedError.message}`);
 			else if (typedError.name === FinalizeCacheError.name) warning(typedError.message);
 			else if (typedError instanceof HttpClientError && typeof typedError.statusCode === "number" && typedError.statusCode >= 500) error(`Failed to save: ${typedError.message}`);
@@ -61344,14 +65299,15 @@ function saveCacheV2(paths_1, key_1, options_1) {
 	});
 }
 //#endregion
-//#region node_modules/.pnpm/@actions-rs-plus+core@0.7.5/node_modules/@actions-rs-plus/core/dist/commands/cargo.js
+//#region node_modules/.pnpm/@actions-rs-plus+core@0.10.0_supports-color@7.2.0/node_modules/@actions-rs-plus/core/dist/commands/cargo.js
 var Cargo = class Cargo extends BaseProgram {
 	constructor(pathToCargo) {
 		super(pathToCargo);
 	}
 	static async get() {
 		try {
-			return new Cargo(await which("cargo", true));
+			const pathToCargo = await which("cargo", true);
+			return new Cargo(pathToCargo);
 		} catch (error$1) {
 			error("cargo is not installed by default for some virtual environments, see https://help.github.com/en/articles/software-in-virtual-environments-for-github-actions");
 			error("To install it, use this action: https://github.com/actions-rs/toolchain");
@@ -61359,25 +65315,25 @@ var Cargo = class Cargo extends BaseProgram {
 		}
 	}
 	/**
-	* Executes `cargo install ${program}`.
-	*
-	* TODO: Caching ability implementation is blocked,
-	* see https://github.com/actions-rs/core/issues/31
-	* As for now it acts just like an stub and simply installs the program
-	* on each call.
-	*
-	* `version` argument could be either actual program version or `"latest"` string,
-	* which can be provided by user input.
-	*
-	* If `version` is `undefined` or `"latest"`, this method could call the Crates.io API,
-	* fetch the latest version and search for it in cache.
-	* TODO: Actually implement this.
-	*
-	* ## Returns
-	*
-	* Path to the installed program.
-	* As the $PATH should be already tuned properly at this point,
-	* returned value at the moment is simply equal to the `program` argument.
+	Executes `cargo install ${program}`.
+	
+	TODO: Caching ability implementation is blocked,
+	see https://github.com/actions-rs/core/issues/31
+	As for now it acts just like an stub and simply installs the program
+	on each call.
+	
+	`version` argument could be either actual program version or `"latest"` string,
+	which can be provided by user input.
+	
+	If `version` is `undefined` or `"latest"`, this method could call the Crates.io API,
+	fetch the latest version and search for it in cache.
+	TODO: Actually implement this.
+	
+	## Returns
+	
+	Path to the installed program.
+	As the $PATH should be already tuned properly at this point,
+	returned value at the moment is simply equal to the `program` argument.
 	*/
 	async installCached(program, version, primaryKey, restoreKeys = []) {
 		if (version === "latest") version = await resolveVersion(program);
@@ -61397,9 +65353,9 @@ var Cargo = class Cargo extends BaseProgram {
 			info(`Caching \`${program}\` with key ${programKey}`);
 			await saveCache(paths, programKey);
 		} catch (error) {
-			if (error instanceof Error) {
+			if (Error.isError(error)) {
 				if (error.name === ValidationError.name) throw error;
-				else if (error.name === ReserveCacheError.name) warning(error.message);
+				if (error.name === ReserveCacheError.name) warning(error.message);
 			} else if (typeof error === "string") warning(error);
 			else throw error;
 		}
@@ -61409,8 +65365,8 @@ var Cargo = class Cargo extends BaseProgram {
 		const arguments_ = ["install"];
 		if (version !== void 0 && version !== "latest") arguments_.push("--version", version);
 		arguments_.push(program);
+		startGroup(`Installing "${program} = ${version ?? "latest"}"`);
 		try {
-			startGroup(`Installing "${program} = ${version ?? "latest"}"`);
 			await this.call(arguments_);
 		} finally {
 			endGroup();
@@ -61418,7 +65374,7 @@ var Cargo = class Cargo extends BaseProgram {
 		return program;
 	}
 	/**
-	* Find the cargo sub-command or install it
+	Find the cargo sub-command or install it
 	*/
 	async findOrInstall(program, version) {
 		try {
@@ -61431,7 +65387,7 @@ var Cargo = class Cargo extends BaseProgram {
 	}
 };
 //#endregion
-//#region node_modules/.pnpm/@actions-rs-plus+core@0.7.5/node_modules/@actions-rs-plus/core/dist/commands/cross.js
+//#region node_modules/.pnpm/@actions-rs-plus+core@0.10.0_supports-color@7.2.0/node_modules/@actions-rs-plus/core/dist/commands/cross.js
 var Cross = class Cross extends BaseProgram {
 	constructor(path) {
 		super(path);
@@ -61445,14 +65401,16 @@ var Cross = class Cross extends BaseProgram {
 		}
 	}
 	static async get() {
-		return new Cross(await which("cross", true));
+		const path = await which("cross", true);
+		return new Cross(path);
 	}
 	static async install(version) {
 		const cargo = await Cargo.get();
 		const cwd = process.cwd();
 		process.chdir(os$2.tmpdir());
 		try {
-			return new Cross(await cargo.installCached("cross", version));
+			const crossPath = await cargo.installCached("cross", version);
+			return new Cross(crossPath);
 		} finally {
 			process.chdir(cwd);
 		}
@@ -61461,75 +65419,50 @@ var Cross = class Cross extends BaseProgram {
 process.platform;
 process.platform;
 //#endregion
-//#region node_modules/.pnpm/@actions-rs-plus+core@0.7.5/node_modules/@actions-rs-plus/core/dist/input.js
-var input_exports = /* @__PURE__ */ __exportAll({
-	getInput: () => getInput,
-	getInputAsArray: () => getInputAsArray,
-	getInputBool: () => getInputBool,
-	getInputList: () => getInputList
-});
+//#region node_modules/.pnpm/@actions-rs-plus+core@0.10.0_supports-color@7.2.0/node_modules/@actions-rs-plus/core/dist/input.js
 /**
-* Workaround for a GitHub weird input naming.
-*
-* For input `all-features: true` it will generate the `INPUT_ALL-FEATURES: true`
-* env variable, which looks too weird.
-* Here we are trying to get proper name `INPUT_NO_DEFAULT_FEATURES` first,
-* and if it does not exist, trying the `INPUT_NO-DEFAULT-FEATURES`.
-**/
+Workaround for a GitHub weird input naming.
+
+For input `all-features: true` it will generate the `INPUT_ALL-FEATURES: true`
+env variable, which looks too weird.
+Here we are trying to get proper name `INPUT_NO_DEFAULT_FEATURES` first,
+and if it does not exist, trying the `INPUT_NO-DEFAULT-FEATURES`.
+*/
 function getInput(name, options) {
 	const value = getInput$1(name.replaceAll("-", "_"), options);
 	if (value.length > 0) return value;
 	return getInput$1(name, options);
 }
 function getInputBool(name, options) {
-	const value = getInput(name, options);
-	if (value === "true" || value === "1") return true;
-	else return false;
-}
-function getInputList(name, options) {
-	return getInput(name, options).split(",").map((item) => {
-		return item.trim();
-	}).filter((item) => {
-		return item.length > 0;
-	});
-}
-function getInputAsArray(name, options) {
-	return getInput(name, options).split("\n").map((s) => {
-		return s.trim();
-	}).filter((x) => {
-		return x !== "";
-	});
+	const normalized = getInput(name, options).trim().toLowerCase();
+	return normalized === "true" || normalized === "1";
 }
 //#endregion
 //#region src/schema.ts
-var AnnotationLevel = /* @__PURE__ */ function(AnnotationLevel) {
-	AnnotationLevel[AnnotationLevel["Error"] = 0] = "Error";
-	AnnotationLevel[AnnotationLevel["Warning"] = 1] = "Warning";
-	AnnotationLevel[AnnotationLevel["Notice"] = 2] = "Notice";
-	return AnnotationLevel;
-}({});
+var AnnotationLevel = {
+	Error: "error",
+	Notice: "notice",
+	Warning: "warning"
+};
 //#endregion
 //#region src/output-parser.ts
 var OutputParser = class OutputParser {
-	_workingDirectory;
-	_uniqueAnnotations;
-	_stats;
+	stats;
+	get annotations() {
+		return this.uniqueAnnotations.values().toArray().flat();
+	}
+	uniqueAnnotations;
+	workingDirectory;
 	constructor(workingDirectory) {
-		this._workingDirectory = workingDirectory ?? null;
-		this._uniqueAnnotations = /* @__PURE__ */ new Map();
-		this._stats = {
+		this.workingDirectory = workingDirectory ?? null;
+		this.uniqueAnnotations = /* @__PURE__ */ new Map();
+		this.stats = {
 			ice: 0,
 			error: 0,
 			warning: 0,
 			note: 0,
 			help: 0
 		};
-	}
-	get stats() {
-		return this._stats;
-	}
-	get annotations() {
-		return [...this._uniqueAnnotations.values()];
 	}
 	static parseCargoJson(line) {
 		try {
@@ -61564,68 +65497,81 @@ var OutputParser = class OutputParser {
 			return;
 		}
 		if (!OutputParser.validateMessageIsCargoMessage(message)) return;
-		const parsedAnnotation = this.makeAnnotation(message);
-		const key = JSON.stringify(parsedAnnotation);
-		if (this._uniqueAnnotations.has(key)) return;
+		const parsedAnnotations = this.makeAnnotations(message);
+		const key = JSON.stringify(parsedAnnotations);
+		if (this.uniqueAnnotations.has(key)) return;
 		switch (message.message.level) {
 			case "help":
-				this._stats.help += 1;
+				this.stats.help += 1;
 				break;
 			case "note":
-				this._stats.note += 1;
+				this.stats.note += 1;
 				break;
 			case "warning":
-				this._stats.warning += 1;
+				this.stats.warning += 1;
 				break;
 			case "error":
-				this._stats.error += 1;
+				this.stats.error += 1;
 				break;
-			case "error: internal compiler error":
-				this._stats.ice += 1;
-				break;
-			default: break;
+			case "error: internal compiler error": this.stats.ice += 1;
 		}
-		this._uniqueAnnotations.set(key, parsedAnnotation);
+		this.uniqueAnnotations.set(key, parsedAnnotations);
 	}
-	makeAnnotation(contents) {
-		const primarySpan = contents.message.spans.find((span) => {
+	/**
+	* Convert parsed JSON line into GH annotation objects, one per primary span
+	*
+	* https://docs.github.com/en/rest/checks/runs#create-a-check-run
+	*
+	* @param {CompilerMessage} contents A cargo `compiler-message`.
+	* @returns {AnnotationWithMessageAndLevel[]} One annotation per primary span, or a single span-less annotation.
+	*/
+	makeAnnotations(contents) {
+		const level = OutputParser.parseLevel(contents.message.level);
+		const primarySpans = contents.message.spans.filter((span) => {
 			return span.is_primary;
 		});
-		if (primarySpan === void 0) throw new Error("Unable to find primary span for message");
-		let pathToFile = primarySpan.file_name;
-		if (this._workingDirectory !== null) pathToFile = path.join(this._workingDirectory, pathToFile);
-		if (os$1.platform() === "win32") pathToFile = pathToFile.split(path.win32.sep).join(path.posix.sep);
-		const annotation = {
-			level: OutputParser.parseLevel(contents.message.level),
+		if (primarySpans.length === 0) return [{
+			level,
 			message: contents.message.rendered,
-			properties: {
-				file: pathToFile,
-				startLine: primarySpan.line_start,
-				endLine: primarySpan.line_end,
-				title: contents.message.message
+			properties: { title: contents.message.message }
+		}];
+		return primarySpans.map((primarySpan) => {
+			let pathToFile = primarySpan.file_name;
+			if (this.workingDirectory !== null) pathToFile = path.join(this.workingDirectory, pathToFile);
+			if (os$1.platform() === "win32") pathToFile = pathToFile.split(path.win32.sep).join(path.posix.sep);
+			const annotation = {
+				level,
+				message: contents.message.rendered,
+				properties: {
+					file: pathToFile,
+					startLine: primarySpan.line_start,
+					endLine: primarySpan.line_end,
+					title: contents.message.message
+				}
+			};
+			if (primarySpan.line_start === primarySpan.line_end) {
+				annotation.properties.startColumn = primarySpan.column_start;
+				annotation.properties.endColumn = primarySpan.column_end;
 			}
-		};
-		if (primarySpan.line_start === primarySpan.line_end) {
-			annotation.properties.startColumn = primarySpan.column_start;
-			annotation.properties.endColumn = primarySpan.column_end;
-		}
-		return annotation;
+			return annotation;
+		});
 	}
 };
 //#endregion
 //#region src/reporter.ts
-async function report(stats, annotations, context) {
-	for (const annotation of annotations) switch (annotation.level) {
+function logAnnotation(annotation) {
+	switch (annotation.level) {
 		case AnnotationLevel.Error:
 			error(annotation.message, annotation.properties);
 			break;
 		case AnnotationLevel.Notice:
 			notice(annotation.message, annotation.properties);
 			break;
-		case AnnotationLevel.Warning:
-			warning(annotation.message, annotation.properties);
-			break;
+		case AnnotationLevel.Warning: warning(annotation.message, annotation.properties);
 	}
+}
+async function report(stats, annotations, context) {
+	for (const annotation of annotations) logAnnotation(annotation);
 	summary.addHeading("Clippy summary", 2);
 	summary.addTable([
 		[{
@@ -61679,26 +65625,26 @@ async function buildContext(program, toolchain) {
 	]);
 	return context;
 }
-function _processLineBuffer(data, stringBuffer, onLine) {
+function processLineBuffer(data, stringBuffer, onLine) {
 	const POSIX_EOL = "\n";
-	let s = stringBuffer + data.toString();
-	let n = s.indexOf(POSIX_EOL);
-	while (n > -1) {
-		onLine(s.slice(0, Math.max(0, n)));
-		s = s.slice(Math.max(0, n + 1));
-		n = s.indexOf(POSIX_EOL);
+	let rest = stringBuffer + data.toString();
+	let eolIndex = rest.indexOf(POSIX_EOL);
+	while (eolIndex > -1) {
+		onLine(rest.slice(0, Math.max(0, eolIndex)));
+		rest = rest.slice(Math.max(0, eolIndex + 1));
+		eolIndex = rest.indexOf(POSIX_EOL);
 	}
-	return s;
+	return rest;
 }
 async function runClippy(actionInput, program) {
-	const arguments_ = buildClippyArguments(actionInput);
-	const outputParser = new OutputParser();
+	const args = buildClippyArguments(actionInput);
+	const outputParser = new OutputParser(actionInput.workingDirectory);
 	let stdbuffer = "";
 	const options = {
 		failOnStdErr: false,
 		ignoreReturnCode: true,
 		listeners: { stdout: (data) => {
-			stdbuffer = _processLineBuffer(data, stdbuffer, (line) => {
+			stdbuffer = processLineBuffer(data, stdbuffer, (line) => {
 				outputParser.tryParseClippyLine(line);
 			});
 		} }
@@ -61707,7 +65653,7 @@ async function runClippy(actionInput, program) {
 	let exitCode;
 	try {
 		startGroup("Executing cargo clippy (JSON output)");
-		exitCode = await program.call(arguments_, options);
+		exitCode = await program.call(args, options);
 	} finally {
 		endGroup();
 	}
@@ -61717,22 +65663,15 @@ async function runClippy(actionInput, program) {
 		exitCode
 	};
 }
-function getProgram(useCross) {
+async function getProgram(useCross) {
 	if (useCross) return Cross.getOrInstall();
-	else return Cargo.get();
-}
-async function run(actionInput) {
-	const program = await getProgram(actionInput.useCross);
-	const context = await buildContext(program, actionInput.toolchain);
-	const { stats, annotations, exitCode } = await runClippy(actionInput, program);
-	await report(stats, annotations, context);
-	if (exitCode !== 0) throw new Error(`Clippy had exited with the ${exitCode} exit code`);
+	return Cargo.get();
 }
 function buildToolchainArguments(toolchain, after) {
-	const arguments_ = [];
-	if (toolchain !== void 0 && toolchain !== "") arguments_.push(`+${toolchain}`);
-	arguments_.push(...after);
-	return arguments_;
+	const args = [];
+	if (toolchain !== void 0 && toolchain !== "") args.push(`+${toolchain}`);
+	args.push(...after);
+	return args;
 }
 function buildClippyArguments(actionInput) {
 	return buildToolchainArguments(actionInput.toolchain, [
@@ -61740,6 +65679,13 @@ function buildClippyArguments(actionInput) {
 		"--message-format=json",
 		...actionInput.args
 	]);
+}
+async function run(actionInput) {
+	const program = await getProgram(actionInput.useCross);
+	const context = await buildContext(program, actionInput.toolchain);
+	const { stats, annotations, exitCode } = await runClippy(actionInput, program);
+	await report(stats, annotations, context);
+	if (exitCode !== 0) throw new Error(`Clippy had exited with the ${exitCode} exit code`);
 }
 //#endregion
 //#region node_modules/.pnpm/string-argv@0.3.2/node_modules/string-argv/index.js
@@ -61767,12 +65713,12 @@ function firstString() {
 //#endregion
 //#region src/input.ts
 function get() {
-	let toolchain = input_exports.getInput("toolchain");
+	let toolchain = getInput("toolchain");
 	if (toolchain.startsWith("+")) toolchain = toolchain.slice(1);
-	const workingDirectory = input_exports.getInput("working-directory");
+	const workingDirectory = getInput("working-directory");
 	return {
-		args: parseArgsStringToArgv(input_exports.getInput("args")),
-		useCross: input_exports.getInputBool("use-cross"),
+		args: parseArgsStringToArgv(getInput("args")),
+		useCross: getInputBool("use-cross"),
 		workingDirectory: workingDirectory === "" ? void 0 : workingDirectory,
 		toolchain: toolchain === "" ? void 0 : toolchain
 	};
@@ -61783,7 +65729,7 @@ async function main() {
 	try {
 		await run(get());
 	} catch (error) {
-		if (error instanceof Error) setFailed(error.message);
+		if (Error.isError(error)) setFailed(error.message);
 		else setFailed(String(error));
 	}
 }

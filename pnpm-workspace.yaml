@@ -1,7 +1,8 @@
-allowBuilds:
-  unrs-resolver: false
+catalogs:
+  default:
+    vite: "8.2.2"
+allowBuilds: {}
 overrides:
-  "@codecov/vite-plugin>vite": "$vite"
-  "eslint-config-love>eslint": "$eslint"
-  "eslint-plugin-import>eslint": "$eslint"
-  "eslint-plugin-react>eslint": "$eslint"
+  "@codecov/vite-plugin>vite": "catalog:default"
+minimumReleaseAgeExclude:
+  - "@actions-rs-plus/*"

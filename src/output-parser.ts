@@ -1,7 +1,7 @@
 import os from "node:os";
 import path from "node:path";
 
-import * as core from "@actions/core";
+import { debug } from "@actions/core";
 
 import type {
     AnnotationWithMessageAndLevel,
@@ -13,14 +13,19 @@ import type {
 import { AnnotationLevel } from "./schema";
 
 export class OutputParser {
-    private readonly _workingDirectory: null | string;
-    private readonly _uniqueAnnotations: Map<string, AnnotationWithMessageAndLevel>;
-    private readonly _stats: Stats;
+    public readonly stats: Stats;
+
+    public get annotations(): AnnotationWithMessageAndLevel[] {
+        return this.uniqueAnnotations.values().toArray().flat();
+    }
+
+    private readonly uniqueAnnotations: Map<string, AnnotationWithMessageAndLevel[]>;
+    private readonly workingDirectory: null | string;
 
     public constructor(workingDirectory?: string) {
-        this._workingDirectory = workingDirectory ?? null;
-        this._uniqueAnnotations = new Map();
-        this._stats = {
+        this.workingDirectory = workingDirectory ?? null;
+        this.uniqueAnnotations = new Map();
+        this.stats = {
             ice: 0,
             error: 0,
             warning: 0,
@@ -29,17 +34,9 @@ export class OutputParser {
         };
     }
 
-    public get stats(): Stats {
-        return this._stats;
-    }
-
-    public get annotations(): AnnotationWithMessageAndLevel[] {
-        return [...this._uniqueAnnotations.values()];
-    }
-
     public static parseCargoJson(line: string): Message | null {
         try {
-            // eslint-disable-next-line @typescript-eslint/no-unsafe-type-assertion -- trusted input
+            // oxlint-disable-next-line typescript/no-unsafe-type-assertion -- trusted input
             return JSON.parse(line) as Message;
         } catch {
             return null;
@@ -48,12 +45,12 @@ export class OutputParser {
 
     public static validateMessageIsCargoMessage(contents: CargoMessage): contents is CompilerMessage {
         if (contents.reason !== "compiler-message") {
-            core.debug(`Unexpected reason field, ignoring it: ${contents.reason}`);
+            debug(`Unexpected reason field, ignoring it: ${contents.reason}`);
             return false;
         }
 
         if (contents.message?.code === undefined || contents.message.code === null) {
-            core.debug("Message code is missing, ignoring it");
+            debug("Message code is missing, ignoring it");
             return false;
         }
 
@@ -79,7 +76,7 @@ export class OutputParser {
         const message = OutputParser.parseCargoJson(line);
 
         if (message === null) {
-            core.debug("Not valid JSON or null, ignoring it");
+            debug("Not valid JSON or null, ignoring it");
             return;
         }
 
@@ -87,33 +84,33 @@ export class OutputParser {
             return;
         }
 
-        const parsedAnnotation = this.makeAnnotation(message);
+        const parsedAnnotations = this.makeAnnotations(message);
 
-        const key = JSON.stringify(parsedAnnotation);
+        const key = JSON.stringify(parsedAnnotations);
 
-        if (this._uniqueAnnotations.has(key)) {
+        if (this.uniqueAnnotations.has(key)) {
             return;
         }
 
         switch (message.message.level) {
             case "help": {
-                this._stats.help += 1;
+                this.stats.help += 1;
                 break;
             }
             case "note": {
-                this._stats.note += 1;
+                this.stats.note += 1;
                 break;
             }
             case "warning": {
-                this._stats.warning += 1;
+                this.stats.warning += 1;
                 break;
             }
             case "error": {
-                this._stats.error += 1;
+                this.stats.error += 1;
                 break;
             }
             case "error: internal compiler error": {
-                this._stats.ice += 1;
+                this.stats.ice += 1;
                 break;
             }
             default: {
@@ -121,50 +118,72 @@ export class OutputParser {
             }
         }
 
-        this._uniqueAnnotations.set(key, parsedAnnotation);
+        this.uniqueAnnotations.set(key, parsedAnnotations);
     }
 
-    /// Convert parsed JSON line into the GH annotation object
-    ///
-    /// https://developer.github.com/v3/checks/runs/#annotations-object
-    private makeAnnotation(contents: CompilerMessage): AnnotationWithMessageAndLevel {
-        const primarySpan = contents.message.spans.find((span) => {
+    /**
+     * Convert parsed JSON line into GH annotation objects, one per primary span
+     *
+     * https://docs.github.com/en/rest/checks/runs#create-a-check-run
+     *
+     * @param {CompilerMessage} contents A cargo `compiler-message`.
+     * @returns {AnnotationWithMessageAndLevel[]} One annotation per primary span, or a single span-less annotation.
+     */
+    private makeAnnotations(contents: CompilerMessage): AnnotationWithMessageAndLevel[] {
+        const level = OutputParser.parseLevel(contents.message.level);
+
+        const primarySpans = contents.message.spans.filter((span) => {
             return span.is_primary;
         });
 
-        // TODO: Handle it properly
-        if (primarySpan === undefined) {
-            throw new Error("Unable to find primary span for message");
+        // Per https://doc.rust-lang.org/rustc/json.html, a top-level message
+        // with one or more spans always has at least one primary span, so
+        // this only matches span-less diagnostics, e.g. removed lints.
+        if (primarySpans.length === 0) {
+            return [
+                {
+                    level,
+                    message: contents.message.rendered,
+                    properties: {
+                        title: contents.message.message,
+                    },
+                },
+            ];
         }
 
-        let pathToFile = primarySpan.file_name;
+        return primarySpans.map((primarySpan) => {
+            let pathToFile = primarySpan.file_name;
 
-        if (this._workingDirectory !== null) {
-            pathToFile = path.join(this._workingDirectory, pathToFile);
-        }
+            if (this.workingDirectory !== null) {
+                pathToFile = path.join(this.workingDirectory, pathToFile);
+            }
 
-        if (os.platform() === "win32") {
-            // `.\\foo\\bar.cs` to `./foo/bar.cs`
-            pathToFile = pathToFile.split(path.win32.sep).join(path.posix.sep);
-        }
+            if (os.platform() === "win32") {
+                // `.\\foo\\bar.cs` to `./foo/bar.cs`
+                pathToFile = pathToFile.split(path.win32.sep).join(path.posix.sep);
+            }
 
-        const annotation: AnnotationWithMessageAndLevel = {
-            level: OutputParser.parseLevel(contents.message.level),
-            message: contents.message.rendered,
-            properties: {
-                file: pathToFile,
-                startLine: primarySpan.line_start,
-                endLine: primarySpan.line_end,
-                title: contents.message.message,
-            },
-        };
+            const annotation: AnnotationWithMessageAndLevel = {
+                level,
+                message: contents.message.rendered,
+                properties: {
+                    file: pathToFile,
+                    startLine: primarySpan.line_start,
+                    endLine: primarySpan.line_end,
+                    title: contents.message.message,
+                },
+            };
 
-        // Omit these parameters if `start_line` and `end_line` have different values.
-        if (primarySpan.line_start === primarySpan.line_end) {
-            annotation.properties.startColumn = primarySpan.column_start;
-            annotation.properties.endColumn = primarySpan.column_end;
-        }
+            // GitHub annotations only support columns when the span is on a single line.
+            // Workflow commands (::error etc.) silently drop the columns on a multi-line span,
+            // but we omit them anyway to mirror the check-run API, which fails with a 422:
+            // https://docs.github.com/en/rest/checks/runs#create-a-check-run
+            if (primarySpan.line_start === primarySpan.line_end) {
+                annotation.properties.startColumn = primarySpan.column_start;
+                annotation.properties.endColumn = primarySpan.column_end;
+            }
 
-        return annotation;
+            return annotation;
+        });
     }
 }
